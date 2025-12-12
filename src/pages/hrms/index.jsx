@@ -18,10 +18,10 @@ const HRMS = () => {
     ];
 
     return (
-        <div className="bg-white px-8 py-6 mx-5 mt-5 rounded-xl min-h-screen border border-[#D9D9D9]">
+        <div className="bg-white px-8 py-6 mx-4 mt-4 rounded-xl min-h-screen border border-[#D9D9D9]">
             {/* Header */}
             <div className="mb-4">
-                <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>Employee Management Dashboard</h1>
+                <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>HRMS Dashboard</h1>
             </div>
 
             {/* Banner / Map Section */}
@@ -29,9 +29,9 @@ const HRMS = () => {
 
             {/* Shortcuts */}
             <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Your Shortcuts</h2>
+                <h2 className="text-xl font-medium text-gray-900 mb-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Your Shortcuts</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-8 ">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-8 ml-2">
                     {shortcuts.map((shortcut) => (
                         <div
                             key={shortcut.name}

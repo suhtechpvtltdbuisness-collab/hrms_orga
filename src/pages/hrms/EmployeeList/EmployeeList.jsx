@@ -14,21 +14,21 @@ import {
 
 const EmployeeList = () => {
     // Mock Data
-    const [employees] = useState([]); 
-    //  const [employees] = useState(Array(10).fill({
-    //     name: "Olivia Rhye",
-    //     empId: "Emp-00123",
-    //     department: "Engineering",
-    //     designation: "Software Engineer",
-    //     joiningDate: "15 Jan 2022",
-    //     contact: "Olivia.R@Corp.Com",
-    //     status: "Active"
-    // }).map((emp, index) => ({ ...emp, srNo: String(index + 1).padStart(2, '0') }))); 
+    // const [employees] = useState([]); 
+    const [employees] = useState(Array(10).fill({
+        name: "Olivia Rhye",
+        empId: "Emp-00123",
+        department: "Engineering",
+        designation: "Software Engineer",
+        joiningDate: "15 Jan 2022",
+        contact: "Olivia.R@Corp.Com",
+        status: "Active"
+    }).map((emp, index) => ({ ...emp, srNo: String(index + 1).padStart(2, '0') })));
 
     return (
-        <div className="bg-white p-6 mx-5 mt-5 rounded-xl min-h-screen border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white p-6 mx-4 mt-4 rounded-xl h-[calc(100vh-50px)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {/* Header Section */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
                 <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
 
                 <div className="flex gap-4">
@@ -65,7 +65,7 @@ const EmployeeList = () => {
             </div>
 
             {/* Filters Section */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4 h-12">
                 {/* Search Bar */}
                 <div className="relative">
                     <div
@@ -102,7 +102,7 @@ const EmployeeList = () => {
             </div>
 
             {/* Table Section */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
                 <table className="w-full">
                     <thead>
                         <tr className="text-left border-b border-gray-100">
@@ -212,13 +212,13 @@ const EmployeeList = () => {
             </div>
 
             {/* Pagination Footer */}
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 text-sm text-gray-500">
-                <div>Showing 1-10 Of 100</div>
+            <div className="relative flex items-center justify-center mt-6 pt-4 border-t border-gray-100 text-sm text-gray-500">
+                <div className="absolute left-0">Showing 1-10 Of 100</div>
                 <div className="flex items-center gap-2">
                     <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
                         <ChevronLeft size={16} /> Previous
                     </button>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 ">
                         <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-600 text-white font-medium">1</button>
                         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">2</button>
                         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">3</button>
