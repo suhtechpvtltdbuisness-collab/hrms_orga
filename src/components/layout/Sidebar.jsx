@@ -37,6 +37,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { name: 'My Profile', icon: UserCircle },
         { name: 'Settings', icon: Settings },
         { name: 'Support', icon: HelpCircle },
+        { name: 'Departments', icon: Users }
     ];
 
     if (!isOpen) return null;
@@ -66,6 +67,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             key={item.name}
                             to={
                                 item.name === 'HRMS' ? '/hrms' :
+                                  item.name ===  'Departments' ? '/hrms/departments' :
                                     item.name === 'Employees' ? '/hrms/employees' :
                                         '#'
                             }
