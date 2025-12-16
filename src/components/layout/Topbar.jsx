@@ -1,8 +1,9 @@
 import React from 'react';
+import { Bell } from 'lucide-react';
 
 const Topbar = () => {
     return (
-        <div className="bg-white px-8 py-6 mx-5 mt-5 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
+        <div className="bg-white px-8 py-6 mx-4 mt-4 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
             {/* Search Bar */}
             {/* Search Bar */}
             {/* Rounded container with light grey bg */}
@@ -26,15 +27,18 @@ const Topbar = () => {
             {/* Right Section: Notification & Profile */}
             <div className="flex items-center space-x-6">
                 {/* Notification */}
-                <div className="relative cursor-pointer w-12 h-12 rounded-full flex items-center justify-center transition-opacity hover:opacity-80">
-                    <img src="/images/notifications.svg" alt="Notifications" className="w-8 h-8" />
+                <div className="relative cursor-pointer w-15 h-15 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]">
+                    <Bell size={32} color="#7D1EDB" fill="#7D1EDB" />
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-[#FF3B30] rounded-full border-2 border-white flex items-center justify-center">
+                        <span className="text-white text-[10px] font-bold">2</span>
+                    </div>
                 </div>
 
                 {/* User Profile */}
                 <div className="flex items-center space-x-3 cursor-pointer group">
                     <div className="relative">
                         <img
-                            className="h-10 w-10 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
+                            className="h-13 w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
                             src="https://avatar.iran.liara.run/public/boy?username=Ankit"
                             alt="Ankit Kumar"
                         />

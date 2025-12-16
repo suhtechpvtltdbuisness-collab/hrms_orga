@@ -11,10 +11,10 @@ const Layout = ({ children }) => {
     };
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-sans overflow-x-hidden">
+        <div className="flex bg-[#eeeff1] min-h-screen font-sans overflow-x-hidden">
             {/* Sidebar Container - Width transitions */}
             <div
-                className={`flex-none transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0 -ml-4' // Negative margin to hide completely or w-20 for mini
+                className={`flex-none transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-70' : 'w-0 -ml-4' // Negative margin to hide completely or w-20 for mini
                     }`}
             >
                 <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />

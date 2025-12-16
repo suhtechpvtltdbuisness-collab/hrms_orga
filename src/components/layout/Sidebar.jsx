@@ -43,7 +43,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="w-64 h-screen rounded-2xl bg-white fixed left-0 top-0 z-20 flex flex-col pt-6 pb-4 shadow-sm border-r border-gray-100 overflow-y-auto font-sans transition-transform duration-300">
+        <div className="w-70 h-screen rounded-2xl bg-white fixed left-0 top-0 z-20 flex flex-col pt-6 pb-4 shadow-sm border-r border-gray-100 overflow-y-auto font-sans transition-transform duration-300">
             {/* Logo Section with Toggle Button */}
             <div className="px-6 mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </div>
 
             {/* Menu Items */}
-            <nav className="flex-1 px-4 space-y-1 mt-10">
+            <nav className="flex-1 px-4 space-y-1 mt-8">
                 {menuItems.map((item) => {
                     const active = isActive(item.name);
                     return (
@@ -71,9 +71,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                     item.name === 'Employees' ? '/hrms/employees' :
                                         '#'
                             }
-                            className={`flex items-center px-4 py-3 cursor-pointer rounded-3xl transition-all duration-200 group text-sm font-medium relative
+                            className={`flex items-center px-4 py-3 cursor-pointer rounded-3xl transition-all duration-200 group text-base font-medium relative
                 ${active
-                                    ? 'bg-purple-50 text-purple-600'
+                                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                         >
