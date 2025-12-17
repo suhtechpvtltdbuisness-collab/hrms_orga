@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function EmpAttendance() {
+export default function EmpUpdateAttendance() {
   const [showFullView, setShowFullView] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;

@@ -15,6 +15,7 @@ const HRMS = () => {
         { name: 'Employee List', badge: true },
         { name: 'Schedule Interview' },
         { name: 'Attendance' },
+        {name:  'Setting' , badge:true},
     ];
 
     return (
