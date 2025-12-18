@@ -62,7 +62,7 @@ const Documents = () => {
         <div className="h-full">
             {/* Filter Button */}
             <button
-                className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[16px]"
+                className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px]"
                 style={{
                     width: '156px',
                     height: '36px',

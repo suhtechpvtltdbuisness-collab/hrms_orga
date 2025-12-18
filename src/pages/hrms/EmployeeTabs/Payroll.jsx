@@ -14,7 +14,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
                     onClick={onToggle}
                     className="w-full px-[16px] h-[52px] flex justify-between items-center transition-colors text-left"
                 >
-                    <span className="text-[#1E1E1E] font-medium text-[16px] leading-[100%] tracking-[0%] text-center" style={{ fontFamily: '"Inter", sans-serif' }}>
+                    <span className="text-[#1E1E1E] font-normal text-[16px] leading-[100%] tracking-[0%] text-center" style={{ fontFamily: '"Inter", sans-serif' }}>
                         {title}
                     </span>
                     {isOpen ? <ChevronUp className="text-gray-500" size={24} /> : <ChevronDown className="text-gray-500" size={24} />}
