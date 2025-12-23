@@ -1,13 +1,11 @@
 import React from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 
 const Topbar = () => {
     return (
-        <div className="bg-white px-8 py-6 mx-4 mt-4 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
-            {/* Search Bar */}
-            {/* Search Bar */}
-            {/* Rounded container with light grey bg */}
-            <div className="relative w-96 flex items-center bg-[#F9FAFB] rounded-full px-4 py-4 border border-[#F2F2F2] focus-within:ring-2 focus-within:ring-purple-100 focus-within:border-purple-200 transition-all">
+        <div className="bg-white px-4 md:px-8 py-4 md:py-6 mx-4 mt-4 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
+
+            <div className="hidden md:flex relative w-96 items-center bg-[#F9FAFB] rounded-full px-4 py-4 border border-[#F2F2F2] focus-within:ring-2 focus-within:ring-purple-100 focus-within:border-purple-200 transition-all">
 
                 {/* Search Icon */}
                 <img
@@ -22,6 +20,11 @@ const Topbar = () => {
                     className="w-full bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none text-base font-normal"
                     placeholder="Search here..."
                 />
+            </div>
+
+            {/* Mobile Search Icon */}
+            <div className="md:hidden p-2 rounded-full bg-gray-50 text-gray-500">
+                <Search size={20} />
             </div>
 
             {/* Right Section: Notification & Profile */}
@@ -43,11 +46,11 @@ const Topbar = () => {
                             alt="Ankit Kumar"
                         />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="hidden md:flex flex-col">
                         <span className="text-sm font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">Ankit Kumar</span>
                         <span className="text-xs text-gray-500 font-medium">Admin</span>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="hidden md:block h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                 </div>

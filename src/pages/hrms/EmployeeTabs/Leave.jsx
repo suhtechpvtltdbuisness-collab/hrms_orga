@@ -123,31 +123,19 @@ const Leave = () => {
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
-                            {leaveHistory.length > 0 ? (
-                                leaveHistory.map((record, index) => (
-                                    <tr key={index}>
-                                        <td colSpan="7">Record</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="7" className="pt-16 pb-8 text-center">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <img
-                                                src={noRecordsImage}
-                                                alt="No Records found"
-                                                className="mb-6 max-w-[501px]"
-                                            />
-                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
                     </table>
                 </div>
+                {leaveHistory.length === 0 && (
+                    <div className="flex flex-col items-center justify-center pt-16 pb-8">
+                        <img
+                            src={noRecordsImage}
+                            alt="No Records found"
+                            className="mb-6 w-full h-auto max-w-[501px]"
+                        />
+                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -4,7 +4,20 @@ import Topbar from './Topbar';
 import { Outlet } from 'react-router-dom';
 
 const Layout = ({ children }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setIsSidebarOpen(false);
+            } else {
+                setIsSidebarOpen(true);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -14,17 +27,12 @@ const Layout = ({ children }) => {
         <div className="flex bg-[#eeeff1] min-h-screen font-sans overflow-x-hidden">
             {/* Sidebar Container - Width transitions */}
             <div
-                className={`flex-none transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-70' : 'w-0 -ml-4' // Negative margin to hide completely or w-20 for mini
+                className={`flex-none transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-70' : 'w-0 -ml-2'
                     }`}
             >
                 <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
             </div>
 
-            {/* Button to open sidebar if closed - floating or attached to edge? 
-                Actually the user asked for button INSIDE sidebar to hide. 
-                If hidden, we need a way to show it.
-                I'll add a small trigger button on the left edge of main content if sidebar is closed.
-            */}
             {!isSidebarOpen && (
                 <button
                     onClick={toggleSidebar}
@@ -43,7 +51,7 @@ const Layout = ({ children }) => {
 
                 {/* Page Content Container */}
                 <main className="flex-1 overflow-x-hidden overflow-y-auto">
-                    {/* Inner content container - align with Topbar's margin */}
+                    
                     <div className="w-full mx-auto">
                         {children || <Outlet />}
                     </div>

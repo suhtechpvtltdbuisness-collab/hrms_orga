@@ -99,7 +99,7 @@ const PersonalInfo = () => {
                     </div>
 
                     {/* Address - Full Width */}
-                    <div className="md:col-span-2">
+                    <div className="col-span-2 md:col-span-2">
                         <label className={labelClasses}>Address</label>
                         <textarea
                             placeholder="Enter your Address"
