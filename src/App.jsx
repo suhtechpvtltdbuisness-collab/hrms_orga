@@ -17,10 +17,10 @@ function App() {
           <Route path="/hrms" element={<HRMS />} />
           <Route path="/hrms/departments" element={<DepartmentList />} />
           <Route path="/hrms/employees" element={<EmployeeList />} />
-          <Route path="/hrms/employees/add" element={<AddEmployee />} />
-          
+          <Route path="/hrms/employees/add" element={<Navigate to="/hrms/employees/add/personal-information" replace />} />
+          <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
+
           <Route path="/hrms/employee-details" element={<EmpPersonalInfo />} />
-          {/* Add other routes here */}
         </Routes>
       </Layout>
     </Router>
