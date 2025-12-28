@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import PersonalInfo from './PersonalInfo';
@@ -32,9 +32,9 @@ const AddEmployee = () => {
 
     const activeTabObj = tabConfig.find(t => t.path === tab) || tabConfig[0];
 
-    const tabsContainerRef = React.useRef(null);
+    const tabsContainerRef = useRef(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (tabsContainerRef.current) {
             const activeTabElement = tabsContainerRef.current.querySelector('[data-active="true"]');
             if (activeTabElement) {

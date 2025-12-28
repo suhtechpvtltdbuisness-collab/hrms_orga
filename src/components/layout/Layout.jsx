@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { Outlet } from 'react-router-dom';
@@ -6,13 +6,9 @@ import { Outlet } from 'react-router-dom';
 const Layout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 1024) {
-                setIsSidebarOpen(false);
-            } else {
-                setIsSidebarOpen(true);
-            }
+            setIsSidebarOpen(window.innerWidth >= 1024);
         };
 
         window.addEventListener('resize', handleResize);
@@ -51,7 +47,7 @@ const Layout = ({ children }) => {
 
                 {/* Page Content Container */}
                 <main className="flex-1 overflow-x-hidden overflow-y-auto">
-                    
+
                     <div className="w-full mx-auto">
                         {children || <Outlet />}
                     </div>

@@ -33,34 +33,46 @@ const EmployeeList = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 md:gap-0">
                 <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
 
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    {/* Export Button */}
+                <div className="flex flex-row gap-2 w-full md:w-auto items-center justify-between md:justify-start">
+                    {/* Mobile Search Trigger */}
                     <button
-                        className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:bg-purple-50 transition-colors bg-white w-full md:w-[110px]"
-                        style={{
-                            height: '48px',
-                            padding: '10px 16px',
-                            borderRadius: '26px',
-                            border: '1px solid #7D1EDB'
-                        }}
+                        className={`md:hidden p-3 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ${isSearchExpanded ? 'bg-purple-100 text-purple-600' : ''}`}
+                        onClick={() => setIsSearchExpanded(!isSearchExpanded)}
                     >
-                        <span>Export</span>
-                        <Download size={18} />
+                        <Search size={20} />
                     </button>
 
-                    {/* Add Employee Button */}
-                    <Link
-                        to="/hrms/employees/add"
-                        className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB] w-full md:w-[177px]"
-                        style={{
-                            height: '48px',
-                            padding: '10px 16px',
-                            borderRadius: '26px'
-                        }}
-                    >
-                        <Plus size={18} />
-                        <span>Add Employee</span>
-                    </Link>
+                    <div className="flex flex-row gap-2 flex-1 md:flex-none justify-end">
+                        {/* Export Button */}
+                        <button
+                            className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:bg-purple-50 transition-colors bg-white flex-1 md:flex-none md:w-[110px]"
+                            style={{
+                                height: '48px',
+                                padding: '10px 16px',
+                                borderRadius: '26px',
+                                border: '1px solid #7D1EDB',
+                                minWidth: '100px'
+                            }}
+                        >
+                            <span>Export</span>
+                            <Download size={18} />
+                        </button>
+
+                        {/* Add Employee Button */}
+                        <Link
+                            to="/hrms/employees/add"
+                            className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB] flex-1 md:flex-none md:w-[177px]"
+                            style={{
+                                height: '48px',
+                                padding: '10px 16px',
+                                borderRadius: '26px',
+                                minWidth: '140px'
+                            }}
+                        >
+                            <Plus size={18} />
+                            <span className="whitespace-nowrap">Add Employee</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
