@@ -35,6 +35,7 @@ const Layout = ({ children }) => {
                 </main>
             </div>
         </div>
+      </div>
     );
 };
 

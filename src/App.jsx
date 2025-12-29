@@ -19,7 +19,8 @@ function App() {
           <Route path="/hrms/departments" element={<DepartmentList />} />
           <Route path="/hrms/employees" element={<EmployeeList />} />
           <Route path="/hrms/employees/add" element={<AddEmployee />} />
-          <Route path="/hrms/employee-details" element={<EmpPersonalInfo />} />
+          <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} />
+          <Route path="/hrms/employee-details-update" element={<EmpUpdatePersonalInfo />} />
           {/* Add other routes here */}
         </Routes>
       </Layout>

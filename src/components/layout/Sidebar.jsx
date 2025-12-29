@@ -19,91 +19,97 @@ import { Link, useLocation } from 'react-router-dom';
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
 
-    const menuItems = [
-        { name: 'Dashboard', icon: LayoutDashboard },
-        { name: 'HRMS', icon: Users },
-        { name: 'Project Management', icon: Briefcase },
-        { name: 'Attendance', icon: CalendarDays },
-        { name: 'Tasks', icon: CheckSquare },
-        { name: 'Reports', icon: BarChart3 },
-        { name: 'Announcements', icon: Megaphone },
-        { name: 'Messages', icon: MessageSquare },
-        { name: 'My Profile', icon: UserCircle },
-        { name: 'Settings', icon: Settings },
-        { name: 'Support', icon: HelpCircle },
-    ];
+  const menuItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboards' },
+    { name: 'HRMS', icon: Users, path: '/hrms' },
+    { name: 'Project Management', icon: Briefcase, path: '/projects' },
+    { name: 'Attendance', icon: CalendarDays, path: '/attendance' },
+    { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
+    { name: 'Reports', icon: BarChart3, path: '/reports' },
+    { name: 'Announcements', icon: Megaphone, path: '/announcements' },
+    { name: 'Messages', icon: MessageSquare, path: '/messages' },
+    { name: 'My Profile', icon: UserCircle, path: '/profile' },
+    { name: 'Settings', icon: Settings, path: '/settings' },
+    { name: 'Support', icon: HelpCircle, path: '/support' }
+  ];
 
   const isActive = (path) => location.pathname.startsWith(path);
 
   return (
     <aside
       className={`
-    fixed left-0 top-0 h-screen
-    bg-white border-r border-gray-100 shadow-sm
-    flex flex-col font-sans
-    transition-all duration-300
-    ${isOpen ? 'w-70 p-5' : 'w-16 py-4 px-2'}
-  `}
+        fixed top-0 left-0 h-screen z-20
+        bg-white border-r border-gray-100 shadow-sm
+        transition-all duration-300 flex flex-col rounded-xl
+        ${isOpen ? 'w-70 px-5 py-5' : 'w-16 py-4'}
+      `}
     >
-
-      {/* Logo + Toggle */}
-      <div className="flex items-center justify-between mb-6 h-10">
+      {/* Logo */}
+      <div className={`relative flex items-center mb-6 h-10 ${
+    isOpen ? 'justify-start' : 'justify-center' }`}>
         <img
           src={isOpen ? '/images/Orga Logo.svg' : '/images/orga A.svg'}
           alt="ORGA"
-          className={`transition-all duration-300 ${isOpen ? 'h-7' : 'h-6 mx-auto'
-            }`}
+          className={`transition-all ${isOpen ? 'h-7' : 'h-6'}`}
         />
 
+        {/* Toggle Button (ALWAYS VISIBLE) */}
         <button
           onClick={toggleSidebar}
-          className={`w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center
-           text-gray-400 hover:bg-purple-50 hover:text-purple-600 transition border border-gray-100 cursor-pointer
-            ${!isOpen ? 'ml-4' : ''}`}
+          className="
+            absolute top-1/2 -right-3 -translate-y-1/2
+            w-7 h-7 rounded-full bg-white border border-gray-200
+            flex items-center justify-center text-gray-500
+            hover:bg-purple-50 hover:text-purple-600
+            shadow-md transition cursor-pointer 
+          "
         >
           <ChevronLeft
-            size={20}
-            className={`transition-transform duration-300 ${!isOpen ? 'rotate-180' : ''
-              }`}
+            size={16}
+            className={`transition-transform duration-300  cursor-pointer ${
+              !isOpen ? 'rotate-180' : ''
+            }`}
           />
         </button>
-
       </div>
 
-            {/* Menu Items */}
-            <nav className="flex-1 px-4 space-y-1 mt-8">
-                {menuItems.map((item) => {
-                    const active = isActive(item.name);
-                    return (
-                        <Link
-                            key={item.name}
-                            to={
-                                item.name === 'HRMS' ? '/hrms' :
-                                    item.name === 'Employees' ? '/hrms/employees' :
-                                        '#'
-                            }
-                            className={`flex items-center px-4 py-3 cursor-pointer rounded-3xl transition-all duration-200 group text-base font-medium relative
-                ${active
-                                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                                }`}
-                        >
-                            <item.icon
-                                strokeWidth={2}
-                                className={`w-5 h-5 mr-3 transition-colors ${active ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'
-                                    }`}
-                            />
-                            <span>{item.name}</span>
-                        </Link>
-                    );
-                })}
-            </nav>
+      {/* Menu */}
+      <nav className="flex-1 mt-8 space-y-1">
+        {menuItems.map((item) => {
+          const active = isActive(item.path);
+
+          return (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`
+                flex items-center rounded-2xl transition-all duration-200
+                ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
+                ${
+                  active
+                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }
+              `}
+            >
+              <item.icon
+                className={`w-5 h-5 ${
+                  active ? 'text-purple-600' : 'text-gray-400'
+                }`}
+              />
+              {isOpen && (
+                <span className="text-sm font-medium">{item.name}</span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
 
       {/* Logout */}
       <div className="mt-auto pt-4 border-t border-gray-100">
         <div
           className={`
-            flex items-center rounded-3xl cursor-pointer transition
+            flex items-center rounded-2xl cursor-pointer transition
             ${isOpen ? 'gap-3 px-4 py-2.5' : 'justify-center py-3'}
             text-gray-600 hover:text-red-500 hover:bg-red-50
           `}
