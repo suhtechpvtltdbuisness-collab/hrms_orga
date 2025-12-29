@@ -26,14 +26,16 @@ const Layout = ({ children }) => {
             <Topbar />
           </div>
 
-          {/* Page Content */}
-          <main className="min-h-screen">
-            {children || <Outlet />}
-          </main>
+                {/* Page Content Container */}
+                <main className="flex-1 overflow-x-hidden">
+                    {/* Inner content container - align with Topbar's margin */}
+                    <div className="w-full mx-auto">
+                        {children || <Outlet />}
+                    </div>
+                </main>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Layout;

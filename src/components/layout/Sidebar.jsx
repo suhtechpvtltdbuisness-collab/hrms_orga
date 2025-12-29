@@ -19,20 +19,19 @@ import { Link, useLocation } from 'react-router-dom';
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
 
-  const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboards' },
-    { name: 'HRMS', icon: Users, path: '/hrms' },
-    { name: 'Project Management', icon: Briefcase, path: '/projects' },
-    { name: 'Employees', icon: Users, path: '/employees' },
-    { name: 'Attendance', icon: CalendarDays, path: '/attendance' },
-    { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
-    { name: 'Reports', icon: BarChart3, path: '/reports' },
-    { name: 'Announcements', icon: Megaphone, path: '/announcements' },
-    { name: 'Messages', icon: MessageSquare, path: '/messages' },
-    { name: 'My Profile', icon: UserCircle, path: '/profile' },
-    { name: 'Settings', icon: Settings, path: '/settings' },
-    { name: 'Support', icon: HelpCircle, path: '/support' }
-  ];
+    const menuItems = [
+        { name: 'Dashboard', icon: LayoutDashboard },
+        { name: 'HRMS', icon: Users },
+        { name: 'Project Management', icon: Briefcase },
+        { name: 'Attendance', icon: CalendarDays },
+        { name: 'Tasks', icon: CheckSquare },
+        { name: 'Reports', icon: BarChart3 },
+        { name: 'Announcements', icon: Megaphone },
+        { name: 'Messages', icon: MessageSquare },
+        { name: 'My Profile', icon: UserCircle },
+        { name: 'Settings', icon: Settings },
+        { name: 'Support', icon: HelpCircle },
+    ];
 
   const isActive = (path) => location.pathname.startsWith(path);
 
@@ -71,33 +70,34 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       </div>
 
-
-      {/* Menu */}
-      <nav className="flex flex-col gap-1">
-        {menuItems.map((item) => (
-          <Link
-            key={item.name}
-            to={item.path}
-            className={`
-              flex items-center rounded-3xl transition text-sm font-medium
-              ${isOpen ? 'gap-3 px-4 py-2.5' : 'justify-center py-3'}
-              ${isActive(item.path)
-                ? 'bg-[#EEF2FF] text-[#7D1EDB]'
-                : 'text-gray-600 hover:bg-gray-50'
-              }
-            `}
-          >
-            <item.icon
-              size={18}
-              className={
-                isActive(item.path) ? 'text-purple-600' : 'text-gray-400'
-              }
-            />
-
-            {isOpen && <span>{item.name}</span>}
-          </Link>
-        ))}
-      </nav>
+            {/* Menu Items */}
+            <nav className="flex-1 px-4 space-y-1 mt-8">
+                {menuItems.map((item) => {
+                    const active = isActive(item.name);
+                    return (
+                        <Link
+                            key={item.name}
+                            to={
+                                item.name === 'HRMS' ? '/hrms' :
+                                    item.name === 'Employees' ? '/hrms/employees' :
+                                        '#'
+                            }
+                            className={`flex items-center px-4 py-3 cursor-pointer rounded-3xl transition-all duration-200 group text-base font-medium relative
+                ${active
+                                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                        >
+                            <item.icon
+                                strokeWidth={2}
+                                className={`w-5 h-5 mr-3 transition-colors ${active ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'
+                                    }`}
+                            />
+                            <span>{item.name}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
 
       {/* Logout */}
       <div className="mt-auto pt-4 border-t border-gray-100">

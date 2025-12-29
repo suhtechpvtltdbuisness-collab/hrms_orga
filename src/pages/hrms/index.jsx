@@ -2,9 +2,11 @@ import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
+ 
 
 const HRMS = () => {
     const navigate = useNavigate();
+
     // Defined shortcuts matching the image
     const shortcuts = [
         { name: 'New Hiring' },
@@ -17,6 +19,14 @@ const HRMS = () => {
         { name: 'Attendance' },
         {name:  'Setting' , badge:true},
     ];
+    const handleShortcut = (name) => {
+        if (name === 'Employee List') {
+        navigate('/hrms/employees');
+      } 
+        else if (name === 'Department') {
+        navigate('/hrms/departments');  // Navigate to Department List
+      }
+    };
 
     return (
         <div className="bg-white px-8 py-6 mx-4 mt-4 rounded-xl min-h-screen border border-[#D9D9D9]">
@@ -41,6 +51,9 @@ const HRMS = () => {
                                 if (shortcut.name === 'Employee List') {
                                     navigate('/hrms/employees');
                                 }
+                                else if (shortcut.name === 'Department') {
+                                    navigate('/hrms/departments');  // Navigate to Department List
+                                }
                             }}
                         >
                             <div className="relative flex items-center">
@@ -56,6 +69,8 @@ const HRMS = () => {
                     ))}
                 </div>
             </div>
+
+
         </div>
 
     );
