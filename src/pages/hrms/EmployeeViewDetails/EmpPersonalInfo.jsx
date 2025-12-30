@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import PersonalInfo from "../EmployeeTabs/PersonalInfo";
@@ -59,8 +59,16 @@ const EmpPersonalInfo = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-2">
                     <h1 className="text-xl font-bold text-gray-900 mb-4">Employee Information</h1>
-                    <button className="flex items-center gap-2 cursor-pointer">
-                        <img src="/EDIT_BTN.svg" alt="edit icon" className="w-24 h-24" />
+                    <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors cursor-pointer"
+                         onClick={() => navigate("/hrms/employees-details-update")}>
+                        <span>Edit</span>
+                        <img
+                            src="/pencil.svg"
+                            alt="Edit"
+                            className="w-4 h-4"
+                        />
+                       
+
                     </button>
                 </div>
 
@@ -124,11 +132,11 @@ const EmpPersonalInfo = () => {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-6 h-full flex items-center justify-center text-sm font-medium whitespace-nowrap transition-all
-                    ${activeTab === tab
+                                        ${activeTab === tab
                                             ? "bg-[#7D1EDB] text-white rounded-lg"
-                                            : "text-gray-600 hover:text-black hover:bg-gray-100"
+                                            : "text-gray-600 hover:text-black hover:bg-gray-200"
                                         }`}
-                                >
+                                    >
                                     {tab}
                                 </button>
                             ))}
