@@ -30,80 +30,70 @@ const EmployeeList = () => {
     return (
         <div className="bg-white p-6 mx-4 mt-4 rounded-xl h-[calc(100vh-50px)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 md:gap-0">
+            <div className="flex justify-between items-center mb-4">
                 <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
 
-                <div className="flex flex-row gap-2 w-full md:w-auto items-center justify-between md:justify-start">
-                    {/* Mobile Search Trigger */}
+                <div className="flex gap-4">
+                    {/* Export Button */}
                     <button
-                        className={`md:hidden p-3 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ${isSearchExpanded ? 'bg-purple-100 text-purple-600' : ''}`}
-                        onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                        className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:bg-purple-50 transition-colors bg-white"
+                        style={{
+                            width: '110px',
+                            height: '48px',
+                            padding: '10px 16px',
+                            borderRadius: '26px',
+                            border: '1px solid #7D1EDB'
+                        }}
                     >
-                        <Search size={20} />
+                        <span>Export</span>
+                        <Download size={18} />
                     </button>
 
-                    <div className="flex flex-row gap-2 flex-1 md:flex-none justify-end">
-                        {/* Export Button */}
-                        <button
-                            className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:bg-purple-50 transition-colors bg-white flex-1 md:flex-none md:w-[110px]"
-                            style={{
-                                height: '48px',
-                                padding: '10px 16px',
-                                borderRadius: '26px',
-                                border: '1px solid #7D1EDB',
-                                minWidth: '100px'
-                            }}
-                        >
-                            <span>Export</span>
-                            <Download size={18} />
-                        </button>
-
-                        {/* Add Employee Button */}
-                        <Link
-                            to="/hrms/employees/add"
-                            className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB] flex-1 md:flex-none md:w-[177px]"
-                            style={{
-                                height: '48px',
-                                padding: '10px 16px',
-                                borderRadius: '26px',
-                                minWidth: '140px'
-                            }}
-                        >
-                            <Plus size={18} />
-                            <span className="whitespace-nowrap">Add Employee</span>
-                        </Link>
-                    </div>
+                    {/* Add Employee Button */}
+                    <Link
+                        to="/hrms/employees/add"
+                        className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
+                        style={{
+                            width: '177px',
+                            height: '48px',
+                            padding: '10px 16px',
+                            borderRadius: '26px'
+                        }}
+                    >
+                        <Plus size={18} />
+                        <span>Add Employee</span>
+                    </Link>
                 </div>
             </div>
 
             {/* Filters Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 h-auto md:h-12">
-                {/* Search Bar - Hidden on mobile unless expanded */}
-                <div className={`relative transition-all duration-300 ${isSearchExpanded ? 'w-full block' : 'hidden md:block w-auto'}`}>
+            <div className="flex justify-between items-center mb-4 h-12">
+                {/* Search Bar */}
+                <div className="relative">
                     <div
-                        className={`flex items-center bg-gray-50 text-gray-400 transition-all duration-300 ${isSearchExpanded ? 'w-full px-4' : 'w-[380px] px-6'} h-[48px] rounded-[32px] border border-transparent`}
+                        className="flex items-center bg-gray-50 text-gray-400"
+                        style={{
+                            width: '380px',
+                            height: '48px',
+                            padding: '2px 32px 2px 24px',
+                            borderRadius: '32px',
+                            border: '1px solid transparent' // Can allow border color change on focus if needed
+                        }}
                     >
-                        {/* Desktop Icon */}
-                        <Search size={20} className="mr-2" />
-
                         <input
                             type="text"
                             placeholder="Search by name,id,email..."
-                            className="bg-transparent outline-none text-gray-700 placeholder-[#B3B3B3] text-base font-normal w-full"
+                            className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-base font-normal"
                         />
-                        {isSearchExpanded && (
-                            <button onClick={() => setIsSearchExpanded(false)} className="ml-2 md:hidden text-gray-500">
-                                <ChevronLeft size={20} />
-                            </button>
-                        )}
                     </div>
                 </div>
 
-                <div className={`gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 ${isSearchExpanded ? 'hidden' : 'flex'}`}>
+                {/* Filter Dropdowns */}
+                <div className="flex gap-3">
                     {['Department', 'Designation', 'Status'].map((filter) => (
                         <button
                             key={filter}
-                            className="flex items-center gap-2 px-4 py-3 text-sm font-normal text-purple-600 rounded-lg hover:bg-purple-100 transition-colors whitespace-nowrap"
+                            className="flex items-center gap-2 px-4 py-3 text-sm font-normal text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                             style={{ backgroundColor: '#EEECFF' }}
                         >
                             {filter}
@@ -227,8 +217,8 @@ const EmployeeList = () => {
             </div>
 
             {/* Pagination Footer */}
-            <div className="relative flex flex-col md:flex-row items-center justify-center mt-6 pt-4 border-t border-gray-100 text-sm text-gray-500 gap-4 md:gap-0">
-                <div className="md:absolute md:left-0 mb-2 md:mb-0">Showing 1-10 Of 100</div>
+            <div className="relative flex items-center justify-center mt-6 pt-4 border-t border-gray-100 text-sm text-gray-500">
+                <div className="absolute left-0">Showing 1-10 Of 100</div>
                 <div className="flex items-center gap-2">
                     <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
                         <ChevronLeft size={16} /> Previous
