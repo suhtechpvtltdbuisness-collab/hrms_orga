@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Calendar } from "lucide-react";
 
 const InputField = ({ label, placeholder, defaultValue, readOnly = false, type = "text" }) => (
@@ -77,9 +77,12 @@ const CheckboxField = ({ label, description }) => (
     </div>
 );
 
+import DeleteEmployee from '../DeleteEmployee/DeleteEmployee';
+
 const OffBoarding = () => {
+
     return (
-        <div className="h-full font-sans flex flex-col p-2 bg-white rounded-xl">
+        <div className="h-full font-sans flex flex-col p-2 bg-white rounded-xl relative">
 
             {/* Personal & Employment Details */}
             <h2 className="text-[16px] font-semibold text-[#1E1E1E] mb-3 leading-none" style={{ fontFamily: '"Inter", sans-serif' }}>
@@ -130,12 +133,7 @@ const OffBoarding = () => {
 
             {/* Buttons */}
             <div>
-                <button
-                    className="bg-[#E90606] text-white px-6 py-3 rounded-full font-medium hover:bg-red-700 transition-colors shadow-sm"
-                    style={{ fontFamily: '"Inter", sans-serif' }}
-                >
-                    Deactivate Profile
-                </button>
+                <DeleteEmployee />
             </div>
 
         </div>
