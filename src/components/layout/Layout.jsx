@@ -16,27 +16,26 @@ const Layout = ({ children }) => {
 
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${
-          isSidebarOpen ? 'ml-70' : 'ml-16'
-        }`}
+        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-70' : 'ml-16'
+          }`}
       >
-        <div className="px-4 py-4">
+        <div className="px-4 pt-4 pb-0">
           {/* Topbar */}
           <div className="sticky top-0 z-30">
             <Topbar />
           </div>
 
-                {/* Page Content Container */}
-                <main className="flex-1 overflow-x-hidden">
-                    {/* Inner content container - align with Topbar's margin */}
-                    <div className="w-full mx-auto">
-                        {children || <Outlet />}
-                    </div>
-                </main>
+          {/* Page Content Container */}
+          <main className="flex-1 overflow-x-hidden">
+            {/* Inner content container - align with Topbar's margin */}
+            <div className="w-full mx-auto">
+              {children || <Outlet />}
             </div>
+          </main>
         </div>
       </div>
-    );
+    </div>
+  );
 };
 
 export default Layout;
