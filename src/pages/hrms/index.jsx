@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
- 
+
 
 const HRMS = () => {
     const navigate = useNavigate();
@@ -17,19 +17,19 @@ const HRMS = () => {
         { name: 'Employee List', badge: true },
         { name: 'Schedule Interview' },
         { name: 'Attendance' },
-        {name:  'Setting' , badge:true},
+        { name: 'Setting', badge: true },
     ];
     const handleShortcut = (name) => {
         if (name === 'Employee List') {
-        navigate('/hrms/employees');
-      } 
+            navigate('/hrms/employees');
+        }
         else if (name === 'Department') {
-        navigate('/hrms/departments');  // Navigate to Department List
-      }
+            navigate('/hrms/departments');  // Navigate to Department List
+        }
     };
 
     return (
-        <div className="bg-white px-8 py-6 mx-4 mt-4 rounded-xl min-h-screen border border-[#D9D9D9]">
+        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]">
             {/* Header */}
             <div className="mb-4">
                 <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>HRMS Dashboard</h1>
@@ -42,7 +42,7 @@ const HRMS = () => {
             <div>
                 <h2 className="text-xl font-medium text-gray-900 mb-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Your Shortcuts</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-8 ml-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-8 gap-x-6 ml-2">
                     {shortcuts.map((shortcut) => (
                         <div
                             key={shortcut.name}
