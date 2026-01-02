@@ -3,10 +3,9 @@ import { Bell } from 'lucide-react';
 
 const Topbar = () => {
     return (
-        <div className="bg-white px-8 py-6 mx-4 mt-4 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
+        <div className="bg-white px-4 py-6 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
             {/* Search Bar */}
-            {/* Search Bar */}
-            {/* Rounded container with light grey bg */}
+            
             <div className="relative w-96 flex items-center bg-[#F9FAFB] rounded-full px-4 py-4 border border-[#F2F2F2] focus-within:ring-2 focus-within:ring-purple-100 focus-within:border-purple-200 transition-all">
 
                 {/* Search Icon */}
@@ -14,8 +13,8 @@ const Topbar = () => {
                     src="/images/search-circle.svg"
                     alt="Search Icon"
                     className="w-5 h-5 mr-3 opacity-70"
-                />
-
+                />                                                                      
+                
                 {/* Input */}
                 <input
                     type="text"

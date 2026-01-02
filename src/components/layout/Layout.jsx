@@ -7,7 +7,7 @@ const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="bg-[#eeeff1] min-h-screen font-sans">
+    <div className="bg-[#eeeff1] font-sans">
       {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -17,7 +17,7 @@ const Layout = ({ children }) => {
       {/* Main Content */}
       <div
         className={`transition-all duration-300 ${
-          isSidebarOpen ? 'ml-70' : 'ml-16'
+          isSidebarOpen ? 'ml-67' : 'ml-13'
         }`}
       >
         <div className="px-4 py-4">
@@ -27,7 +27,7 @@ const Layout = ({ children }) => {
           </div>
 
                 {/* Page Content Container */}
-                <main className="flex-1 overflow-x-hidden">
+                <main className="flex-1 overflow-x-hidden mr-[-15px]">
                     {/* Inner content container - align with Topbar's margin */}
                     <div className="w-full mx-auto">
                         {children || <Outlet />}
