@@ -20,7 +20,7 @@ function App() {
           <Route path="/hrms/employees" element={<EmployeeList />} />
           <Route path="/hrms/employees/add" element={<AddEmployee />} />
           <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} />
-          <Route path="/hrms/employee-details-update" element={<EmpUpdatePersonalInfo />} />
+          <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
           {/* Add other routes here */}
           <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
         </Routes>

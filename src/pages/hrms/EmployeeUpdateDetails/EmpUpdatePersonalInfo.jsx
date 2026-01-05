@@ -50,7 +50,7 @@ const EmpUpdatePersonalInfo = () => {
 
 
             {/* Main Content Container with Border */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden min-h-[calc(100vh-200px)]">
+            <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-4 sm:mx-6 md:mx-0 mt-4 mb-4 rounded-xl h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]">
 
                 {/* Breadcrumb */}
                 <div className="flex items-center text-sm text-gray-500 my-3 mx-3">

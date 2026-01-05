@@ -5,6 +5,13 @@ import { useNavigate } from "react-router-dom";
 import PersonalInfo from "../EmployeeTabs/PersonalInfo";
 import EmpEmployment from "./EmpEmployment";
 import EmpAttendance from "./EmpAttendance";
+import EmpLeave from "./EmpLeave";
+import EmpPerformance from "./EmpPerformance";
+import EmpDocuments from "./EmpDocument";
+import EmpPayroll from "./EmpPayroll";
+import EmpTrainingDevelopment from "./EmpTrainingDevelopment";
+import EmpOffBoarding from "./EmpOffBoarding";
+import EmpActivityLog from "./EmpActivityLog";
 
 const EmpPersonalInfo = () => {
     const navigate = useNavigate();
@@ -31,6 +38,26 @@ const EmpPersonalInfo = () => {
                 return <EmpEmployment />;
             case "Attendance":
                 return <EmpAttendance />;
+            case "Leave":
+                return <EmpLeave />;
+
+            case "Performance":
+                return <EmpPerformance />;
+
+            case "Documents":
+                return <EmpDocuments />;
+
+            case "Payroll":
+                return <EmpPayroll />;
+
+            case "Training & Development":
+                return <EmpTrainingDevelopment />;
+
+            case "Off Boarding":
+                return <EmpOffBoarding />;
+
+            case "Activity Log":
+                return <EmpActivityLog />;
             default:
                 return (
                     <div className="p-10 text-center text-gray-500 bg-white rounded-b-xl min-h-[400px]">
@@ -42,7 +69,7 @@ const EmpPersonalInfo = () => {
 
     return (
         <div className="mx-5 mt-5 font-sans">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden min-h-[calc(100vh-160px)] p-4">
+            <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-4 sm:mx-6 md:mx-0 mt-4 mb-4 rounded-xl h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]">
 
                 {/* Breadcrumb */}
                 <div className="flex items-center text-sm text-gray-500 mb-4">
@@ -60,14 +87,14 @@ const EmpPersonalInfo = () => {
                 <div className="flex justify-between items-center mb-2">
                     <h1 className="text-xl font-bold text-gray-900 mb-4">Employee Information</h1>
                     <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors cursor-pointer"
-                         onClick={() => navigate("/hrms/employees-details-update")}>
+                        onClick={() => navigate("/hrms/employees-details-update")}>
                         <span>Edit</span>
                         <img
                             src="/pencil.svg"
                             alt="Edit"
                             className="w-4 h-4"
                         />
-                       
+
 
                     </button>
                 </div>
@@ -82,7 +109,7 @@ const EmpPersonalInfo = () => {
 
                                 <div className="flex flex-col items-center">
                                     <div className="relative">
-                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                        <div className="w-24 h-24 rounded-full flex items-center justify-center">
                                             <img
                                                 src="/EMP_IMG.svg"
                                                 alt="Employee"
@@ -91,7 +118,7 @@ const EmpPersonalInfo = () => {
                                         </div>
 
                                         <button className="absolute bottom-0 right-0 text-white p-1 rounded-full cursor-pointer">
-                                            <img src="/EMP_IMG_EDIT.svg" alt="edit icon" className="w-8 h-8" />
+                                            <img src="/EMP_IMG_EDIT.svg" alt="" className="w-8 h-8" />
                                         </button>
                                     </div>
 
@@ -124,29 +151,30 @@ const EmpPersonalInfo = () => {
                     )}
 
                     {/* RIGHT SIDE */}
-                    <div className={`bg-white rounded-xl border border-gray-200 p-4 flex flex-col ${activeTab === "Personal Information" ? "lg:col-span-3" : "lg:col-span-4"}`}>
-                        {/* Tabs */}
-                        <div className="bg-[#EFEEE7] h-12 rounded-lg overflow-x-auto no-scrollbar flex">
+                    <div className={`bg-white rounded-xl border border-gray-200 flex flex-col ${activeTab === "Personal Information" ? "lg:col-span-3" : "lg:col-span-4"}`}
+                        style={{ height: 'calc(100vh - 200px)' }}> {/* Adjust 200px according to your layout */}
+
+                        {/* Tabs - Fixed at top */}
+                        <div className="bg-[#EFEEE7] h-12 shrink-0 rounded-lg overflow-x-auto no-scrollbar flex">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-6 h-full flex items-center justify-center text-sm font-medium whitespace-nowrap transition-all
-                                        ${activeTab === tab
+                    ${activeTab === tab
                                             ? "bg-[#7D1EDB] text-white rounded-lg"
                                             : "text-gray-600 hover:text-black hover:bg-gray-200"
                                         }`}
-                                    >
+                                >
                                     {tab}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Dynamic Tab Content */}
-                        <div className="mt-4 flex-1 overflow-y-auto custom-scrollbar p-2">
+                        {/* Scrollable Content Area */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-4">
                             {renderContent()}
                         </div>
-
                     </div>
 
                 </div>

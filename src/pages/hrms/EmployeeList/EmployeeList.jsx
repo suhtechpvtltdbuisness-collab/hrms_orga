@@ -175,11 +175,13 @@ const EmployeeList = () => {
                                     </td>
                                     <td className="py-4 px-4">
                                         <div className="flex items-center gap-3">
-                                            <button className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer ">
-                                                <Eye size={18} />
+                                            <button 
+                                                onClick={() => navigate('/hrms/employees-details')}
+                                                className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer">
+                                                    <Eye size={18} />
                                             </button>
                                             <button
-                                                onClick={() => navigate('/hrms/employees-details')}
+                                                onClick={() => navigate("/hrms/employees-details-update")}
                                                 className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
                                             >
                                                 <Pencil size={18} />
