@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { Outlet } from 'react-router-dom';
@@ -20,23 +20,23 @@ const Layout = ({ children }) => {
           isSidebarOpen ? 'ml-67' : 'ml-13'
         }`}
       >
-        <div className="px-4 py-4">
+        <div className="px-4 pt-4 pb-0">
           {/* Topbar */}
           <div className="sticky top-0 z-30">
             <Topbar />
           </div>
-
-                {/* Page Content Container */}
-                <main className="flex-1 overflow-x-hidden mr-[-15px]">
-                    {/* Inner content container - align with Topbar's margin */}
-                    <div className="w-full mx-auto">
-                        {children || <Outlet />}
-                    </div>
-                </main>
+          
+          {/* Page Content Container */}
+          <main className="flex-1 overflow-x-hidden -mr-3.75">
+            {/* Inner content container - align with Topbar's margin */}
+            <div className="w-full mx-auto">
+              {children || <Outlet />}
             </div>
+          </main>
         </div>
       </div>
-    );
+    </div>
+  );
 };
 
 export default Layout;

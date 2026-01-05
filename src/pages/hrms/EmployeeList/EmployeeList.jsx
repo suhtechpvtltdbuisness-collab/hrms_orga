@@ -28,7 +28,7 @@ const EmployeeList = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-white p-6 mx-4 mt-4 rounded-xl h-[calc(100vh-50px)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {/* Header Section */}
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
@@ -104,60 +104,60 @@ const EmployeeList = () => {
             </div>
 
             {/* Table Section */}
-            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto">
                 <table className="w-full">
-                    <thead>
+                    <thead className="sticky top-0 bg-white z-10">
                         <tr className="text-left border-b border-gray-100">
-                            <th className="py-4 px-4 w-10">
+                            <th className="py-4 px-4 w-10 bg-white">
                                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     SR NO <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     EMP NAME <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     EMP ID <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     DEPARTMENT <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     DESIGNATION <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     JOINING DATE <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     CONTACT <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
                                     STATUS <ChevronDown className="ml-1 w-3 h-3" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider">ACTION</th>
+                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
                         </tr>
                     </thead>
-                    <tbody >
+                    <tbody>
                         {employees.length > 0 ? (
                             employees.map((employee, idx) => (
-                                <tr key={idx} className="hover:bg-gray-50 group transition-colors">
+                                <tr key={idx} className="hover:bg-gray-50 group transition-colors border-b border-gray-50">
                                     <td className="py-2 px-4">
                                         <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
                                     </td>

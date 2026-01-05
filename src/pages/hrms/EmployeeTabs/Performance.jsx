@@ -120,42 +120,38 @@ const Performance = () => {
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] leading-none tracking-normal" style={{ fontFamily: 'Poppins, sans-serif' }}>Goals & Objectives</h2>
                 </div>
 
-                <div className="overflow-x-auto flex-1">
-                    <table className="w-full border-separate border-spacing-0">
-                        <thead className='h-[48px]'>
-                            <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
-                                {['Sr no', 'Goal', 'Progress', 'Status'].map((header, index, arr) => (
-                                    <th
-                                        key={index}
-                                        className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
+                {goalsData.length > 0 ? (
+                    <div className="overflow-x-auto flex-1">
+                        <table className="w-full border-separate border-spacing-0">
+                            <thead className='h-[48px]'>
+                                <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
+                                    {['Sr no', 'Goal', 'Progress', 'Status'].map((header, index, arr) => (
+                                        <th
+                                            key={index}
+                                            className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
                                             ${index === 0 ? 'border-l rounded-l-[8px]' : ''}
                                             ${index === arr.length - 1 ? 'border-r rounded-r-[8px]' : ''}
                                         `}
-                                    >
-                                        {header}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {goalsData.length > 0 ? (
-                                goalsData.map((record, index) => (
-                                    <tr key={index}><td colSpan="4">Record</td></tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="4" className="pt-16 pb-8 text-center">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px]" />
-                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                                        </div>
-                                    </td>
+                                        >
+                                            {header}
+                                        </th>
+                                    ))}
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {goalsData.map((record, index) => (
+                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
+                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                    </div>
+                )}
             </div>
 
             {/* Competency Evaluation Section */}
@@ -164,42 +160,38 @@ const Performance = () => {
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] leading-none tracking-normal" style={{ fontFamily: 'Poppins, sans-serif' }}>Competency Evaluation</h2>
                 </div>
 
-                <div className="overflow-x-auto flex-1">
-                    <table className="w-full border-separate border-spacing-0">
-                        <thead className='h-[48px]'>
-                            <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
-                                {['Sr no', 'Competency', 'Rating', 'Comments'].map((header, index, arr) => (
-                                    <th
-                                        key={index}
-                                        className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
+                {competencyData.length > 0 ? (
+                    <div className="overflow-x-auto flex-1">
+                        <table className="w-full border-separate border-spacing-0">
+                            <thead className='h-[48px]'>
+                                <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
+                                    {['Sr no', 'Competency', 'Rating', 'Comments'].map((header, index, arr) => (
+                                        <th
+                                            key={index}
+                                            className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
                                             ${index === 0 ? 'border-l rounded-l-[8px]' : ''}
                                             ${index === arr.length - 1 ? 'border-r rounded-r-[8px]' : ''}
                                         `}
-                                    >
-                                        {header}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {competencyData.length > 0 ? (
-                                competencyData.map((record, index) => (
-                                    <tr key={index}><td colSpan="4">Record</td></tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="4" className="pt-16 pb-8 text-center">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px]" />
-                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                                        </div>
-                                    </td>
+                                        >
+                                            {header}
+                                        </th>
+                                    ))}
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {competencyData.map((record, index) => (
+                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
+                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
