@@ -29,7 +29,7 @@ const EmpTrainingDevelopment = () => {
 
         <div className="border border-gray-200 rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="text-gray-400">
+            <thead className="text-[#757575]">
               <tr>
                 <th className="py-4 px-6 text-left font-semibold">Sr no</th>
                 <th className="py-4 px-6 text-left font-semibold">Assigned Courses</th>
@@ -85,7 +85,6 @@ const EmpTrainingDevelopment = () => {
             <div className="relative h-[4px] bg-gray-200 rounded-full mb-6">
               <div className="absolute left-0 h-[4px] bg-green-500 rounded-full" style={{ width: '25%' }}></div>
               <span className="absolute left-[25%] -top-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-              {/* <div className="absolute left-[25%] h-[4px] bg-cyan-400 rounded-full" style={{ width: '30%' }}></div> */}
               <span className="absolute left-[55%] -top-1 w-3 h-3 bg-cyan-400 rounded-full border-2 border-white"></span>
             </div>
 
@@ -106,7 +105,7 @@ const EmpTrainingDevelopment = () => {
               { label: "Certificates Earned", value: "85" },
             ].map((item) => (
               <div key={item.label}>
-                <p className="text-xs text-gray-400">{item.label}</p>
+                <p className="text-xs text-[#757575]">{item.label}</p>
                 <p className="text-xl font-semibold text-purple-600">{item.value}</p>
               </div>
             ))}
@@ -135,8 +134,8 @@ const EmpTrainingDevelopment = () => {
                 {/* Skill Level Bar */}
                 <div>
                   <div className="relative h-2 bg-gray-200 rounded-full mb-2">
-                    <div 
-                      className="absolute h-2 bg-purple-500 rounded-full" 
+                    <div
+                      className="absolute h-2 bg-purple-500 rounded-full"
                       style={{ width: `${skill.level}%` }}
                     />
                   </div>

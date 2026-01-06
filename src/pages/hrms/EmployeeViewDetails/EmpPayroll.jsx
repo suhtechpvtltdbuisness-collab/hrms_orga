@@ -6,11 +6,10 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
   return (
     <div className="flex flex-col">
       <div
-        className={`border rounded-lg overflow-hidden ${
-          isOpen
-            ? 'bg-white border-gray-200'
-            : 'bg-[#F5F5F5] border-[#CBCBCB]'
-        }`}
+        className={`border rounded-lg overflow-hidden ${isOpen
+          ? 'bg-white border-gray-200'
+          : 'bg-[#F5F5F5] border-[#CBCBCB]'
+          }`}
       >
         <button
           onClick={onToggle}
@@ -34,22 +33,22 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 const InputField = ({ label, placeholder }) => (
   <div>
     <label
-      className="block text-[#656565] mb-1.5"
+      className="block text-[#757575] mb-1.5"
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     >
       {label}
     </label>
     <input
       defaultValue={placeholder}
+      disabled
       className="
         w-full px-4 py-3
-        bg-white
-        border border-[#E0E0E0]
+        bg-[#F5F5F5]
+        border border-[#D9D9D9]
         rounded-lg
-        text-[#1E1E1E]
+        text-[#757575]
         focus:outline-none
-        focus:ring-2
-        focus:ring-purple-100
+        transition-all cursor-not-allowed
       "
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     />
@@ -59,22 +58,22 @@ const InputField = ({ label, placeholder }) => (
 const SelectField = ({ label, placeholder }) => (
   <div>
     <label
-      className="block text-[#000000] mb-1.5"
+      className="block text-[#757575] mb-1.5"
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     >
       {label}
     </label>
     <input
       defaultValue={placeholder}
+      disabled
       className="
         w-full px-4 py-3
-        bg-white
-        border border-[#E0E0E0]
+        bg-[#F5F5F5]
+        border border-[#D9D9D9]
         rounded-lg
-        text-[#1E1E1E]
+        text-[#757575]
         focus:outline-none
-        focus:ring-2
-        focus:ring-purple-100
+        transition-all cursor-not-allowed
       "
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     />

@@ -30,7 +30,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">{label}</label>
 
             <input
                 type={type}

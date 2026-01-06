@@ -32,14 +32,14 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#000000] mb-1.5 leading-[140%]">{label}</label>
             <input
                 type={type}
                 placeholder={placeholder}
                 defaultValue={defaultValue}
                 className="
                     w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
+                    text-[#B8B8B8] text-base placeholder-gray-400
                     focus:outline-none focus:ring-2 focus:ring-purple-100
                     focus:border-purple-300 transition-all
                 "
@@ -51,7 +51,7 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
 const SelectField = ({ label, placeholder, options = [] }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#000000] mb-1.5 leading-[140%]">{label}</label>
             <div className="relative">
                 <select
                     className="

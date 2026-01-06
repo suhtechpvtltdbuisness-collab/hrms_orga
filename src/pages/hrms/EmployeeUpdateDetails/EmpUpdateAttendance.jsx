@@ -71,28 +71,23 @@ export default function EmpUpdateAttendance() {
   };
 
   return (
-    <div className=" min-h-screen p-2">
+    <div className="p-2">
       <div className="max-w-7xl mx-auto">
-
-
-
-
-        {/* <div className="bg-white rounded-xl p-6 shadow-sm"> */}
 
         {!showFullView && (
           <>
             {/* Overview Section */}
             <h2 className="text-lg font-semibold mb-4 text-gray-800">Overview</h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 pr-12">
               {overview.map((item, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-lg flex flex-col items-center"
+                  className="p-4 h-[106px] w-[145px] rounded-lg flex flex-col items-center"
                   style={{ backgroundColor: "#EFEEE7" }}
                 >
-                  <p className="text-xs text-gray-600 text-center mb-1">{item.label}</p>
-                  <p className="text-2xl text-black font-semibold">{item.value}</p>
+                  <p className="text-[12px] pt-2 text-gray-600 text-center mb-1">{item.label}</p>
+                  <p className="text-[20px] mt-2 text-black font-medium">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -138,8 +133,8 @@ export default function EmpUpdateAttendance() {
                   <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-md text-xs font-medium inline-block ${row.status === "Present"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
                         }`}
                     >
                       {row.status}
@@ -193,8 +188,8 @@ export default function EmpUpdateAttendance() {
                       key={index}
                       onClick={() => handlePageChange(page)}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                          ? "bg-purple-600 text-white"
-                          : "text-gray-600 hover:bg-gray-100"
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
                         }`}
                     >
                       {page}
