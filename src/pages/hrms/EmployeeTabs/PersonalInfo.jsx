@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -27,7 +27,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     );
 };
 
-const PersonalInfo = () => {
+const PersonalInfo = ({ formData = {}, onChange }) => {
     const [sections, setSections] = useState({
         basicDetails: true,
         emergencyContact: false,
@@ -41,7 +41,7 @@ const PersonalInfo = () => {
         }));
     };
 
-    const inputClasses = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all placeholder-gray-400";
+    const inputClasses = "w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all placeholder-gray-400";
     const labelClasses = "block text-base font-normal text-[#1E1E1E] mb-1.5 leading-[140%]";
 
     return (
@@ -54,11 +54,17 @@ const PersonalInfo = () => {
                 className="bg-[#F5F5F5]"
             >
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6 ">
+
                     {/* Gender */}
                     <div>
                         <label className={labelClasses}>Gender</label>
                         <div className="relative">
-                            <select className={`${inputClasses} appearance-none cursor-pointer`}>
+                            <select
+                                name="gender"
+                                value={formData.gender || ''}
+                                onChange={onChange}
+                                className={`${inputClasses} appearance-none cursor-pointer`}
+                            >
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -71,17 +77,25 @@ const PersonalInfo = () => {
                     {/* Date of Birth */}
                     <div>
                         <label className={labelClasses}>Date of Birth</label>
-                        <div className="relative">
-                            <input type="text" placeholder="Select Date" className={inputClasses} onFocus={(e) => e.target.type = 'date'} onBlur={(e) => e.target.type = 'text'} />
-                            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                        <input
+                            type="date"
+                            name="dob"
+                            value={formData.dob || ''}
+                            onChange={onChange}
+                            className={inputClasses}
+                        />
                     </div>
 
                     {/* Blood Group */}
                     <div>
                         <label className={labelClasses}>Blood Group</label>
                         <div className="relative">
-                            <select className={`${inputClasses} appearance-none cursor-pointer`}>
+                            <select
+                                name="bloodGroup"
+                                value={formData.bloodGroup || ''}
+                                onChange={onChange}
+                                className={`${inputClasses} appearance-none cursor-pointer`}
+                            >
                                 <option value="">Select Blood group</option>
                                 <option value="a+">A+</option>
                                 <option value="b+">B+</option>
@@ -95,13 +109,28 @@ const PersonalInfo = () => {
                     {/* Marital Status */}
                     <div>
                         <label className={labelClasses}>Marital Status</label>
-                        <input type="text" placeholder="Select marital status" className={inputClasses} />
+                        <div className="relative">
+                            <select
+                                name="maritalStatus"
+                                value={formData.maritalStatus || ''}
+                                onChange={onChange}
+                                className={`${inputClasses} appearance-none cursor-pointer p-3`}
+                            >
+                                <option value="">Select Marital Status</option>
+                                <option value="single">Single</option>
+                                <option value="married">Married</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                        </div>
                     </div>
 
                     {/* Address - Full Width */}
                     <div className="col-span-2 md:col-span-2">
                         <label className={labelClasses}>Address</label>
                         <textarea
+                            name="address"
+                            value={formData.address || ''}
+                            onChange={onChange}
                             placeholder="Enter your Address"
                             rows="1"
                             className={`${inputClasses} resize-none`}
@@ -120,15 +149,36 @@ const PersonalInfo = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label className={labelClasses}>Contact Name</label>
-                            <input type="text" placeholder="Enter contact name" className={inputClasses} />
+                            <input
+                                type="text"
+                                name="contactName"
+                                value={formData.contactName || ''}
+                                onChange={onChange}
+                                placeholder="Enter contact name"
+                                className={inputClasses}
+                            />
                         </div>
                         <div>
                             <label className={labelClasses}>Relation</label>
-                            <input type="text" placeholder="Enter relation" className={inputClasses} />
+                            <input
+                                type="text"
+                                name="relation"
+                                value={formData.relation || ''}
+                                onChange={onChange}
+                                placeholder="Enter relation"
+                                className={inputClasses}
+                            />
                         </div>
                         <div>
                             <label className={labelClasses}>Contact Number</label>
-                            <input type="text" placeholder="Enter contact number" className={inputClasses} />
+                            <input
+                                type="text"
+                                name="contactNumber"
+                                value={formData.contactNumber || ''}
+                                onChange={onChange}
+                                placeholder="Enter contact number"
+                                className={inputClasses}
+                            />
                         </div>
                     </div>
                 </div>
@@ -143,11 +193,25 @@ const PersonalInfo = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
                         <label className={labelClasses}>Aadhar Number</label>
-                        <input type="text" placeholder="Enter aadhar number" className={inputClasses} />
+                        <input
+                            type="text"
+                            name="aadharNumber"
+                            value={formData.aadharNumber || ''}
+                            onChange={onChange}
+                            placeholder="Enter aadhar number"
+                            className={inputClasses}
+                        />
                     </div>
                     <div>
                         <label className={labelClasses}>PAN Number</label>
-                        <input type="text" placeholder="Enter PAN number" className={inputClasses} />
+                        <input
+                            type="text"
+                            name="panNumber"
+                            value={formData.panNumber || ''}
+                            onChange={onChange}
+                            placeholder="Enter PAN number"
+                            className={inputClasses}
+                        />
                     </div>
                 </div>
             </AccordionItem>

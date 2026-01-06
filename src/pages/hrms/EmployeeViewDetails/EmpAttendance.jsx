@@ -71,13 +71,8 @@ export default function EmpAttendance() {
   };
 
   return (
-    <div className=" min-h-screen p-2">
+    <div className="p-2">
       <div className="max-w-7xl mx-auto">
-
-
-
-
-        {/* <div className="bg-white rounded-xl p-6 shadow-sm"> */}
 
         {!showFullView && (
           <>
@@ -91,7 +86,7 @@ export default function EmpAttendance() {
                   className="p-4 rounded-lg flex flex-col items-center"
                   style={{ backgroundColor: "#EFEEE7" }}
                 >
-                  <p className="text-xs text-gray-600 text-center mb-1">{item.label}</p>
+                  <p className="text-xs text-[#757575] text-center mb-1">{item.label}</p>
                   <p className="text-2xl text-black font-semibold">{item.value}</p>
                 </div>
               ))}
@@ -118,13 +113,13 @@ export default function EmpAttendance() {
           <table className="w-full text-sm">
             <thead className="bg-white">
               <tr className="border-b border-gray-200">
-                <th className="p-3 text-left text-gray-400 font-semibold">Sr no</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">Date</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">Status</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">In Time</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">Out Time</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">Total Hours</th>
-                <th className="p-3 text-left text-gray-400 font-semibold">Remarks</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Sr no</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Date</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Status</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">In Time</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Out Time</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Total Hours</th>
+                <th className="p-3 text-left text-[#757575] font-semibold">Remarks</th>
               </tr>
             </thead>
 
@@ -138,8 +133,8 @@ export default function EmpAttendance() {
                   <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-md text-xs font-medium inline-block ${row.status === "Present"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
                         }`}
                     >
                       {row.status}
@@ -193,8 +188,8 @@ export default function EmpAttendance() {
                       key={index}
                       onClick={() => handlePageChange(page)}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                          ? "bg-purple-600 text-white"
-                          : "text-gray-600 hover:bg-gray-100"
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
                         }`}
                     >
                       {page}

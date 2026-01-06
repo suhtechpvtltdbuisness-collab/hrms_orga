@@ -6,11 +6,10 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
   return (
     <div>
       <div
-        className={`border rounded-lg ${
-          isOpen
-            ? "bg-white border-[#E0E0E0]"
-            : "bg-[#F5F5F5] border-[#CBCBCB]"
-        }`}
+        className={`border rounded-lg ${isOpen
+          ? "bg-white border-[#E0E0E0]"
+          : "bg-[#F5F5F5] border-[#CBCBCB]"
+          }`}
       >
         <button
           onClick={onToggle}
@@ -31,34 +30,34 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 /* Inputs */
 const InputField = ({ label, value }) => (
   <div>
-    <label className="block text-[#B3B3B3] mb-1.5 font-nunito-semibold">
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       {label}
     </label>
     <input
       value={value}
       disabled
-      className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg bg-[#FAFAFA] text-[#B3B3B3] font-nunito-semibold"
+      className="w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed"
     />
   </div>
 );
 
 const SelectField = ({ label, value }) => (
   <div>
-    <label className="block text-[#B3B3B3] mb-1.5 font-nunito-semibold">
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       {label}
     </label>
     <input
       value={value}
       disabled
-      className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg bg-[#FAFAFA] text-[#B3B3B3] font-nunito-semibold"
+      className="w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed"
     />
   </div>
 );
 
-/* Stars (outline only) */
+/* Stars */
 const StarRating = ({ rating }) => (
   <div>
-    <label className="block text-[#B3B3B3] mb-1.5 font-nunito-semibold">
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       Overall Rating
     </label>
     <div className="flex gap-2 py-3">

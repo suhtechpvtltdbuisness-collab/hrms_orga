@@ -125,38 +125,42 @@ const Payroll = () => {
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] leading-[100%] tracking-[0%] text-center" style={{ fontFamily: '"Inter", sans-serif' }}>Payroll History</h2>
                 </div>
 
-                {payrollHistory.length > 0 ? (
-                    <div className="overflow-x-auto flex-1">
-                        <table className="w-full border-separate border-spacing-0">
-                            <thead className='h-[48px]'>
-                                <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
-                                    {['Sr no', 'Month', 'Gross Salary', 'Net Salary', 'Deduction', 'Status', 'Payslip'].map((header, index, arr) => (
-                                        <th
-                                            key={index}
-                                            className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
+                <div className="overflow-x-auto flex-1">
+                    <table className="w-full border-separate border-spacing-0">
+                        <thead className='h-[48px]'>
+                            <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
+                                {['Sr no', 'Month', 'Gross Salary', 'Net Salary', 'Deduction', 'Status', 'Payslip'].map((header, index, arr) => (
+                                    <th
+                                        key={index}
+                                        className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
                                             ${index === 0 ? 'border-l rounded-l-[8px]' : ''}
                                             ${index === arr.length - 1 ? 'border-r rounded-r-[8px]' : ''}
                                         `}
-                                        >
-                                            {header}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {payrollHistory.map((record, index) => (
-                                    <tr key={index}><td colSpan="7">Record</td></tr>
+                                    >
+                                        {header}
+                                    </th>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[501px] w-full" />
-                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                    </div>
-                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {payrollHistory.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="py-16 text-center text-[#B0B0B0]">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[501px] w-full" />
+                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                payrollHistory.map((record, index) => (
+                                    <tr key={index}><td colSpan="7">Record</td></tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

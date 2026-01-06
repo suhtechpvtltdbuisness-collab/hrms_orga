@@ -1,22 +1,21 @@
 import React from 'react';
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import EmpDeleteEmployee from './EmpDeleteEmployee';
 
-const InputField = ({ label, placeholder, defaultValue, readOnly = false, type = "text" }) => (
+const InputField = ({ label, placeholder, defaultValue, type = "text" }) => (
     <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-base font-normal text-[#1E1E1E] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
+        <label className="text-base font-normal text-[#757575] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
             {label}
         </label>
         <input
             type={type}
             placeholder={placeholder}
             defaultValue={defaultValue}
-            readOnly={readOnly}
-            className={`
-                w-full px-4 py-3 border rounded-lg text-base text-gray-700
-                focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all
-                ${readOnly ? 'bg-white text-[#949494] border-[#E0E0E0]' : 'bg-white border-gray-200'}
-            `}
+            disabled
+            className="
+                w-full px-4 py-3 border border-[#D9D9D9] rounded-lg text-[#757575] bg-[#F5F5F5]
+                focus:outline-none transition-all cursor-not-allowed
+            "
             style={{ fontFamily: '"Inter", sans-serif' }}
         />
     </div>
@@ -25,19 +24,17 @@ const InputField = ({ label, placeholder, defaultValue, readOnly = false, type =
 
 const DatePicker = ({ label, placeholder }) => (
     <div className="flex flex-col gap-1.5 w-full relative">
-        <label className="text-base font-normal text-[#656565] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
+        <label className="text-base font-normal text-[#757575] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
             {label}
         </label>
         <div className="relative">
             <input
-                type="text"
+                type="date"
                 placeholder={placeholder}
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => (e.target.type = "text")}
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer"
+                disabled
+                className="w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base focus:outline-none transition-all cursor-not-allowed"
                 style={{ fontFamily: '"Inter", sans-serif' }}
             />
-            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
         </div>
     </div>
 );
@@ -49,7 +46,8 @@ const SelectField = ({ label, placeholder, options = [] }) => (
         </label>
         <div className="relative">
             <select
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all"
+                disabled
+                className="w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base appearance-none focus:outline-none transition-all cursor-not-allowed"
                 style={{ fontFamily: '"Inter", sans-serif' }}
             >
                 <option value="">{placeholder}</option>
@@ -58,7 +56,7 @@ const SelectField = ({ label, placeholder, options = [] }) => (
                 ))}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6" /></svg>
+                <ChevronDown className="text-gray-400" size={20} />
             </div>
         </div>
     </div>
@@ -72,7 +70,7 @@ const CheckboxField = ({ label, description }) => (
             className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 mt-1"
         />
         <div className="flex flex-col">
-            <span className="text-base font-normal text-[#1E1E1E]" style={{ fontFamily: '"Inter", sans-serif' }}>{label}</span>
+            <span className="text-base font-normal text-[#757575]" style={{ fontFamily: '"Inter", sans-serif' }}>{label}</span>
             <span className="text-xs text-[#959595]" style={{ fontFamily: '"Inter", sans-serif' }}>{description}</span>
         </div>
     </div>
@@ -117,7 +115,8 @@ const EmpOffBoarding = () => {
             <div className="mb-2 w-full md:w-1/2">
                 <textarea
                     placeholder="Enter detailed reason..."
-                    className="w-full h-22 px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all resize-none placeholder-gray-400"
+                    disabled
+                    className="w-full h-22 px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base focus:outline-none transition-all resize-none placeholder-gray-400 cursor-not-allowed"
                     style={{ fontFamily: '"Inter", sans-serif' }}
                 />
             </div>

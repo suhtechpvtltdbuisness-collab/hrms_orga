@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Pencil,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Search,
   ChevronDown,
-  X
+  X,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
@@ -36,6 +34,8 @@ const DepartmentList = () => {
     status: '',
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const departments = [
     { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
     { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active' },
@@ -47,6 +47,10 @@ const DepartmentList = () => {
     { name: 'Finance', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active' },
     { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
   ];
+
+  const filteredDepartments = departments.filter(dept =>
+    dept.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -118,6 +122,8 @@ const DepartmentList = () => {
             <input
               type="text"
               placeholder="Search by department name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-light font-popins"
             />
           </div>
@@ -154,7 +160,14 @@ const DepartmentList = () => {
                 >
                   <div className="flex items-center cursor-pointer hover:text-gray-700">
                     {head}
-                    {head !== 'ACTION' && head !== 'STATUS' && <ChevronDown className="ml-1 w-3 h-3" />}
+                    {head !== 'ACTION' && (
+                      <img
+                        src="/images/sort_arrow.svg"
+                        alt="sort"
+                        className="ml-1"
+                        style={{ width: '10px', height: '16px' }}
+                      />
+                    )}
                   </div>
                 </th>
               ))}
@@ -162,7 +175,7 @@ const DepartmentList = () => {
           </thead>
 
           <tbody>
-            {departments.map((dept, index) => (
+            {filteredDepartments.map((dept, index) => (
               <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-base h-[54px]">
                 <td className="py-4 px-4  text-[#7268FF] cursor-pointer" onClick={() => navigate('/hrms/department-details')}>{dept.name}</td>
                 <td className="py-4 px-4  text-[#1E1E1E]">{dept.head}</td>
@@ -175,7 +188,7 @@ const DepartmentList = () => {
                 </td>
                 <td className="py-4 px-4">
                   <button onClick={() => handleEditClick(dept)} className="text-purple-600 hover:text-purple-800 transition-colors">
-                    <img src="/public/pencil.svg" alt="edit" style={{height: '20px', width: '20px'}}/>
+                    <img src="/pencil.svg" alt="edit" style={{ height: '20px', width: '20px' }} />
                   </button>
                 </td>
               </tr>
@@ -189,18 +202,18 @@ const DepartmentList = () => {
         <div className="absolute left-0">Showing 1-10 Of 100</div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-            <ChevronLeft size={16} /> Previous
+            <ArrowLeft size={14} /> Previous
           </button>
           <div className="flex gap-1 ">
             <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-600 text-white font-medium">1</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">2</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">3</button>
-            <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">6</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">7</button>
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#1E1E1E]">2</button>
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#1E1E1E]">3</button>
+            <span className="w-8 h-8 flex items-center justify-center text-[#1E1E1E]">...</span>
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#1E1E1E]">6</button>
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#1E1E1E]">7</button>
           </div>
-          <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-            Next <ChevronRight size={16} />
+          <button className="flex items-center gap-1 text-[#1E1E1E] transition-colors">
+            Next <ArrowRight size={14} />
           </button>
         </div>
       </div>
@@ -365,11 +378,11 @@ const DepartmentList = () => {
           onSave={handleEditSave}
           initialData={selectedDepartment ? {
             departmentName: selectedDepartment.name,
-            departmentCode: "DEP-00X", // Mock code since not in initial info
+            departmentCode: "DEP-00X", 
             departmentHead: selectedDepartment.head,
             location: selectedDepartment.location,
-            description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances", // Mock description
-            parentDepartment: "Finance", // Mock parent
+            description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances", 
+            parentDepartment: "Finance", 
             status: selectedDepartment.status
           } : null}
         />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { getEmployeeData } from '../../../utils/employeeData';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -34,6 +35,9 @@ const EmpPersonalInfo = () => {
         identification: false
     });
 
+    // Load data from localStorage via utils
+    const [data] = useState(getEmployeeData());
+
     const toggleSection = (section) => {
         setSections(prev => ({
             ...prev,
@@ -41,8 +45,8 @@ const EmpPersonalInfo = () => {
         }));
     };
 
-    const inputClasses = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all placeholder-gray-400";
-    const labelClasses = "block text-base font-normal text-[#1E1E1E] mb-1.5 leading-[140%]";
+    const inputClasses = "w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base focus:outline-none transition-all placeholder-gray-400 cursor-not-allowed";
+    const labelClasses = "block text-base font-normal text-[#757575] mb-1.5 leading-[140%]";
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -58,7 +62,11 @@ const EmpPersonalInfo = () => {
                     <div>
                         <label className={labelClasses}>Gender</label>
                         <div className="relative">
-                            <select className={`${inputClasses} appearance-none cursor-pointer`}>
+                            <select
+                                disabled
+                                value={data.gender || ''}
+                                className={`${inputClasses} appearance-none cursor-not-allowed`}
+                            >
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -71,17 +79,23 @@ const EmpPersonalInfo = () => {
                     {/* Date of Birth */}
                     <div>
                         <label className={labelClasses}>Date of Birth</label>
-                        <div className="relative">
-                            <input type="text" placeholder="Select Date" className={inputClasses} onFocus={(e) => e.target.type = 'date'} onBlur={(e) => e.target.type = 'text'} />
-                            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                        <input
+                            type="text"
+                            disabled
+                            value={data.dob ? data.dob.split('-').reverse().join('/') : ''}
+                            className={inputClasses}
+                        />
                     </div>
 
                     {/* Blood Group */}
                     <div>
                         <label className={labelClasses}>Blood Group</label>
                         <div className="relative">
-                            <select className={`${inputClasses} appearance-none cursor-pointer`}>
+                            <select
+                                disabled
+                                value={data.bloodGroup || ''}
+                                className={`${inputClasses} appearance-none cursor-not-allowed`}
+                            >
                                 <option value="">Select Blood group</option>
                                 <option value="a+">A+</option>
                                 <option value="b+">B+</option>
@@ -95,15 +109,21 @@ const EmpPersonalInfo = () => {
                     {/* Marital Status */}
                     <div>
                         <label className={labelClasses}>Marital Status</label>
-                        <input type="text" placeholder="Select marital status" className={inputClasses} />
+                        <input
+                            type="text"
+                            disabled
+                            value={data.maritalStatus ? (data.maritalStatus.charAt(0).toUpperCase() + data.maritalStatus.slice(1)) : ''}
+                            className={inputClasses}
+                        />
                     </div>
 
                     {/* Address - Full Width */}
                     <div className="col-span-2 md:col-span-2">
                         <label className={labelClasses}>Address</label>
                         <textarea
-                            placeholder="Enter your Address"
+                            value={data.address || ''}
                             rows="1"
+                            disabled
                             className={`${inputClasses} resize-none`}
                         ></textarea>
                     </div>
@@ -120,15 +140,30 @@ const EmpPersonalInfo = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label className={labelClasses}>Contact Name</label>
-                            <input type="text" placeholder="Enter contact name" className={inputClasses} />
+                            <input
+                                type="text"
+                                disabled
+                                value={data.contactName || ''}
+                                className={inputClasses}
+                            />
                         </div>
                         <div>
                             <label className={labelClasses}>Relation</label>
-                            <input type="text" placeholder="Enter relation" className={inputClasses} />
+                            <input
+                                type="text"
+                                disabled
+                                value={data.relation || ''}
+                                className={inputClasses}
+                            />
                         </div>
                         <div>
                             <label className={labelClasses}>Contact Number</label>
-                            <input type="text" placeholder="Enter contact number" className={inputClasses} />
+                            <input
+                                type="text"
+                                disabled
+                                value={data.contactNumber || ''}
+                                className={inputClasses}
+                            />
                         </div>
                     </div>
                 </div>
@@ -140,14 +175,24 @@ const EmpPersonalInfo = () => {
                 isOpen={sections.identification}
                 onToggle={() => toggleSection('identification')}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
                     <div>
                         <label className={labelClasses}>Aadhar Number</label>
-                        <input type="text" placeholder="Enter aadhar number" className={inputClasses} />
+                        <input
+                            type="text"
+                            disabled
+                            value={data.aadharNumber || ''}
+                            className={inputClasses}
+                        />
                     </div>
                     <div>
                         <label className={labelClasses}>PAN Number</label>
-                        <input type="text" placeholder="Enter PAN number" className={inputClasses} />
+                        <input
+                            type="text"
+                            disabled
+                            value={data.panNumber || ''}
+                            className={inputClasses}
+                        />
                     </div>
                 </div>
             </AccordionItem>

@@ -28,7 +28,7 @@ const ViewEmployee = () => {
     { name: "Attendance", path: "attendance", component: <EmpAttendance /> },
     { name: "Leave", path: "leave", component: <EmpLeave /> },
     { name: "Performance", path: "performance", component: <EmpPerformance /> },
-    { name: "Document", path: "documents", component: <EmpDocuments/> },
+    { name: "Document", path: "documents", component: <EmpDocuments /> },
     { name: "Payroll", path: "payroll", component: <EmpPayroll /> },
     { name: "Training & Development", path: "training-development", component: <EmpTrainingDevelopment /> },
     { name: "Off Boarding", path: "off-board", component: <EmpOffBoarding /> },
@@ -43,67 +43,67 @@ const ViewEmployee = () => {
   }, [tab]);
 
   return (
-    <div className="bg-white px-6 py-6 mx-4 my-4 rounded-xl border border-[#D9D9D9]">
+    <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
 
       {/* Breadcrumb */}
-      <div className="flex items-center text-sm mb-4">
-        <ArrowLeft
-          size={14}
-          className="cursor-pointer mr-2"
-          onClick={() => navigate("/hrms/employees")}
-        />
-        <span className="text-gray-500 cursor-pointer hover:text-purple-600"
+      <div className="flex items-center text-sm mb-4 shrink-0">
+        <span className="text-[#026E78] cursor-pointer hover:text-purple-600"
           onClick={() => navigate("/hrms/employees")}  >Employee List</span>
         <ChevronRight size={16} className="mx-1 hover:text-purple-600" />
-        <span className="text-gray-900 font-medium">View Employee</span>
+        <span className="text-[#667085] font-base">Employee details</span>
       </div>
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 shrink-0">
         <h1 className="text-xl font-bold">Employee Information</h1>
-        <button onClick={() => navigate("/hrms/employees-details-update")} className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors" > <span>Edit</span> <img src="/pencil.svg" alt="Edit" className="w-4 h-4" /> </button>
+        <button onClick={() => navigate("/hrms/employees-details-update", { state: { activeTab: activeTab.name } })} className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors" > <span>Edit</span> <img src="/pencil.svg" alt="Edit" className="w-4 h-4" /> </button>
       </div>
 
-      {/* MAIN CARD */}
-      <div className="border border-[#D9D9D9] rounded-3xl p-1">
+      {/* Content Area - Split Layout */}
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
 
-        {/* Tabs */}
-        <div ref={tabsRef} className="bg-[#EFEEE7] h-12 rounded-lg flex overflow-x-auto no-scrollbar px-2">
-          {tabConfig.map(t => (
-            <button
-              key={t.path}
-              data-active={activeTab.path === t.path}
-              onClick={() => navigate(`/hrms/employees-details/${t.path}`)}
-              className={`px-6 h-full text-sm font-medium whitespace-nowrap
-                ${activeTab.path === t.path
-                  ? "bg-[#7D1EDB] text-white rounded-lg"
-                  : "text-gray-600 hover:bg-gray-200"}
-              `}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
+        {/* Left Side - Profile Card */}
+        {activeTab.name === "Personal Information" && (
+          <div className="w-full lg:w-[320px] shrink-0 h-full">
+            <EmployeeProfileCard />
+          </div>
+        )}
 
-        {/* CONTENT GRID */}
-        <div className="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {activeTab.path === "personal-information" && (
-            <div className="lg:col-span-1">
-              <EmployeeProfileCard />
+        {/* Right Side - Tabs & Content */}
+        <div className="flex-1 min-w-0 h-full">
+          <div className="flex flex-col h-full bg-white border border-[#D9D9D9] rounded-[24px] overflow-hidden">
+
+            {/* Tabs Bar */}
+            <div className="sticky top-0 z-10 bg-white pt-3 pb-1 px-3 border-b border-gray-100">
+              <div ref={tabsRef} className="bg-[#EFEEE7] h-12 shrink-0 rounded-lg overflow-x-auto no-scrollbar flex">
+                {tabConfig.map((t, index) => (
+                  <button
+                    key={t.path}
+                    data-active={activeTab.path === t.path}
+                    onClick={() => navigate(`/hrms/employees-details/${t.path}`)}
+                    className={`px-4 h-full flex items-center justify-center text-sm font-medium whitespace-nowrap transition-all
+                                ${index === 0 ? 'rounded-lg' : ''} 
+                                ${index === tabConfig.length - 1 ? 'rounded-lg' : ''}
+                                ${activeTab.path === t.path
+                        ? "bg-[#7D1EDB] text-white rounded-lg"
+                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}
+                            `}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
 
-          <div
-            className={`bg-white rounded-xl border border-gray-200 p-4
-              ${activeTab.path === "personal-information"
-                ? "lg:col-span-3"
-                : "lg:col-span-4"}
-            `}
-          >
-            {activeTab.component}
+            {/* Content Area - Scrollable */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              {activeTab.component}
+            </div>
           </div>
         </div>
+
       </div>
+
     </div>
   );
 };

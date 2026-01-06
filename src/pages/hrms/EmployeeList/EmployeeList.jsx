@@ -25,6 +25,38 @@ const EmployeeList = () => {
         status: "Active"
     }).map((emp, index) => ({ ...emp, srNo: String(index + 1).padStart(2, '0') })));
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredEmployees = employees.filter(emp =>
+        emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.contact.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // State for checkbox selection
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
+
+    // Handle Select All
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            const allSrNos = employees.map(emp => emp.srNo);
+            setSelectedEmployees(allSrNos);
+        } else {
+            setSelectedEmployees([]);
+        }
+    };
+
+    // Handle Individual Selection
+    const handleSelectEmployee = (srNo) => {
+        setSelectedEmployees(prev => {
+            if (prev.includes(srNo)) {
+                return prev.filter(id => id !== srNo);
+            } else {
+                return [...prev, srNo];
+            }
+        });
+    };
+
     const navigate = useNavigate();
 
     return (
@@ -60,8 +92,8 @@ const EmployeeList = () => {
                             borderRadius: '26px'
                         }}
                     >
-                        <Plus size={18} />
                         <span>Add Employee</span>
+                        <Plus size={18} />
                     </Link>
                 </div>
             </div>
@@ -77,12 +109,14 @@ const EmployeeList = () => {
                             height: '48px',
                             padding: '2px 32px 2px 24px',
                             borderRadius: '32px',
-                            border: '1px solid transparent' // Can allow border color change on focus if needed
+                            border: '1px solid transparent' 
                         }}
                     >
                         <input
                             type="text"
                             placeholder="Search by name,id,email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-base font-normal"
                         />
                     </div>
@@ -109,65 +143,79 @@ const EmployeeList = () => {
                     <thead className="sticky top-0 bg-white z-10">
                         <tr className="text-left border-b border-gray-100">
                             <th className="py-4 px-4 w-10 bg-white">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                                <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded border border-[#7D1EDB] accent-[#7D1EDB] cursor-pointer"
+                                    style={{ borderColor: '#7D1EDB' }}
+                                    checked={employees.length > 0 && selectedEmployees.length === employees.length}
+                                    onChange={handleSelectAll}
+                                />
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    SR NO <ChevronDown className="ml-1 w-3 h-3" />
+                                    SR NO <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    EMP NAME <ChevronDown className="ml-1 w-3 h-3" />
+                                    EMP NAME <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    EMP ID <ChevronDown className="ml-1 w-3 h-3" />
+                                    EMP ID <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    DEPARTMENT <ChevronDown className="ml-1 w-3 h-3" />
+                                    DEPARTMENT <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    DESIGNATION <ChevronDown className="ml-1 w-3 h-3" />
+                                    DESIGNATION <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    JOINING DATE <ChevronDown className="ml-1 w-3 h-3" />
+                                    JOINING DATE <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    CONTACT <ChevronDown className="ml-1 w-3 h-3" />
+                                    CONTACT <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
                                 <div className="flex items-center cursor-pointer hover:text-gray-700">
-                                    STATUS <ChevronDown className="ml-1 w-3 h-3" />
+                                    STATUS <img src="/images/sort_arrow.svg" alt="sort" className="ml-1" />
                                 </div>
                             </th>
-                            <th className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
+                            <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {employees.length > 0 ? (
-                            employees.map((employee, idx) => (
-                                <tr key={idx} className="hover:bg-gray-50 group transition-colors border-b border-gray-50">
+                        {filteredEmployees.length > 0 ? (
+                            filteredEmployees.map((employee, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50 group transition-colors border-b border-gray-50 font-Poppins">
                                     <td className="py-2 px-4">
-                                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border border-[#7D1EDB] accent-[#7D1EDB] cursor-pointer"
+                                            style={{ borderColor: '#7D1EDB' }}
+                                            checked={selectedEmployees.includes(employee.srNo)}
+                                            onChange={() => handleSelectEmployee(employee.srNo)}
+                                        />
                                     </td>
-                                    <td className="py-4 px-4 text-sm font-normal text-[#1E1E1E]">{employee.srNo}</td>
-                                    <td className="py-4 px-4 text-sm font-medium text-purple-600">{employee.name}</td>
-                                    <td className="py-4 px-4 text-sm font-normal text-[#1E1E1E]">{employee.empId}</td>
-                                    <td className="py-4 px-4 text-sm font-normal text-gray-900">{employee.department}</td>
-                                    <td className="py-4 px-4 text-sm font-normal text-[#1E1E1E]">{employee.designation}</td>
-                                    <td className="py-4 px-4 text-sm font-normal text-[#1E1E1E]">{employee.joiningDate}</td>
-                                    <td className="py-4 px-4 text-sm font-normal text-[#1E1E1E]">{employee.contact}</td>
+
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#1E1E1E]">{employee.srNo}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#7268FF]">{employee.name}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#1E1E1E]">{employee.empId}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-gray-900">{employee.department}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#1E1E1E]">{employee.designation}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#1E1E1E]">{employee.joiningDate}</td>
+                                    <td className="py-4 px-4 text-[16px] font-normal text-[#1E1E1E]">{employee.contact}</td>
                                     <td className="py-4 px-4">
                                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-normal bg-[#76DB1E33] text-[#34C759]">
                                             {employee.status}
@@ -175,16 +223,16 @@ const EmployeeList = () => {
                                     </td>
                                     <td className="py-4 px-4">
                                         <div className="flex items-center gap-3">
-                                            <button 
+                                            <button
                                                 onClick={() => navigate('/hrms/employees-details')}
                                                 className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer">
-                                                    <Eye size={18} />
+                                                <Eye size={18} />
                                             </button>
                                             <button
                                                 onClick={() => navigate("/hrms/employees-details-update")}
                                                 className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
                                             >
-                                                <Pencil size={18} />
+                                                <img src="/images/pencil_Icon.svg" alt="edit" style={{ width: '15px', height: '15px' }} />
                                             </button>
                                         </div>
                                     </td>
@@ -192,7 +240,7 @@ const EmployeeList = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="10" className="py-16 text-center">
+                                <td colSpan="10" className="py-10 text-center">
                                     <div className="flex flex-col items-center justify-center">
                                         <img src="/images/emptyEmpList.png" alt="No Employees" className="mb-6 max-w-[400px]" />
                                         <h3 className="text-2xl font-medium text-black mb-2">No Employees found</h3>
@@ -227,13 +275,13 @@ const EmployeeList = () => {
                     </button>
                     <div className="flex gap-1 ">
                         <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-600 text-white font-medium">1</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">2</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">3</button>
-                        <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">6</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">7</button>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-[#1E1E1E]">2</button>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-[#1E1E1E]">3</button>
+                        <span className="w-8 h-8 flex items-center justify-center text-[#1E1E1E]">...</span>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-[#1E1E1E]">6</button>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-[#1E1E1E]">7</button>
                     </div>
-                    <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+                    <button className="flex items-center gap-1 text-[#1E1E1E] transition-colors">
                         Next <ChevronRight size={16} />
                     </button>
                 </div>
