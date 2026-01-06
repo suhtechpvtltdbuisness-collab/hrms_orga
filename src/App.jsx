@@ -6,6 +6,7 @@ import AddEmployee from './pages/hrms/EmployeeTabs/AddEmployee';
 import DepartmentList from './pages/hrms/Department/DepartmentList';
 
 import './App.css';
+import DepartmentDetails from './pages/hrms/Department/DepartmentViewDetails/DepartmentDetails';
 import EmpPersonalInfo from './pages/hrms/EmployeeViewDetails/EmpPersonalInfo';
 import EmpUpdatePersonalInfo from './pages/hrms/EmployeeUpdateDetails/EmpUpdatePersonalInfo';
 import ViewEmployee from './pages/hrms/EmployeeViewDetails/ViewEmployee';
@@ -25,6 +26,7 @@ function App() {
           <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
           {/* Add other routes here */}
           <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
+          <Route path="/hrms/department-details" element={<DepartmentDetails />} />
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
         </Routes>
       </Layout>
