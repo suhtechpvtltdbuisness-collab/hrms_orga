@@ -118,7 +118,7 @@ const DepartmentList = () => {
             <input
               type="text"
               placeholder="Search by department name..."
-              className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-base font-popins"
+              className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-light font-popins"
             />
           </div>
         </div>
@@ -127,14 +127,14 @@ const DepartmentList = () => {
         <div className="flex gap-3 font-popins">
           <button
             className="flex items-center gap-2 px-4 py-3 text-[14px] font-base text-[#7D1EDB] rounded-lg hover:bg-purple-100 transition-colors"
-            style={{ backgroundColor: '#EEECFF', minWidth: '140px', justifyContent: 'space-between' }}
+            style={{ backgroundColor: '#EEECFF', minWidth: '147px', justifyContent: 'space-between' }}
           >
             All Locations
             <ChevronDown size={16} />
           </button>
           <button
-            className="flex items-center gap-2 px-4 py-3 text-[14px] font-base text-[#7D1EDB] rounded-lg hover:bg-purple-100 transition-colors"
-            style={{ backgroundColor: '#EEECFF', minWidth: '120px', justifyContent: 'space-between' }}
+            className="flex items-center gap-2 px-6 py-3 text-[14px] font-base text-[#7D1EDB] rounded-lg hover:bg-purple-100 transition-colors"
+            style={{ backgroundColor: '#EEECFF', minWidth: '147px', justifyContent: 'space-between' }}
           >
             All Heads
             <ChevronDown size={16} />
@@ -150,7 +150,7 @@ const DepartmentList = () => {
               {['DEPARTMENT NAME', 'DEPARTMENT HEAD', 'EMPLOYEES', 'LOCATION', 'STATUS', 'ACTION'].map((head, i) => (
                 <th
                   key={i}
-                  className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white"
+                  className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white"
                 >
                   <div className="flex items-center cursor-pointer hover:text-gray-700">
                     {head}
@@ -163,7 +163,7 @@ const DepartmentList = () => {
 
           <tbody>
             {departments.map((dept, index) => (
-              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-base">
+              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-base h-[54px]">
                 <td className="py-4 px-4  text-[#7268FF] cursor-pointer" onClick={() => navigate('/hrms/department-details')}>{dept.name}</td>
                 <td className="py-4 px-4  text-[#1E1E1E]">{dept.head}</td>
                 <td className="py-4 px-4  text-[#1E1E1E]">{dept.employees}</td>
@@ -175,7 +175,7 @@ const DepartmentList = () => {
                 </td>
                 <td className="py-4 px-4">
                   <button onClick={() => handleEditClick(dept)} className="text-purple-600 hover:text-purple-800 transition-colors">
-                    <Pencil size={18} />
+                    <img src="/public/pencil.svg" alt="edit" style={{height: '20px', width: '20px'}}/>
                   </button>
                 </td>
               </tr>
