@@ -33,17 +33,27 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
             <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
-            <input
-                type={type}
-                placeholder={placeholder}
-                defaultValue={defaultValue}
-                className="
-                    w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-purple-100
-                    focus:border-purple-300 transition-all
-                "
-            />
+            <div className="relative">
+                <input
+                    type={type}
+                    placeholder={placeholder}
+                    defaultValue={defaultValue}
+                    className={`
+                        w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
+                        text-gray-700 text-base placeholder-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-purple-100
+                        focus:border-purple-300 transition-all
+                        ${type === 'date' ? 'appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer' : ''}
+                    `}
+                />
+                {type === 'date' && (
+                    <img
+                        src="/images/calender.svg"
+                        alt="calendar"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
+                )}
+            </div>
         </div>
     );
 };
@@ -103,7 +113,7 @@ const Performance = () => {
                 isOpen={isSummaryOpen}
                 onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-[#B3B3B3]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-[#B3B3B3]">
                     <InputField label="Last review Date" type="date" placeholder="Select Date" />
                     <SelectField
                         label="Performance status"

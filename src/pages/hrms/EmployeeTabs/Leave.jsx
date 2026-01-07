@@ -12,7 +12,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
             >
                 <button
                     onClick={onToggle}
-                    className="w-full px-6 h-[52px] flex justify-between items-center transition-colors text-left"
+                    className="w-full px-4 h-[52px] flex justify-between items-center transition-colors text-left"
                 >
                     <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                         {title}
@@ -84,7 +84,7 @@ const Leave = () => {
                 isOpen={isSummaryOpen}
                 onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <SelectField label="Total leaves Allocated/Year" placeholder="Select no of Leaves" options={['10', '20', '30']} />
                     <SelectField label="Sick Leaves Balance" placeholder="Select no of Leaves" options={['5', '10', '15']} />
                     <SelectField label="Casual Leaves Balance" placeholder="Select no of Leaves" options={['5', '10', '15']} />

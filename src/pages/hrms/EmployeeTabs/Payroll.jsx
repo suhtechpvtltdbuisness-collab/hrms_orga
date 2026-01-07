@@ -14,7 +14,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
                     onClick={onToggle}
                     className="w-full px-[16px] h-[52px] flex justify-between items-center transition-colors text-left"
                 >
-                    <span className="text-[#1E1E1E] font-normal text-[16px] leading-[100%] tracking-[0%] text-center" style={{ fontFamily: '"Inter", sans-serif' }}>
+                    <span className="text-[#1E1E1E] font-normal text-[16px] leading-[100%] tracking-[0%] text-center" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                         {title}
                     </span>
                     {isOpen ? <ChevronUp className="text-gray-500" size={24} /> : <ChevronDown className="text-gray-500" size={24} />}
@@ -87,7 +87,7 @@ const Payroll = () => {
                 isOpen={isPayrollOpen}
                 onToggle={() => setIsPayrollOpen(!isPayrollOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <SelectField label="Salary Structure" placeholder="Select salary structure" options={['Option 1', 'Option 2']} />
                     <SelectField label="CTC" placeholder="Select CTC" options={['Option 1', 'Option 2']} />
                     <SelectField label="Monthly Gross" placeholder="Select monthly gross" options={['Option 1', 'Option 2']} />
@@ -104,7 +104,7 @@ const Payroll = () => {
                 isOpen={isEarningsOpen}
                 onToggle={() => setIsEarningsOpen(!isEarningsOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Employee Name" placeholder="Rohan Patil" />
                     <InputField label="Employee ID" placeholder="EMP1023" />
                     <InputField label="Department" placeholder="Finance" />

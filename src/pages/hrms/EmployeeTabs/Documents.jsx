@@ -47,7 +47,7 @@ const DocumentSection = ({ title, documents }) => {
     return (
         <div className="flex flex-col gap-4 mb-2">
             <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>{title}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {documents.map((doc, index) => (
                     <DocumentCard key={index} title={doc} />
                 ))}
@@ -100,7 +100,7 @@ const Documents = () => {
                 {/* Other Documents Section - Just Upload */}
                 <div className="flex flex-col gap-4 mb-2">
                     <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <UploadCard />
                     </div>
                 </div>
