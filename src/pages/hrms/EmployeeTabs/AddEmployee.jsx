@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import PersonalInfo from './PersonalInfo';
@@ -15,6 +15,15 @@ import ActivityLog from './ActivityLog';
 const AddEmployee = () => {
     const navigate = useNavigate();
     const { tab } = useParams();
+    const [formData, setFormData] = useState({});
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     const tabConfig = [
         { name: "Personal Information", path: "personal-information", component: <PersonalInfo /> },
@@ -59,17 +68,17 @@ const AddEmployee = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0 shrink-0">
                 <h1 className="text-xl font-bold text-gray-900">Add Employee</h1>
-                <div className="flex gap-4">
+                <div className="flex gap-4 w-full sm:w-auto">
                     <button
                         onClick={() => navigate('/hrms/employees')}
-                        className="px-6 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white"
-                        style={{ width: '100px', borderRadius: '30px' }}
+                        className="px-6 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white w-full sm:w-[100px]"
+                        style={{ borderRadius: '30px' }}
                     >
                         Cancel
                     </button>
                     <button
-                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm"
-                        style={{ width: '100px', borderRadius: '30px' }}
+                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-[100px]"
+                        style={{ borderRadius: '30px' }}
                     >
                         Save
                     </button>
@@ -108,7 +117,9 @@ const AddEmployee = () => {
 
                     {/* Content Area */}
                     <div className="p-2 mx-1 flex-1">
-                        {activeTabObj.component || (
+                        {activeTabObj.component ? (
+                            React.cloneElement(activeTabObj.component, { formData, onChange: handleInputChange })
+                        ) : (
                             <div className="p-10 text-center text-gray-500 bg-white rounded-b-xl min-h-[400px]">
                                 {activeTabObj.name}
                             </div>

@@ -10,7 +10,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
             >
                 <button
                     onClick={onToggle}
-                    className="w-full px-6 h-[52px] flex justify-between items-center transition-colors text-left"
+                    className="w-full px-4 h-[52px] flex justify-between items-center transition-colors text-left"
                 >
                     <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                         {title}
@@ -53,7 +53,20 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                 onToggle={() => toggleSection('basicDetails')}
                 className="bg-[#F5F5F5]"
             >
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6 ">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 ">
+
+                    {/* Employee ID */}
+                    <div>
+                        <label className={labelClasses}>Employee ID</label>
+                        <input
+                            type="text"
+                            name="employeeId"
+                            value={formData.employeeId || ''}
+                            onChange={onChange}
+                            placeholder="EMP1023"
+                            className={inputClasses}
+                        />
+                    </div>
 
                     {/* Gender */}
                     <div>
@@ -77,13 +90,16 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                     {/* Date of Birth */}
                     <div>
                         <label className={labelClasses}>Date of Birth</label>
-                        <input
-                            type="date"
-                            name="dob"
-                            value={formData.dob || ''}
-                            onChange={onChange}
-                            className={inputClasses}
-                        />
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="dob"
+                                value={formData.dob || ''}
+                                onChange={onChange}
+                                className={`${inputClasses} appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
+                            />
+                            <img src="/images/calender.svg" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" alt="calendar" />
+                        </div>
                     </div>
 
                     {/* Blood Group */}
@@ -125,7 +141,7 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                     </div>
 
                     {/* Address - Full Width */}
-                    <div className="col-span-2 md:col-span-2">
+                    <div className="col-span-1 sm:col-span-2">
                         <label className={labelClasses}>Address</label>
                         <textarea
                             name="address"
@@ -146,7 +162,7 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                 onToggle={() => toggleSection('emergencyContact')}
             >
                 <div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
                             <label className={labelClasses}>Contact Name</label>
                             <input
@@ -190,7 +206,7 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                 isOpen={sections.identification}
                 onToggle={() => toggleSection('identification')}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                         <label className={labelClasses}>Aadhar Number</label>
                         <input

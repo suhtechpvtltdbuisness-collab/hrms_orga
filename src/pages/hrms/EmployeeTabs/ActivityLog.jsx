@@ -39,7 +39,7 @@ const ActivityLog = () => {
             {/* Main Heading outside container */}
             <h2 className="text-[16px] font-semibold text-[#1E1E1E]" style={{ fontFamily: '"Inter", sans-serif' }}>Activity Log</h2>
             <div className="flex justify-end items-center mb-4">
-                <div className="absolute">
+                <div className="relative">
                     <select
                         className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer text-sm font-normal"
                         style={{ fontFamily: '"Inter", sans-serif' }}
