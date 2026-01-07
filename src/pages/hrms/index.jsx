@@ -13,11 +13,12 @@ const HRMS = () => {
         { name: 'New Onboarding' },
         { name: 'Organization Tree' },
         { name: 'Designation' },
+        { name: 'Settings' },
         { name: 'Department', badge: true },
         { name: 'Employee List', badge: true },
         { name: 'Schedule Interview' },
         { name: 'Attendance' },
-        { name: 'Setting', badge: true },
+        { name: 'New Job Opening' },
     ];
     const handleShortcut = (name) => {
         if (name === 'Employee List') {
@@ -42,7 +43,7 @@ const HRMS = () => {
             <div>
                 <h2 className="text-xl font-medium text-gray-900 mb-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Your Shortcuts</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-8 gap-x-6 ml-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-y-8 gap-x-6 ml-2">
                     {shortcuts.map((shortcut) => (
                         <div
                             key={shortcut.name}
@@ -62,7 +63,7 @@ const HRMS = () => {
                                 </span>
                                 <ArrowUpRight
                                     strokeWidth={2.5}
-                                    className="w-3 h-3.5 ml-2 text-gray-900 group-hover:text-purple-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                    className="w-4 h-4 ml-2 text-gray-900 group-hover:text-purple-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                                 />
                             </div>
                         </div>

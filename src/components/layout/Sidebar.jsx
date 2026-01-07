@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
+  Mail,
   CalendarDays,
   CheckSquare,
   BarChart3,
@@ -14,15 +15,25 @@ import {
   LogOut,
   ChevronLeft
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    // Navigate to login page
+    navigate('/login');
+  };
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboards' },
     { name: 'HRMS', icon: Users, path: '/hrms' },
     { name: 'Project Management', icon: Briefcase, path: '/projects' },
+    { name: 'Employees', icon: Mail, path: '/employees' },
     { name: 'Attendance', icon: CalendarDays, path: '/attendance' },
     { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
     { name: 'Reports', icon: BarChart3, path: '/reports' },
@@ -106,15 +117,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </nav>
 
       {/* Logout */}
-      <div className="mt-auto pt-4 border-t border-gray-100">
+      <div className="mt-auto pt-4 border-t border-gray-200">
         <div
+          onClick={handleLogout}
           className={`
-            flex items-center rounded-2xl cursor-pointer transition
-            ${isOpen ? 'gap-3 px-4 py-2.5' : 'justify-center py-3'}
-            text-gray-600 hover:text-red-500 hover:bg-red-50
+            flex items-center rounded-2xl cursor-pointer transition-all duration-200
+            ${isOpen ? 'gap-3 px-4 py-3' : 'justify-center py-3'}
+            text-gray-700 hover:text-gray-900 hover:bg-gray-50
           `}
         >
-          <LogOut size={18} />
+          <LogOut className="w-5 h-5" strokeWidth={1.5} />
           {isOpen && <span className="text-sm font-medium">Logout</span>}
         </div>
       </div>
