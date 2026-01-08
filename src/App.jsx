@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import HRMS from './pages/hrms';
 import EmployeeList from './pages/hrms/EmployeeList/EmployeeList';
@@ -14,6 +15,7 @@ import ViewEmployee from './pages/hrms/EmployeeViewDetails/ViewEmployee';
 function App() {
   return (
     <Router>
+      <Toaster />
       <Layout>
         <Routes>
           <Route path="/" element={<Navigate to="/hrms" replace />} />

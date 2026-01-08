@@ -173,7 +173,7 @@ const EmpPerformance = () => {
                     {[...Array(row[2])].map((_, idx) => (
                       <Star
                         key={idx}
-                        size={18}
+                        size={20}
                         className="text-black"
                         fill="none"
                       />
