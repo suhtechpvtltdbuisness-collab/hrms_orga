@@ -32,7 +32,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
   );
 };
 
-const InputField = ({ label, placeholder }) => (
+const InputField = ({ label, value, onChange }) => (
   <div>
     <label
       className="block text-[#757575] mb-1.5"
@@ -41,23 +41,23 @@ const InputField = ({ label, placeholder }) => (
       {label}
     </label>
     <input
-      defaultValue={placeholder}
-      disabled
+      value={value}
+      onChange={onChange}
       className="
         w-full px-4 py-3
-        bg-[#F5F5F5]
+        bg-white
         border border-[#D9D9D9]
         rounded-lg
-        text-[#757575]
-        focus:outline-none
-        transition-all cursor-not-allowed
+        text-black
+        focus:outline-none focus:border-purple-500
+        transition-all
       "
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     />
   </div>
 );
 
-const SelectField = ({ label, placeholder }) => (
+const SelectField = ({ label, value, onChange, options }) => (
   <div>
     <label
       className="block text-[#757575] mb-1.5"
@@ -65,26 +65,50 @@ const SelectField = ({ label, placeholder }) => (
     >
       {label}
     </label>
-    <input
-      defaultValue={placeholder}
-      disabled
+    <select
+      value={value}
+      onChange={onChange}
       className="
         w-full px-4 py-3
-        bg-[#F5F5F5]
+        bg-white
         border border-[#D9D9D9]
         rounded-lg
-        text-[#757575]
-        focus:outline-none
-        transition-all cursor-not-allowed
+        text-black
+        focus:outline-none focus:border-purple-500
+        transition-all cursor-pointer
       "
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-    />
+    >
+      <option value="">Select {label.toLowerCase()}</option>
+      {options.map((opt, idx) => (
+        <option key={idx} value={opt}>{opt}</option>
+      ))}
+    </select>
   </div>
 );
 
-const EmpPayroll = () => {
+const EmpUpdatePayroll = () => {
   const [isPayrollOpen, setIsPayrollOpen] = useState(true);
   const [isEarningsOpen, setIsEarningsOpen] = useState(true);
+
+  // Payroll State
+  const [salaryStructure, setSalaryStructure] = useState("");
+  const [ctc, setCtc] = useState("");
+  const [monthlyGross, setMonthlyGross] = useState("");
+  const [payCycle, setPayCycle] = useState("");
+  const [paymentMode, setPaymentMode] = useState("");
+  const [monthlyNetPay, setMonthlyNetPay] = useState("");
+
+  // Earnings State
+  const [employeeName, setEmployeeName] = useState("Rohan Patil");
+  const [employeeId, setEmployeeId] = useState("EMP1023");
+  const [department, setDepartment] = useState("Finance");
+  const [hra, setHra] = useState("₹10,000");
+  const [conveyanceAllowance, setConveyanceAllowance] = useState("₹3,000");
+  const [overtimeEarnings, setOvertimeEarnings] = useState("₹1,000");
+  const [variablePay, setVariablePay] = useState("₹5,000");
+  const [specialAllowance, setSpecialAllowance] = useState("₹7,000");
+  const [basicSalary, setBasicSalary] = useState("₹25,000");
 
   const payrollHistory = [
     {
@@ -124,17 +148,17 @@ const EmpPayroll = () => {
     
     // Employee data
     const employeeData = {
-      name: 'Rohan Patil',
-      id: 'EMP1023',
-      department: 'Finance',
+      name: employeeName,
+      id: employeeId,
+      department: department,
       designation: 'Senior Analyst',
-      paymentMode: 'Bank Transfer',
-      basicSalary: '₹25,000',
-      hra: '₹10,000',
-      conveyanceAllowance: '₹3,000',
-      specialAllowance: '₹7,000',
-      variablePay: '₹5,000',
-      overtimeEarnings: '₹1,000',
+      paymentMode: paymentMode || 'Bank Transfer',
+      basicSalary: basicSalary,
+      hra: hra,
+      conveyanceAllowance: conveyanceAllowance,
+      specialAllowance: specialAllowance,
+      variablePay: variablePay,
+      overtimeEarnings: overtimeEarnings,
     };
     
     // Generate PDF
@@ -155,17 +179,17 @@ const EmpPayroll = () => {
     
     // Employee data
     const employeeData = {
-      name: 'Rohan Patil',
-      id: 'EMP1023',
-      department: 'Finance',
+      name: employeeName,
+      id: employeeId,
+      department: department,
       designation: 'Senior Analyst',
-      paymentMode: 'Bank Transfer',
-      basicSalary: '₹25,000',
-      hra: '₹10,000',
-      conveyanceAllowance: '₹3,000',
-      specialAllowance: '₹7,000',
-      variablePay: '₹5,000',
-      overtimeEarnings: '₹1,000',
+      paymentMode: paymentMode || 'Bank Transfer',
+      basicSalary: basicSalary,
+      hra: hra,
+      conveyanceAllowance: conveyanceAllowance,
+      specialAllowance: specialAllowance,
+      variablePay: variablePay,
+      overtimeEarnings: overtimeEarnings,
     };
     
     // Generate and download PDF
@@ -182,13 +206,43 @@ const EmpPayroll = () => {
         isOpen={isPayrollOpen}
         onToggle={() => setIsPayrollOpen(!isPayrollOpen)}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SelectField label="Salary Structure" placeholder="Select salary structure" />
-          <SelectField label="CTC" placeholder="Select CTC" />
-          <SelectField label="Monthly Gross" placeholder="Select monthly gross" />
-          <SelectField label="Pay Cycle" placeholder="Select pay cycle" />
-          <SelectField label="Payment Mode" placeholder="Select payment mode" />
-          <SelectField label="Monthly Net Pay" placeholder="Select net pay" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SelectField 
+            label="Salary Structure" 
+            value={salaryStructure}
+            onChange={(e) => setSalaryStructure(e.target.value)}
+            options={["Structure A", "Structure B", "Structure C"]}
+          />
+          <SelectField 
+            label="CTC" 
+            value={ctc}
+            onChange={(e) => setCtc(e.target.value)}
+            options={["₹6,00,000", "₹8,00,000", "₹10,00,000"]}
+          />
+          <SelectField 
+            label="Monthly Gross" 
+            value={monthlyGross}
+            onChange={(e) => setMonthlyGross(e.target.value)}
+            options={["₹50,000", "₹60,000", "₹70,000"]}
+          />
+          <SelectField 
+            label="Pay Cycle" 
+            value={payCycle}
+            onChange={(e) => setPayCycle(e.target.value)}
+            options={["Monthly", "Bi-weekly", "Weekly"]}
+          />
+          <SelectField 
+            label="Payment Mode" 
+            value={paymentMode}
+            onChange={(e) => setPaymentMode(e.target.value)}
+            options={["Bank Transfer", "Cash", "Cheque"]}
+          />
+          <SelectField 
+            label="Monthly Net Pay" 
+            value={monthlyNetPay}
+            onChange={(e) => setMonthlyNetPay(e.target.value)}
+            options={["₹45,000", "₹55,000", "₹65,000"]}
+          />
         </div>
       </AccordionItem>
 
@@ -198,24 +252,24 @@ const EmpPayroll = () => {
         isOpen={isEarningsOpen}
         onToggle={() => setIsEarningsOpen(!isEarningsOpen)}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <InputField label="Employee Name" placeholder="Rohan Patil" />
-          <InputField label="Employee ID" placeholder="EMP1023" />
-          <InputField label="Department" placeholder="Finance" />
-          <InputField label="HRA" placeholder="₹10,000" />
-          <InputField label="Conveyance allowance" placeholder="₹3,000" />
-          <InputField label="Overtime Earnings" placeholder="₹1,000" />
-          <InputField label="Variable Pay" placeholder="₹5,000" />
-          <InputField label="Special Allowance" placeholder="₹7,000" />
-          <InputField label="Basic Salary" placeholder="₹25,000" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <InputField label="Employee Name" value={employeeName} onChange={(e) => setEmployeeName(e.target.value)} />
+          <InputField label="Employee ID" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} />
+          <InputField label="Department" value={department} onChange={(e) => setDepartment(e.target.value)} />
+          <InputField label="HRA" value={hra} onChange={(e) => setHra(e.target.value)} />
+          <InputField label="Conveyance allowance" value={conveyanceAllowance} onChange={(e) => setConveyanceAllowance(e.target.value)} />
+          <InputField label="Overtime Earnings" value={overtimeEarnings} onChange={(e) => setOvertimeEarnings(e.target.value)} />
+          <InputField label="Variable Pay" value={variablePay} onChange={(e) => setVariablePay(e.target.value)} />
+          <InputField label="Special Allowance" value={specialAllowance} onChange={(e) => setSpecialAllowance(e.target.value)} />
+          <InputField label="Basic Salary" value={basicSalary} onChange={(e) => setBasicSalary(e.target.value)} />
         </div>
       </AccordionItem>
 
       {/* Payroll History */}
       <h2 className="text-[16px] text-black">Payroll History</h2>
 
-      <div className="border border-[#E0E0E0] rounded-xl bg-white overflow-hidden">
-        <table className="w-full">
+      <div className="border border-[#E0E0E0] rounded-xl bg-white overflow-x-auto">
+        <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-[#E0E0E0] text-[#757575] text-[13px]">
               <th className="px-4 py-3 text-left font-normal">Sr no</th>
@@ -266,4 +320,4 @@ const EmpPayroll = () => {
   );
 };
 
-export default EmpPayroll;
+export default EmpUpdatePayroll;

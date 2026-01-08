@@ -5,6 +5,12 @@ import EmpUpdateEmployment from './EmpUpdateEmployment';
 import EmpUpdateAttendance from './EmpUpdateAttendance';
 import PersonalInfo from '../EmployeeTabs/PersonalInfo';
 import EmpUpdateLeave from './EmpUpdateLeave';
+import EmpUpdatePerformance from './EmpUpdatePerformance';
+import EmpUpdateDocument from './EmpUpdateDocument';
+import EmpUpdatePayroll from './EmpUpdatePayroll';
+import EmpUpdateTrainingDevelopment from './EmpUpdateTrainingDevelopment';
+import EmpUpdateOffBoarding from './EmpUpdateOffBoarding';
+import EmpUpdateActivityLog from './EmpUpdateActivityLog';
 import EmployeeProfileCard from '../EmployeeViewDetails/EmployeeProfileCard';
 import { getEmployeeData, saveEmployeeData } from '../../../utils/employeeData';
 
@@ -76,6 +82,25 @@ const EmpUpdatePersonalInfo = () => {
 
             case 'Leave':
                 return <EmpUpdateLeave />;
+
+            case 'Performance':
+                return <EmpUpdatePerformance />;
+
+            case 'Documents':
+                return <EmpUpdateDocument />;
+
+            case 'Payroll':
+                return <EmpUpdatePayroll />;
+
+            case 'Training & Development':
+                return <EmpUpdateTrainingDevelopment />;
+
+            case 'Off Boarding':
+                return <EmpUpdateOffBoarding />;
+
+            case 'Activity Log':
+                return <EmpUpdateActivityLog />;
+
             default:
                 return (
                     <div className="p-10 text-center text-gray-500 bg-white min-h-[400px]">
@@ -117,7 +142,7 @@ const EmpUpdatePersonalInfo = () => {
             </div>
 
             {/* Content Area - Split Layout */}
-            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-auto">
 
                 {/* Left Side - Profile Card */}
                 {activeTab === "Personal Information" && (

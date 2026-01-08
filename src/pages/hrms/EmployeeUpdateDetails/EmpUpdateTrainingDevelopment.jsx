@@ -1,6 +1,6 @@
 import React from 'react';
 
-const EmpTrainingDevelopment = () => {
+const EmpUpdateTrainingDevelopment = () => {
   const courses = [
     { id: "01", name: "Course 1", date: "01/01/2024", by: "John Doe", required: "Mandatory", priority: "High", status: "Assigned" },
     { id: "02", name: "Course 2", date: "01/01/2024", by: "John Smith", required: "Mandatory", priority: "High", status: "Completed" },
@@ -154,4 +154,4 @@ const EmpTrainingDevelopment = () => {
   );
 };
 
-export default EmpTrainingDevelopment;
+export default EmpUpdateTrainingDevelopment;

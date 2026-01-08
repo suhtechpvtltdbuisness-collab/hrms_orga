@@ -60,7 +60,7 @@ const ViewEmployee = () => {
       </div>
 
       {/* Content Area - Split Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-auto">
 
         {/* Left Side - Profile Card */}
         {activeTab.name === "Personal Information" && (
