@@ -40,7 +40,9 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' })
                     style={{
                         width: minWidth,
                         borderRadius: '8px',
-                        overflow: 'hidden',
+                        maxHeight: '320px',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
                         boxShadow: '0px 4px 14px 0px #0000001A',
                         fontFamily: 'Montserrat, sans-serif'
                     }}
