@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
-
 import { useNavigate } from 'react-router-dom';
+import ActivityHeatmap from './ActivityHeatmap';
 
 
 const HRMS = () => {
@@ -36,8 +36,8 @@ const HRMS = () => {
                 <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>HRMS Dashboard</h1>
             </div>
 
-            {/* Banner / Map Section */}
-            <div className="w-full h-96 bg-[#D9D9D9] rounded-xl relative flex items-center justify-center shadow-inner overflow-hidden mb-6"></div>
+            {/* Activity Heatmap Section */}
+            <ActivityHeatmap />
 
             {/* Shortcuts */}
             <div>
