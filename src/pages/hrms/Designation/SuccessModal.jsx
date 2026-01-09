@@ -1,19 +1,17 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 
-const ErrorModal = ({
+const SuccessModal = ({
   isOpen,
   onClose,
-  message = "Department could not be saved",
-  subMessage = "Changes were not saved.",
+  message = "Designation Saved Successfully",
+  subMessage = "Designation is now saved",
 }) => {
-  // Optional: Auto close for error modal too? usually errors stay until dismissed.
-  // Allowing 3 seconds for now or manual close.
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
         onClose();
-      }, 3000);
+      }, 3000); // Auto close after 3 seconds
       return () => clearTimeout(timer);
     }
   }, [isOpen, onClose]);
@@ -36,8 +34,8 @@ const ErrorModal = ({
         <div className="flex items-center gap-5">
           <div className="shrink-0">
             <img
-              src="/images/Failed_error.svg"
-              alt="Error"
+              src="/images/sucess_check.svg"
+              alt="Success"
               className="w-[60px] h-[60px]"
             />
           </div>
@@ -55,4 +53,4 @@ const ErrorModal = ({
   );
 };
 
-export default ErrorModal;
+export default SuccessModal;
