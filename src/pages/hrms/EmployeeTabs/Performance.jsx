@@ -50,7 +50,7 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
                     <img
                         src="/images/calender.svg"
                         alt="calendar"
-                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5"
                     />
                 )}
             </div>

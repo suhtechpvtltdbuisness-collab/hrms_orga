@@ -98,7 +98,7 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                                 onChange={onChange}
                                 className={`${inputClasses} appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
                             />
-                            <img src="/images/calender.svg" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" alt="calendar" />
+                            <img src="/images/calender.svg" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" alt="calendar" />
                         </div>
                     </div>
 

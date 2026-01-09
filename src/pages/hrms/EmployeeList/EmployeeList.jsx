@@ -8,6 +8,8 @@ import {
     ArrowLeft,
     ArrowRight,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -36,11 +38,13 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' })
 
             {isOpen && (
                 <div
-                    className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light"
+                    className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light space-y-1"
                     style={{
                         width: minWidth,
                         borderRadius: '8px',
-                        overflow: 'hidden',
+                        maxHeight: '320px',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
                         boxShadow: '0px 4px 14px 0px #0000001A',
                         fontFamily: 'Montserrat, sans-serif'
                     }}
@@ -205,6 +209,33 @@ const EmployeeList = () => {
 
     const navigate = useNavigate();
 
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text('Employee List', 14, 22);
+
+        const tableColumn = ["Sr No", "Name", "Emp ID", "Department", "Designation", "Joining Date", "Contact", "Status"];
+        const tableRows = employees.map(emp => [
+            emp.srNo,
+            emp.name,
+            emp.empId,
+            emp.department,
+            emp.designation,
+            emp.joiningDate,
+            emp.contact,
+            emp.status
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 30,
+        });
+
+        doc.save('Employee_List.pdf');
+    };
+
     return (
         <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {/* Header Section */}
@@ -214,7 +245,8 @@ const EmployeeList = () => {
                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                     {/* Export Button */}
                     <button
-                        className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto min-w-[110px]"
+                        onClick={handleExportPDF}
+                        className="flex items-center cursor-pointer justify-center gap-2 text-[#7D1EDB] font-medium hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto min-w-[110px]"
                         style={{
                             height: '48px',
                             padding: '10px 16px',
@@ -403,7 +435,7 @@ const EmployeeList = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="10" className="py-16 text-center">
+                                <td colSpan="10" className="py-12 text-center">
                                     <div className="flex flex-col items-center justify-center">
                                         <img src="/images/emptyEmpList.png" alt="No Employees" className="mb-6 max-w-[400px]" />
                                         <h3 className="text-2xl font-medium text-black mb-2">No Employees found</h3>

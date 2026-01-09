@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Pencil,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Search,
   ChevronDown,
   X,
   ArrowRight,
@@ -46,7 +42,9 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' })
           style={{
             width: minWidth,
             borderRadius: '8px',
-            overflow: 'hidden',
+            maxHeight: '320px',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             boxShadow: '0px 4px 14px 0px #0000001A',
             fontFamily: 'Montserrat, sans-serif'
           }}
@@ -98,21 +96,20 @@ const DepartmentList = () => {
   });
 
   const [departments, setDepartments] = useState([
-    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
-    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active' },
-    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active' },
-    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active' },
-    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active' },
-    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active' },
-    { name: 'Legal', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active' },
-    { name: 'R&D', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active' },
-    { name: 'Logistics', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
-    { name: 'Support', head: 'Sarah Jones', employees: 10, location: 'Bangalore', status: 'Active' },
-    { name: 'Product', head: 'Mike Ross', employees: 8, location: 'Delhi', status: 'Inactive' },
-    { name: 'Design', head: 'Rachel Green', employees: 14, location: 'Pune', status: 'Active' },
+    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Financial Planning, Reporting And Analysis Department', createdOn: '15/01/2023', lastUpdated: '11/10/2024' },
+    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active', description: 'Employee Relations, Recruitment, and HR Strategy', createdOn: '20/02/2023', lastUpdated: '15/11/2024' },
+    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active', description: 'Brand Management, Digital Marketing, and Advertising', createdOn: '10/03/2023', lastUpdated: '01/12/2024' },
+    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active', description: 'Daily Business Operations and Logistics Management', createdOn: '05/04/2023', lastUpdated: '20/11/2024' },
+    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active', description: 'IT Infrastructure, Support, and Development', createdOn: '12/01/2023', lastUpdated: '10/10/2024' },
+    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active', description: 'Revenue Generation and Client Relationship Management', createdOn: '01/05/2023', lastUpdated: '05/12/2024' },
+    { name: 'Legal', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active', description: 'Legal Compliance and Corporate Affairs Management', createdOn: '18/06/2023', lastUpdated: '15/10/2024' },
+    { name: 'R&D', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active', description: 'Research and Development of New Products', createdOn: '22/07/2023', lastUpdated: '20/09/2024' },
+    { name: 'Logistics', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Supply Chain and Transportation Management', createdOn: '30/08/2023', lastUpdated: '11/09/2024' },
+    { name: 'Support', head: 'Sarah Jones', employees: 10, location: 'Bangalore', status: 'Active', description: 'Customer Service and Technical Support', createdOn: '14/09/2023', lastUpdated: '25/11/2024' },
+    { name: 'Product', head: 'Mike Ross', employees: 8, location: 'Delhi', status: 'Inactive', description: 'Product Roadmap and Lifecycle Management', createdOn: '05/10/2023', lastUpdated: '01/11/2024' },
+    { name: 'Design', head: 'Rachel Green', employees: 14, location: 'Pune', status: 'Active', description: 'Creative Design and User Experience', createdOn: '20/11/2023', lastUpdated: '10/12/2024' },
   ]);
 
-  /* Sorting & Search Logic */
   /* Sorting & Search Logic */
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [searchQuery, setSearchQuery] = useState("");
@@ -195,11 +192,10 @@ const DepartmentList = () => {
   };
 
   const handleSubmit = () => {
-    // Add new department to the list (mock functionality)
     const newDepartment = {
       name: formData.departmentName,
       head: formData.departmentHead,
-      employees: 0, // Default 0
+      employees: 0,
       location: formData.location,
       status: formData.status
     };
@@ -224,10 +220,28 @@ const DepartmentList = () => {
   };
 
   const handleEditSave = (data) => {
+    // Map form data back to department schema
+    const updatedDept = {
+      name: data.departmentName,
+      head: data.departmentHead,
+      location: data.location,
+      status: data.status,
+      description: data.description,
+    };
+
+    setDepartments(prevData => {
+      const index = prevData.findIndex(d => d === selectedDepartment);
+      if (index !== -1) {
+        const newData = [...prevData];
+        newData[index] = { ...newData[index], ...updatedDept };
+        return newData;
+      }
+      return prevData;
+    });
+
     console.log('Updated department data:', data);
     setShowEditModal(false);
     setShowSuccessModal(true);
-    // setShowErrorModal(true); // Uncomment to test error modal
   };
 
   return (
@@ -253,9 +267,9 @@ const DepartmentList = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4 shrink-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 shrink-0 transition-all">
         {/* Search Bar */}
-        <div className="relative w-full lg:w-[380px]">
+        <div className="relative w-full md:w-[280px] lg:w-[350px]">
           <div
             className="flex items-center bg-[#F9FAFB] border border-[#F9FAFB] text-[#B3B3B3]"
             style={{
@@ -276,7 +290,7 @@ const DepartmentList = () => {
         </div>
 
         {/* Filter Dropdowns */}
-        <div className="flex flex-wrap gap-3 font-popins w-full lg:w-auto">
+        <div className="flex flex-wrap gap-3 font-popins w-full md:w-auto">
           {/* Location Filter */}
           <FilterDropdown
             label="All Locations"
@@ -334,8 +348,18 @@ const DepartmentList = () => {
 
           <tbody>
             {currentItems.map((dept, index) => (
-              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-base h-[54px]">
-                <td className="py-2 px-4  text-[#7268FF] cursor-pointer" onClick={() => navigate('/hrms/department-details')}>{dept.name}</td>
+              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-[54px]">
+                <td className="px-6 py-4">
+                  <span
+                    className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/hrms/department-details/overview', { state: { department: dept } });
+                    }}
+                  >
+                    {dept.name}
+                  </span>
+                </td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{dept.head}</td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees}</td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{dept.location}</td>
@@ -558,11 +582,11 @@ const DepartmentList = () => {
             onSave={handleEditSave}
             initialData={selectedDepartment ? {
               departmentName: selectedDepartment.name,
-              departmentCode: "DEP-00X", // Mock code since not in initial info
+              departmentCode: "DEP-00X",
               departmentHead: selectedDepartment.head,
               location: selectedDepartment.location,
-              description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances", // Mock description
-              parentDepartment: "Finance", // Mock parent
+              description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances",
+              parentDepartment: "Finance",
               status: selectedDepartment.status
             } : null}
           />
