@@ -4,6 +4,7 @@ import HRMS from './pages/hrms';
 import EmployeeList from './pages/hrms/EmployeeList/EmployeeList';
 import AddEmployee from './pages/hrms/EmployeeTabs/AddEmployee';
 import DepartmentList from './pages/hrms/Department/DepartmentList';
+import Settings from './pages/hrms/Settings/Settings';
 
 import './App.css';
 import EmpPersonalInfo from './pages/hrms/EmployeeViewDetails/EmpPersonalInfo';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/hrms/employees/add" element={<AddEmployee />} />
           <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} />
           <Route path="/hrms/employee-details-update" element={<EmpUpdatePersonalInfo />} />
+          <Route path="/hrms/settings" element={<Settings />} />
           {/* Add other routes here */}
           <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
         </Routes>
