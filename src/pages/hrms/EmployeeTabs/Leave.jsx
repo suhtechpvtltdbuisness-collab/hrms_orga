@@ -12,7 +12,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
             >
                 <button
                     onClick={onToggle}
-                    className="w-full px-6 h-[52px] flex justify-between items-center transition-colors text-left"
+                    className="w-full px-4 h-[52px] flex justify-between items-center transition-colors text-left"
                 >
                     <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                         {title}
@@ -32,14 +32,14 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#000000] mb-1.5 leading-[140%]">{label}</label>
             <input
                 type={type}
                 placeholder={placeholder}
                 defaultValue={defaultValue}
                 className="
                     w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
+                    text-[#B8B8B8] text-base placeholder-gray-400
                     focus:outline-none focus:ring-2 focus:ring-purple-100
                     focus:border-purple-300 transition-all
                 "
@@ -51,7 +51,7 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
 const SelectField = ({ label, placeholder, options = [] }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#000000] mb-1.5 leading-[140%]">{label}</label>
             <div className="relative">
                 <select
                     className="
@@ -84,7 +84,7 @@ const Leave = () => {
                 isOpen={isSummaryOpen}
                 onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <SelectField label="Total leaves Allocated/Year" placeholder="Select no of Leaves" options={['10', '20', '30']} />
                     <SelectField label="Sick Leaves Balance" placeholder="Select no of Leaves" options={['5', '10', '15']} />
                     <SelectField label="Casual Leaves Balance" placeholder="Select no of Leaves" options={['5', '10', '15']} />

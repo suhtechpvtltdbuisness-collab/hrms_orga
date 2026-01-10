@@ -3,21 +3,23 @@ import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
-        <div className="border border-gray-200 rounded-lg mb-4 my-2 overflow-hidden bg-white">
-            <button
-                onClick={onToggle}
-                className="w-full px-6 py-4 flex justify-between items-center bg-[#F5F5F5] hover:bg-gray-50 transition-colors text-left"
+        <div className="flex flex-col">
+            <div
+                className={`border rounded-lg overflow-hidden ${isOpen ? 'bg-white border-gray-200' : 'bg-[#F5F5F5] border-[#CBCBCB]'
+                    }`}
             >
-                <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>{title}</span>
-                {isOpen ? (
-                    <ChevronUp className="text-gray-500" size={28} />
-                ) : (
-                    <ChevronDown className="text-gray-500" size={28} />
-                )}
-            </button>
-
+                <button
+                    onClick={onToggle}
+                    className="w-full px-6 h-[52px] flex justify-between items-center transition-colors text-left"
+                >
+                    <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                        {title}
+                    </span>
+                    {isOpen ? <ChevronUp className="text-gray-500" size={24} /> : <ChevronDown className="text-gray-500" size={24} />}
+                </button>
+            </div>
             {isOpen && (
-                <div className="px-6 pb-6 pt-2 border-t border-gray-100 animate-fadeIn">
+                <div className="pt-4 animate-fadeIn">
                     {children}
                 </div>
             )}
@@ -28,15 +30,15 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
 const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
+            <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">{label}</label>
 
             <input
                 type={type}
                 placeholder={placeholder || label}
                 defaultValue={defaultValue}
                 className="
-                    w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
+                    w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg
+                    text-[#000000] text-base placeholder-gray-400
                     focus:outline-none focus:ring-2 focus:ring-purple-100
                     focus:border-purple-300 transition-all
                 "
@@ -67,7 +69,7 @@ const EmpUpdateEmployment = () => {
     };
 
     return (
-        <div className="h-full">
+        <div className="h-full flex flex-col gap-4">
 
             {/* ---------------------- JOB DETAILS ---------------------- */}
             <AccordionItem

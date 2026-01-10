@@ -33,17 +33,27 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
     return (
         <div>
             <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
-            <input
-                type={type}
-                placeholder={placeholder}
-                defaultValue={defaultValue}
-                className="
-                    w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-purple-100
-                    focus:border-purple-300 transition-all
-                "
-            />
+            <div className="relative">
+                <input
+                    type={type}
+                    placeholder={placeholder}
+                    defaultValue={defaultValue}
+                    className={`
+                        w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
+                        text-gray-700 text-base placeholder-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-purple-100
+                        focus:border-purple-300 transition-all
+                        ${type === 'date' ? 'appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer' : ''}
+                    `}
+                />
+                {type === 'date' && (
+                    <img
+                        src="/images/calender.svg"
+                        alt="calendar"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5"
+                    />
+                )}
+            </div>
         </div>
     );
 };
@@ -103,7 +113,7 @@ const Performance = () => {
                 isOpen={isSummaryOpen}
                 onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
             >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-[#B3B3B3]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-[#B3B3B3]">
                     <InputField label="Last review Date" type="date" placeholder="Select Date" />
                     <SelectField
                         label="Performance status"
@@ -120,38 +130,42 @@ const Performance = () => {
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] leading-none tracking-normal" style={{ fontFamily: 'Poppins, sans-serif' }}>Goals & Objectives</h2>
                 </div>
 
-                {goalsData.length > 0 ? (
-                    <div className="overflow-x-auto flex-1">
-                        <table className="w-full border-separate border-spacing-0">
-                            <thead className='h-[48px]'>
-                                <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
-                                    {['Sr no', 'Goal', 'Progress', 'Status'].map((header, index, arr) => (
-                                        <th
-                                            key={index}
-                                            className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
+                <div className="overflow-x-auto flex-1">
+                    <table className="w-full border-separate border-spacing-0">
+                        <thead className='h-[48px]'>
+                            <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
+                                {['Sr no', 'Goal', 'Progress', 'Status'].map((header, index, arr) => (
+                                    <th
+                                        key={index}
+                                        className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
                                             ${index === 0 ? 'border-l rounded-l-[8px]' : ''}
                                             ${index === arr.length - 1 ? 'border-r rounded-r-[8px]' : ''}
                                         `}
-                                        >
-                                            {header}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {goalsData.map((record, index) => (
-                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                    >
+                                        {header}
+                                    </th>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
-                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                    </div>
-                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {goalsData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="4" className="py-16 text-center text-[#B0B0B0]">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
+                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                goalsData.map((record, index) => (
+                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Competency Evaluation Section */}
@@ -160,38 +174,42 @@ const Performance = () => {
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] leading-none tracking-normal" style={{ fontFamily: 'Poppins, sans-serif' }}>Competency Evaluation</h2>
                 </div>
 
-                {competencyData.length > 0 ? (
-                    <div className="overflow-x-auto flex-1">
-                        <table className="w-full border-separate border-spacing-0">
-                            <thead className='h-[48px]'>
-                                <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
-                                    {['Sr no', 'Competency', 'Rating', 'Comments'].map((header, index, arr) => (
-                                        <th
-                                            key={index}
-                                            className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
+                <div className="overflow-x-auto flex-1">
+                    <table className="w-full border-separate border-spacing-0">
+                        <thead className='h-[48px]'>
+                            <tr className="bg-[#FFFFFF] text-[14px] p-[10px] gap-[10px]">
+                                {['Sr no', 'Competency', 'Rating', 'Comments'].map((header, index, arr) => (
+                                    <th
+                                        key={index}
+                                        className={`py-2 px-4 text-left text-[14px] font-normal text-[#757575] whitespace-nowrap border-t border-b border-[#CECECE]
                                             ${index === 0 ? 'border-l rounded-l-[8px]' : ''}
                                             ${index === arr.length - 1 ? 'border-r rounded-r-[8px]' : ''}
                                         `}
-                                        >
-                                            {header}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {competencyData.map((record, index) => (
-                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                    >
+                                        {header}
+                                    </th>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
-                        <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
-                        <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
-                    </div>
-                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {competencyData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="4" className="py-16 text-center text-[#B0B0B0]">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <img src={noRecordsImage} alt="No Records found" className="mb-6 max-w-[426px] w-full" />
+                                            <h3 className="text-[24px] font-medium text-black mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>No Records found</h3>
+                                            <p className="text-[#B0B0B0] text-lg" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>There are no records to show at the moment.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                competencyData.map((record, index) => (
+                                    <tr key={index}><td colSpan="4">Record</td></tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

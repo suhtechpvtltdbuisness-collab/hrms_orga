@@ -33,10 +33,10 @@ const DatePicker = ({ label, placeholder }) => (
                 placeholder={placeholder}
                 onFocus={(e) => (e.target.type = "date")}
                 onBlur={(e) => (e.target.type = "text")}
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer"
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 style={{ fontFamily: '"Inter", sans-serif' }}
             />
-            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+            <img src="/images/calender.svg" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" alt="calendar" />
         </div>
     </div>
 );
@@ -89,7 +89,7 @@ const OffBoarding = () => {
                 Personal & Employment Details
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <InputField label="Employee ID" placeholder="EMP-1001" />
                 <DatePicker label="Date of Joining" placeholder="15/01/2023" />
                 <InputField label="Department" placeholder="Product Design" />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, ArrowUp } from "lucide-react";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -10,7 +10,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
             >
                 <button
                     onClick={onToggle}
-                    className="w-full px-6 h-[52px] flex justify-between items-center transition-colors text-left"
+                    className="w-full px-4 h-[52px] flex justify-between items-center transition-colors text-left"
                 >
                     <span className="text-[#000000] font-normal text-[16px] leading-none" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                         {title}
@@ -27,22 +27,32 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     );
 };
 
-const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
+const InputField = ({ label, type = "text", placeholder, defaultValue, ...props }) => {
     return (
         <div>
-            <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">{label}</label>
-
-            <input
-                type={type}
-                placeholder={placeholder || label}
-                defaultValue={defaultValue}
-                className="
-                    w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                    text-gray-700 text-base placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-purple-100
-                    focus:border-purple-300 transition-all
-                "
-            />
+            <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">{label}</label>
+            <div className="relative">
+                <input
+                    type={type}
+                    placeholder={placeholder || label}
+                    defaultValue={defaultValue}
+                    className={`
+                        w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
+                        text-gray-700 text-base placeholder-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-purple-100
+                        focus:border-purple-300 transition-all
+                        ${type === 'date' ? 'appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer' : ''}
+                    `}
+                    {...props}
+                />
+                {type === 'date' && (
+                    <img
+                        src="/images/calender.svg"
+                        alt="calendar"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5"
+                    />
+                )}
+            </div>
         </div>
     );
 };
@@ -77,7 +87,7 @@ const Employment = () => {
                 isOpen={sections.jobDetails}
                 onToggle={() => toggleSection("jobDetails")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Job Title" placeholder="Enter job title" />
                     <InputField label="Department" placeholder="Enter department" />
                     <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
@@ -86,7 +96,7 @@ const Employment = () => {
                     <InputField label="Date of Joining" type="date" placeholder="Select Date" />
                     <InputField label="Work Location" placeholder="Enter location" />
                     <InputField label="Branch" placeholder="Enter Branch name" />
-                    <InputField label="Prohibition Period" placeholder="Select Date" type="date" />
+                    <InputField label="Prohibition Period" placeholder="Enter Period" />
 
                     <InputField label="Confirm Date" type="date" placeholder="Select Date" />
                     <InputField label="Employment Status" placeholder="Active" />
@@ -100,14 +110,13 @@ const Employment = () => {
                 isOpen={sections.employmentHistory}
                 onToggle={() => toggleSection("employmentHistory")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <InputField label="Previous Designations" placeholder="Enter designations" />
-                    <InputField label="Department Transfers" placeholder="Enter department transfers" />
-                    <InputField label="Manager Changes" placeholder="Enter manager changes" />
-
-                    <InputField label="Salary Revision History" placeholder="Enter revision history" />
-                    <InputField label="Promotion History" placeholder="Enter promotion history" />
-                    <InputField label="Role Change Logs" placeholder="Enter role logs" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {["Previous Designations", "Department Transfers", "Manager Changes", "Role Change Logs", "Salary Revision History", "Promotion History"].map((item, index) => (
+                        <div key={index} className="flex items-center gap-2 cursor-pointer group">
+                            <span className="text-[#4F4F4F] text-[16px]" style={{ fontFamily: 'Inter, sans-serif' }}>{item}</span>
+                            <ArrowUp size={16} className="text-[#4F4F4F] group-hover:text-purple-600 transition-colors" />
+                        </div>
+                    ))}
                 </div>
             </AccordionItem>
 
@@ -117,7 +126,7 @@ const Employment = () => {
                 isOpen={sections.contractDetails}
                 onToggle={() => toggleSection("contractDetails")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Contract Types" placeholder="Enter contract type" />
                     <InputField label="Contract Start Date" type="date" placeholder="Select Date" />
                     <InputField label="Contract End Date" type="date" placeholder="Select Date" />
@@ -134,7 +143,7 @@ const Employment = () => {
                 isOpen={sections.shiftDetails}
                 onToggle={() => toggleSection("shiftDetails")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Work Mode" placeholder="Enter work mode" />
                     <InputField label="Current Shift" placeholder="Enter current shift" />
                     <InputField label="Shift Timings" placeholder="Enter shift timings" />
@@ -151,10 +160,10 @@ const Employment = () => {
                 isOpen={sections.shiftSchedule}
                 onToggle={() => toggleSection("shiftSchedule")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Assigned Shift" placeholder="Enter assigned shift" />
-                    <InputField label="Shift Start Time" type="time" placeholder="Select Time" />
-                    <InputField label="Shift End Time" type="time" placeholder="Select Time" />
+                    <InputField label="Shift Start Time" placeholder="Enter Start Time" />
+                    <InputField label="Shift End Time" placeholder="Enter End Time" />
 
                     <InputField label="Break Timings" placeholder="Enter break timings" />
                     <InputField label="Weekly Off" placeholder="Enter weekly off" />
@@ -167,7 +176,7 @@ const Employment = () => {
                 isOpen={sections.workSchedule}
                 onToggle={() => toggleSection("workSchedule")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Weekly Schedule" placeholder="Enter weekly schedule" />
                     <InputField label="Working Hours Per Day" placeholder="Enter hours" />
                     <InputField label="Total Weekly Work Hours" placeholder="Enter total hours" />
@@ -183,7 +192,7 @@ const Employment = () => {
                 isOpen={sections.roster}
                 onToggle={() => toggleSection("roster")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Monthly Roster Calendar" placeholder="Select calendar" />
                     <InputField label="Rotational Shift Cycle" placeholder="Enter cycle" />
                     <InputField label="Upcoming Shift Assignment" placeholder="Enter assignment" />
@@ -199,7 +208,7 @@ const Employment = () => {
                 isOpen={sections.roleAssignments}
                 onToggle={() => toggleSection("roleAssignments")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Primary Roles" placeholder="Enter primary role" />
                     <InputField label="Additional Roles" placeholder="Enter additional roles" />
                     <InputField label="Module Access" placeholder="Enter module access" />
@@ -214,7 +223,7 @@ const Employment = () => {
                 isOpen={sections.permissionLevels}
                 onToggle={() => toggleSection("permissionLevels")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Levels" placeholder="Enter levels" />
                     <InputField label="Access Scope" placeholder="Enter scope" />
                     <InputField label="Approval Rights" placeholder="Yes/No" />
@@ -230,7 +239,7 @@ const Employment = () => {
                 isOpen={sections.securitySettings}
                 onToggle={() => toggleSection("securitySettings")}
             >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="MFA Enabled" placeholder="Yes/No" />
                     <InputField label="Restricted IP Login" placeholder="Yes/No" />
                     <InputField label="Device Access Controls" placeholder="Yes/No" />

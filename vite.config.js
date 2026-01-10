@@ -8,4 +8,16 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['lucide-react', 'react-hot-toast'],
+          pdf: ['jspdf', 'jspdf-autotable'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 })
