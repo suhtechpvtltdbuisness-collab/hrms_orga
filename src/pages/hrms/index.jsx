@@ -27,6 +27,9 @@ const HRMS = () => {
         else if (name === 'Department') {
             navigate('/hrms/departments');  // Navigate to Department List
         }
+        else if (name === 'Setting') {
+            navigate('/hrms/settings');  // Navigate to Settings
+        }
     };
 
     return (
@@ -54,6 +57,9 @@ const HRMS = () => {
                                 }
                                 else if (shortcut.name === 'Department') {
                                     navigate('/hrms/departments');  // Navigate to Department List
+                                }
+                                else if (shortcut.name === 'Setting') {
+                                    navigate('/hrms/settings');  // Navigate to Settings
                                 }
                             }}
                         >
