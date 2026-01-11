@@ -192,17 +192,23 @@ const DepartmentList = () => {
   };
 
   const handleSubmit = () => {
+    if (!formData.departmentName || !formData.departmentHead) {
+      setShowErrorModal(true);
+      return;
+    }
+
     const newDepartment = {
       name: formData.departmentName,
       head: formData.departmentHead,
       employees: 0,
-      location: formData.location,
-      status: formData.status
+      location: formData.location || 'Mumbai',
+      status: formData.status || 'Active'
     };
     setDepartments([...departments, newDepartment]);
 
     console.log('Form submitted:', formData);
     setShowModal(false);
+    setShowSuccessModal(true);
     setFormData({
       departmentName: '',
       departmentCode: '',

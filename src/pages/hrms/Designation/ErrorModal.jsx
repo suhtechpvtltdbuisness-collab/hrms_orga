@@ -4,16 +4,14 @@ import { X } from "lucide-react";
 const ErrorModal = ({
   isOpen,
   onClose,
-  message = "Department could not be saved",
+  message = "Designation could not be saved",
   subMessage = "Changes were not saved.",
 }) => {
-  // Optional: Auto close for error modal too? usually errors stay until dismissed.
-  // Allowing 3 seconds for now or manual close.
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
         onClose();
-      }, 3000);
+      }, 3000); // Auto close after 3 seconds
       return () => clearTimeout(timer);
     }
   }, [isOpen, onClose]);

@@ -2,10 +2,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import HRMS from './pages/hrms';
-import EmployeeList from './pages/hrms/EmployeeList/EmployeeList';
-import AddEmployee from './pages/hrms/EmployeeTabs/AddEmployee';
+import EmployeeList from './pages/hrms/Employee/EmployeeList/EmployeeList';
+import AddEmployee from './pages/hrms/Employee/EmployeeTabs/AddEmployee';
 import DepartmentList from './pages/hrms/Department/DepartmentList';
 import Settings from './pages/hrms/Settings/Settings';
+import DesignationList from './pages/hrms/Designation/DesignationList';
 
 import './App.css';
 import DepartmentDetails from './pages/hrms/Department/DepartmentViewDetails/DepartmentDetails';
@@ -13,9 +14,12 @@ import DepartmentOverview from './pages/hrms/Department/DepartmentViewDetails/De
 import DepartmentEmployees from './pages/hrms/Department/DepartmentViewDetails/DepartmentEmployees';
 import DepartmentOrgStructure from './pages/hrms/Department/DepartmentViewDetails/DepartmentOrgStructure';
 import DepartmentSettings from './pages/hrms/Department/DepartmentViewDetails/DepartmentSettings';
-import EmpPersonalInfo from './pages/hrms/EmployeeViewDetails/EmpPersonalInfo';
-import EmpUpdatePersonalInfo from './pages/hrms/EmployeeUpdateDetails/EmpUpdatePersonalInfo';
-import ViewEmployee from './pages/hrms/EmployeeViewDetails/ViewEmployee';
+import EmpPersonalInfo from './pages/hrms/Employee/EmployeeViewDetails/EmpPersonalInfo';
+import EmpUpdatePersonalInfo from './pages/hrms/Employee/EmployeeUpdateDetails/EmpUpdatePersonalInfo';
+import ViewEmployee from './pages/hrms/Employee/EmployeeViewDetails/ViewEmployee';
+import DesignationView from './pages/hrms/Designation/DesignationViewDetails/DesignationView';
+import DesignationOverview from './pages/hrms/Designation/DesignationViewDetails/DesignationOverview';
+import DesignationUpdate from './pages/hrms/Designation/DesignationUpdateDetails/DesignationUpdate';
 
 function App() {
   return (
@@ -26,6 +30,7 @@ function App() {
           <Route path="/" element={<Navigate to="/hrms" replace />} />
           <Route path="/hrms" element={<HRMS />} />
           <Route path="/hrms/departments" element={<DepartmentList />} />
+          <Route path="/hrms/designations" element={<DesignationList />} />
           <Route path="/hrms/employees" element={<EmployeeList />} />
           <Route path="/hrms/employees/add" element={<AddEmployee />} />
           <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} />
@@ -42,6 +47,14 @@ function App() {
             <Route path="employees" element={<DepartmentEmployees />} />
             <Route path="org-structure" element={<DepartmentOrgStructure />} />
             <Route path="settings" element={<DepartmentSettings />} />
+          </Route>
+          <Route path="/hrms/designation-details" element={<DesignationView />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<DesignationOverview />} />
+          </Route>
+          <Route path="/hrms/designation-update" element={<DesignationUpdate />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<DesignationOverview />} />
           </Route>
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
         </Routes>
