@@ -1,10 +1,20 @@
 export const defaultEmployeeData = {
     // Basic Details
+    name: "Rohan Patil",
+    designation: "Frontend Developer",
+    empId: "EMP-1001",
     gender: "male",
     dob: "1998-01-22",
     bloodGroup: "o+",
     maritalStatus: "married",
     address: "55 Orchard Road, Singapore – 238841",
+    mobile: "+91 98453647588",
+    email: "rohanp@company.com",
+    location: "Mumbai",
+    joiningDate: "15 Jan 2022",
+    department: "HR",
+    manager: "Priya Sharma",
+    status: "Active",
 
     // Emergency Contact
     contactName: "Rohan Patil",
