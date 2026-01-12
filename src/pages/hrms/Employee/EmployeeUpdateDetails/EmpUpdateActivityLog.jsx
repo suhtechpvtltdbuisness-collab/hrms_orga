@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronDown } from "lucide-react";
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 
 const EmpUpdateActivityLog = () => {
@@ -69,21 +70,17 @@ const EmpUpdateActivityLog = () => {
     return (
         <div className="h-full font-sans flex flex-col gap-4">
             {/* Header Area */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-3">
                 <h2 className="text-[16px] font-semibold text-[#1E1E1E]" style={{ fontFamily: '"Inter", sans-serif' }}>Activity Log</h2>
                 <div className="relative">
-                    <select
-                        className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer text-sm font-normal"
-                        style={{ fontFamily: '"Inter", sans-serif' }}
-                        value={selectedRange}
-                        onChange={(e) => setSelectedRange(e.target.value)}
-                    >
-                        <option>Select Date range</option>
-                        <option>Last 24 Hours</option>
-                        <option>Last Week</option>
-                        <option>Last Month</option>
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                    <FilterDropdown
+                        placeholder="Select Date range"
+                        options={['Last 24 Hours', 'Last Week', 'Last Month']}
+                        value={selectedRange === "Select Date range" ? "" : selectedRange}
+                        onChange={setSelectedRange}
+                        className="bg-white border border-gray-200 text-gray-700 py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer text-sm font-normal flex items-center justify-between min-w-[180px]"
+                        buttonTextClassName="whitespace-nowrap"
+                    />
                 </div>
             </div>
 

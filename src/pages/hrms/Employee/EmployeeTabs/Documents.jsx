@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, Upload } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const DocumentCard = ({ title, showView = true }) => {
     return (
@@ -58,52 +59,65 @@ const DocumentSection = ({ title, documents }) => {
 };
 
 const Documents = () => {
+    const [selectedCategory, setSelectedCategory] = useState("All Documents");
+
+    const allSections = [
+        {
+            title: "Identity Documents",
+            documents: ['Aadhar Card', 'PAN Card', 'Passport']
+        },
+        {
+            title: "Employment Documents",
+            documents: ['Offer Letter', 'Appointment Letter', 'Employee contract']
+        },
+        {
+            title: "Payroll And Compliance",
+            documents: ['Form 16', 'PDF Declaration']
+        },
+        {
+            title: "Education And Certifications",
+            documents: ['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']
+        }
+    ];
+
+    const filterOptions = ["All Documents", ...allSections.map(s => s.title)];
+
+    const filteredSections = selectedCategory === "All Documents" || !selectedCategory
+        ? allSections
+        : allSections.filter(section => section.title === selectedCategory);
+
     return (
         <div className="h-full">
             {/* Filter Button */}
-            <button
-                className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px]"
-                style={{
-                    width: '156px',
-                    height: '36px',
-                    borderRadius: '13px',
-                    padding: '5px 7px'
-                }}
-            >
-                <span>All Documents</span>
-                <ChevronDown size={16} className="text-[#1F1F1F]" />
-            </button>
+            <div className="flex">
+                <FilterDropdown
+                    placeholder="All Documents"
+                    options={filterOptions}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                    className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px] rounded-[13px] px-[12px] py-[5px] h-[36px] min-w-[156px] cursor-pointer"
+                    buttonTextClassName="whitespace-nowrap"
+                />
+            </div>
 
             {/* Main Content */}
             <div className="mt-[24px] flex flex-col gap-[8px] text-[16px] font-semibold">
-
-                <DocumentSection
-                    title="Identity Documents"
-                    documents={['Aadhar Card', 'PAN Card', 'Passport']}
-                />
-
-                <DocumentSection
-                    title="Employment Documents"
-                    documents={['Offer Letter', 'Appointment Letter', 'Employee contract']}
-                />
-
-                <DocumentSection
-                    title="Payroll And Compliance"
-                    documents={['Form 16', 'PDF Declaration']}
-                />
-
-                <DocumentSection
-                    title="Education And Certifications"
-                    documents={['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']}
-                />
-
-                {/* Other Documents Section - Just Upload */}
-                <div className="flex flex-col gap-4 mb-2">
-                    <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <UploadCard />
+                
+                {filteredSections.map((section, index) => (
+                    <DocumentSection
+                        key={index}
+                        title={section.title}
+                        documents={section.documents}
+                    />
+                ))}
+                 {(selectedCategory === "All Documents" || selectedCategory === "Other Documents") && (
+                    <div className="flex flex-col gap-4 mb-2">
+                         <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <UploadCard />
+                        </div>
                     </div>
-                </div>
+                 )}
 
             </div>
         </div>

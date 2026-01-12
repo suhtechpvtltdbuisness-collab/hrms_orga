@@ -33,11 +33,9 @@ const InputField = ({ label, value }) => (
     <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       {label}
     </label>
-    <input
-      value={value}
-      disabled
-      className="w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed"
-    />
+    <div className='w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed'>
+        {value}
+    </div>
   </div>
 );
 
@@ -46,11 +44,9 @@ const SelectField = ({ label, value }) => (
     <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       {label}
     </label>
-    <input
-      value={value}
-      disabled
-      className="w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed"
-    />
+    <div className='w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed'>
+        {value}
+    </div>
   </div>
 );
 
@@ -60,13 +56,15 @@ const StarRating = ({ rating }) => (
     <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
       Overall Rating
     </label>
-    <div className="flex gap-2 py-3">
+    <div className="flex items-center" style={{ gap: '2.67px', height: '48px' }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          size={22}
-          className="text-[#A1A1A1]"
-          fill="none"
+          width="26.67"
+          height="25.33"
+          fill={i <= rating ? "#FFD700" : "none"}
+          stroke={i <= rating ? "#FFD700" : "#B3B3B3"}
+          strokeWidth="1.6"
         />
       ))}
     </div>
@@ -74,8 +72,28 @@ const StarRating = ({ rating }) => (
 );
 
 /* Main Component */
-const EmpPerformance = () => {
+const EmpPerformance = ({ data }) => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(true);
+
+  // Fallback values if data is not provided or fields are missing
+  const lastReviewDate = data?.lastReviewDate || "13 Nov 2025";
+  const performanceStatus = data?.performanceStatus || "Excellent";
+  const overallRating = data?.overallRating || 4;
+
+  const goals = data?.goals || [
+      { id: 1, goal: "Improve UI performance by 30%", progress: "80%", status: "On Track" },
+      { id: 2, goal: "Lead the website revamp project", progress: "100%", status: "Completed" },
+      { id: 3, goal: "Monitor 2 junior developers", progress: "50%", status: "In Progress" },
+  ];
+
+  const competencies = data?.competencies || [
+      { id: 1, competency: "Technical Skills", rating: 4, comments: "Strong in react & dev UI" },
+      { id: 2, competency: "Communication", rating: 4, comments: "Clear & Concise" },
+      { id: 3, competency: "Teamwork", rating: 5, comments: "Excellent Collaboration" },
+      { id: 4, competency: "Problem Solving", rating: 4, comments: "Good analytical approach" },
+      { id: 5, competency: "Leadership", rating: 3, comments: "Improving" },
+  ];
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,9 +105,9 @@ const EmpPerformance = () => {
         onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <InputField label="Last review Date" value="13 Nov 2025" />
-          <SelectField label="Performance status" value="Excellent" />
-          <StarRating rating={4} />
+          <InputField label="Last review Date" value={lastReviewDate} />
+          <SelectField label="Performance status" value={performanceStatus} />
+          <StarRating rating={overallRating} />
         </div>
       </AccordionItem>
 
@@ -110,32 +128,16 @@ const EmpPerformance = () => {
           </thead>
 
           <tbody>
-            <tr>
-              <td className="px-4 py-3 font-nunito-semibold">01</td>
-              <td className="px-4 py-3 font-nunito-semibold">
-                Improve UI performance by 30%
-              </td>
-              <td className="px-4 py-3 font-nunito-semibold">80%</td>
-              <td className="px-4 py-3 font-nunito-semibold">On Track</td>
-            </tr>
-
-            <tr>
-              <td className="px-4 py-3 font-nunito-semibold">02</td>
-              <td className="px-4 py-3 font-nunito-semibold">
-                Lead the website revamp project
-              </td>
-              <td className="px-4 py-3 font-nunito-semibold">100%</td>
-              <td className="px-4 py-3 font-nunito-semibold">Completed</td>
-            </tr>
-
-            <tr>
-              <td className="px-4 py-3 font-nunito-semibold">03</td>
-              <td className="px-4 py-3 font-nunito-semibold">
-                Monitor 2 junior developers
-              </td>
-              <td className="px-4 py-3 font-nunito-semibold">50%</td>
-              <td className="px-4 py-3 font-nunito-semibold">In Progress</td>
-            </tr>
+            {goals.map((goal, index) => (
+                <tr key={goal.id}>
+                <td className="px-4 py-3 font-nunito-semibold">{String(index + 1).padStart(2, '0')}</td>
+                <td className="px-4 py-3 font-nunito-semibold">
+                    {goal.goal}
+                </td>
+                <td className="px-4 py-3 font-nunito-semibold">{goal.progress}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{goal.status}</td>
+                </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -157,31 +159,27 @@ const EmpPerformance = () => {
           </thead>
 
           <tbody>
-            {[
-              ["01", "Technical Skills", 4, "Strong in react & dev UI"],
-              ["02", "Communication", 4, "Clear & Concise"],
-              ["03", "Teamwork", 5, "Excellent Collaboration"],
-              ["04", "Problem Solving", 4, "Good analytical approach"],
-              ["05", "Leadership", 3, "Improving"],
-            ].map((row, i) => (
+            {competencies.map((row, i) => (
               <tr key={i}>
-                <td className="px-4 py-3 font-nunito-semibold">{row[0]}</td>
-                <td className="px-4 py-3 font-nunito-semibold">{row[1]}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{String(i + 1).padStart(2, '0')}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{row.competency}</td>
 
                 <td className="px-4 py-3">
-                  <div className="flex gap-1">
-                    {[...Array(row[2])].map((_, idx) => (
+                    <div className="flex" style={{ gap: '2px' }}>
+                    {[...Array(5)].map((_, idx) => (
                       <Star
                         key={idx}
-                        size={20}
-                        className="text-black"
-                        fill="none"
+                        width="20"
+                        height="20"
+                        fill={idx < row.rating ? "#FFD700" : "none"}
+                        stroke={idx < row.rating ? "#FFD700" : "#B3B3B3"}
+                        strokeWidth="2.5"
                       />
                     ))}
                   </div>
                 </td>
 
-                <td className="px-4 py-3 font-nunito-semibold">{row[3]}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{row.comments}</td>
               </tr>
             ))}
           </tbody>

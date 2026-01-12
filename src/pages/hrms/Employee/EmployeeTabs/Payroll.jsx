@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from "lucide-react";
 import noRecordsImage from '../../../../assets/no-records.svg';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -50,26 +51,19 @@ const InputField = ({ label, type = "text", placeholder, defaultValue }) => {
 };
 
 const SelectField = ({ label, placeholder, options = [] }) => {
+    const [selected, setSelected] = useState('');
+
     return (
         <div>
             <label className="block text-base font-normal text-[#000000] mb-1.5 leading-[140%]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>{label}</label>
-            <div className="relative">
-                <select
-                    className="
-                        w-full px-4 py-3 bg-white border border-gray-200 rounded-lg
-                        text-gray-700 text-base font-normal placeholder-gray-400 appearance-none
-                        focus:outline-none focus:ring-2 focus:ring-purple-100
-                        focus:border-purple-300 transition-all
-                    "
-                    style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-                >
-                    <option value="">{placeholder}</option>
-                    {options.map((opt, idx) => (
-                        <option key={idx} value={opt}>{opt}</option>
-                    ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
-            </div>
+            <FilterDropdown
+                placeholder={placeholder}
+                options={options}
+                value={selected}
+                onChange={setSelected}
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base font-normal outline-none transition-all flex items-center justify-between"
+                minWidth="100%"
+            />
         </div>
     );
 };

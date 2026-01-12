@@ -1,5 +1,7 @@
 import React from 'react';
 import { Calendar } from "lucide-react";
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import { useState } from 'react';
 
 const InputField = ({ label, placeholder, defaultValue, readOnly = false, type = "text" }) => (
     <div className="flex flex-col gap-1.5 w-full">
@@ -41,27 +43,25 @@ const DatePicker = ({ label, placeholder }) => (
     </div>
 );
 
-const SelectField = ({ label, placeholder, options = [] }) => (
-    <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-base font-normal text-[#757575] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
-            {label}
-        </label>
-        <div className="relative">
-            <select
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all"
-                style={{ fontFamily: '"Inter", sans-serif' }}
-            >
-                <option value="">{placeholder}</option>
-                {options.map((opt, idx) => (
-                    <option key={idx} value={opt}>{opt}</option>
-                ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6" /></svg>
-            </div>
+const SelectField = ({ label, placeholder, options = [] }) => {
+    const [selected, setSelected] = useState('');
+
+    return (
+        <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-base font-normal text-[#757575] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
+                {label}
+            </label>
+            <FilterDropdown
+                placeholder={placeholder}
+                options={options}
+                value={selected}
+                onChange={setSelected}
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base font-normal outline-none transition-all flex items-center justify-between"
+                minWidth="100%"
+            />
         </div>
-    </div>
-);
+    );
+};
 
 
 const CheckboxField = ({ label, description }) => (

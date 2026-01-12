@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown } from "lucide-react";
 import DeleteEmployee from '../DeleteEmployee/DeleteEmployee';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const InputField = ({ label, placeholder, value, onChange, type = "text" }) => (
     <div className="flex flex-col gap-1.5 w-full">
@@ -50,22 +51,14 @@ const SelectField = ({ label, placeholder, value, onChange, options = [] }) => (
         <label className="text-base font-normal text-[#757575] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
             {label}
         </label>
-        <div className="relative">
-            <select
-                value={value}
-                onChange={onChange}
-                className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-black text-base appearance-none focus:outline-none focus:border-purple-500 transition-all cursor-pointer"
-                style={{ fontFamily: '"Inter", sans-serif' }}
-            >
-                <option value="">{placeholder}</option>
-                {options.map((opt, idx) => (
-                    <option key={idx} value={opt}>{opt}</option>
-                ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <ChevronDown className="text-gray-400" size={20} />
-            </div>
-        </div>
+        <FilterDropdown
+            options={options}
+            value={value}
+            onChange={(val) => onChange({ target: { value: val } })}
+            placeholder={placeholder}
+            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-black text-base outline-none transition-all cursor-pointer flex items-center justify-between"
+            minWidth="100%"
+        />
     </div>
 );
 
@@ -122,7 +115,7 @@ const EmpUpdateOffBoarding = () => {
                     placeholder="+91 9876543210"
                     value={phone ? `+91 ${phone}` : ''}
                     onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                        const value = e.target.value.replace(/\D/g, ''); 
                         if (value.length <= 10) {
                             setPhone(value);
                         }

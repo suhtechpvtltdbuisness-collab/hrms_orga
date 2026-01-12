@@ -421,6 +421,7 @@ const DesignationList = () => {
               <th
                 onClick={() => handleSort("name")}
                 className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
+                style={{ width: "25%" }}
               >
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   DESIGNATION NAME{" "}
@@ -440,6 +441,7 @@ const DesignationList = () => {
               <th
                 onClick={() => handleSort("department")}
                 className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
+                style={{ width: "20%" }}
               >
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   DEPARTMENT{" "}
@@ -459,6 +461,7 @@ const DesignationList = () => {
               <th
                 onClick={() => handleSort("level")}
                 className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
+                style={{ width: "10%" }}
               >
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   LEVEL{" "}
@@ -478,6 +481,7 @@ const DesignationList = () => {
               <th
                 onClick={() => handleSort("employees")}
                 className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
+                style={{ width: "15%" }}
               >
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   TOTAL EMPLOYEES{" "}
@@ -497,6 +501,7 @@ const DesignationList = () => {
               <th
                 onClick={() => handleSort("status")}
                 className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
+                style={{ width: "15%" }}
               >
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   STATUS{" "}
@@ -513,7 +518,7 @@ const DesignationList = () => {
                   />
                 </div>
               </th>
-              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">
+              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white" style={{ width: "15%" }}>
                 ACTION
               </th>
             </tr>

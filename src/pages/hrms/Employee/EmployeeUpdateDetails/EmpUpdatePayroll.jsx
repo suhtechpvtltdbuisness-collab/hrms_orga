@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from "lucide-react";
 import toast from 'react-hot-toast';
 import { generatePayslipPDF } from '../../../../utils/pdfGenerator';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
   return (
@@ -65,25 +66,25 @@ const SelectField = ({ label, value, onChange, options }) => (
     >
       {label}
     </label>
-    <select
+    <FilterDropdown
+      options={options}
       value={value}
-      onChange={onChange}
+      onChange={(val) => {
+         // Create a synthetic event to match the expected onChange signature of the parent usage
+         onChange({ target: { value: val } })
+      }}
+      placeholder={`Select ${label.toLowerCase()}`}
       className="
         w-full px-4 py-3
         bg-white
         border border-[#D9D9D9]
         rounded-lg
         text-black
-        focus:outline-none focus:border-purple-500
-        transition-all cursor-pointer
+        outline-none
+        transition-all cursor-pointer flex items-center justify-between
       "
-      style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-    >
-      <option value="">Select {label.toLowerCase()}</option>
-      {options.map((opt, idx) => (
-        <option key={idx} value={opt}>{opt}</option>
-      ))}
-    </select>
+      minWidth="100%"
+    />
   </div>
 );
 
