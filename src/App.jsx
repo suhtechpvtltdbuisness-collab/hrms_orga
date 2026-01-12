@@ -33,10 +33,7 @@ function App() {
           <Route path="/hrms/designations" element={<DesignationList />} />
           <Route path="/hrms/employees" element={<EmployeeList />} />
           <Route path="/hrms/employees/add" element={<AddEmployee />} />
-          <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} />
-          <Route path="/hrms/employee-details-update" element={<EmpUpdatePersonalInfo />} />
           <Route path="/hrms/settings" element={<Settings />} />
-          {/* <Route path="/hrms/employees-details" element={<EmpPersonalInfo />} /> */}
           <Route path="/hrms/employees-details" element={<Navigate to="/hrms/employees-details/personal-information" />} />
           <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
           {/* Add other routes here */}
