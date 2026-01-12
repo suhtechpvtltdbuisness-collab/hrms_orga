@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Announcements', icon: Megaphone, path: '/announcements' },
     { name: 'Messages', icon: MessageSquare, path: '/messages' },
     { name: 'My Profile', icon: UserCircle, path: '/profile' },
-    { name: 'Settings', icon: Settings, path: '/settings' },
+    { name: 'Settings', icon: Settings, path: '/hrms/settings' },
     { name: 'Support', icon: HelpCircle, path: '/support' }
   ];
 
@@ -56,8 +56,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       `}
     >
       {/* Logo */}
-      <div className={`relative flex items-center mb-6 h-10 ${
-    isOpen ? 'justify-start' : 'justify-center' }`}>
+      <div className={`relative flex items-center mb-6 h-10 ${isOpen ? 'justify-start' : 'justify-center'}`}>
         <img
           src={isOpen ? '/images/Orga Logo.svg' : '/images/orga A.svg'}
           alt="ORGA"
@@ -77,9 +76,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         >
           <ChevronLeft
             size={16}
-            className={`transition-transform duration-300  cursor-pointer ${
-              !isOpen ? 'rotate-180' : ''
-            }`}
+            className={`transition-transform duration-300  cursor-pointer ${!isOpen ? 'rotate-180' : ''
+              }`}
           />
         </button>
       </div>
@@ -96,17 +94,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               className={`
                 flex items-center rounded-2xl transition-all duration-200
                 ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
-                ${
-                  active
-                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                ${active
+                  ? 'bg-[#EEF2FF] text-[#7D1EDB]'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
             >
               <item.icon
-                className={`w-5 h-5 ${
-                  active ? 'text-purple-600' : 'text-gray-400'
-                }`}
+                className={`w-5 h-5 ${active ? 'text-purple-600' : 'text-gray-400'
+                  }`}
               />
               {isOpen && (
                 <span className="text-sm font-medium">{item.name}</span>
