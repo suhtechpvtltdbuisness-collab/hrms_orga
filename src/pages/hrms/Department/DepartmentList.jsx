@@ -10,67 +10,7 @@ import {
 import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
 import ErrorModal from './DepartmentUpdate/ErrorModal';
-
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-3 bg-[#EEECFF] text-[#7D1EDB] rounded-[12px] text-sm font-normal outline-none hover:bg-purple-100 transition-colors"
-        style={{ minWidth }}
-      >
-        <span>{value || label}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light"
-          style={{
-            width: minWidth,
-            borderRadius: '8px',
-            maxHeight: '320px',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            boxShadow: '0px 4px 14px 0px #0000001A',
-            fontFamily: 'Montserrat, sans-serif'
-          }}
-        >
-          <div
-            onClick={() => { onChange(''); setIsOpen(false); }}
-            className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-            style={{ minHeight: '44px', fontSize: '16px', color: '#333333' }}
-          >
-            All
-          </div>
-          {options.map((opt) => (
-            <div
-              key={opt}
-              onClick={() => { onChange(opt); setIsOpen(false); }}
-              className="px-4 py-2 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-              style={{ minHeight: '44px', fontSize: '16px', color: '#333333', lineHeight: '1.2' }}
-            >
-              {opt}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import FilterDropdown from '../../../components/ui/FilterDropdown';
 
 const DepartmentList = () => {
   const navigate = useNavigate();
@@ -323,32 +263,32 @@ const DepartmentList = () => {
         <table className="w-full relative border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="text-left text-[14px] font-popins">
-              <th onClick={() => handleSort('name')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+              <th onClick={() => handleSort('name')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "25%" }}>
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   DEPARTMENT NAME <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'name' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
                 </div>
               </th>
-              <th onClick={() => handleSort('head')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+              <th onClick={() => handleSort('head')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "20%" }}>
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   DEPARTMENT HEAD <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'head' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
                 </div>
               </th>
-              <th onClick={() => handleSort('employees')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+              <th onClick={() => handleSort('employees')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   EMPLOYEES <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'employees' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
                 </div>
               </th>
-              <th onClick={() => handleSort('location')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+              <th onClick={() => handleSort('location')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   LOCATION <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'location' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
                 </div>
               </th>
-              <th onClick={() => handleSort('status')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+              <th onClick={() => handleSort('status')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                   STATUS <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'status' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
                 </div>
               </th>
-              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
+              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white" style={{ width: "10%" }}>ACTION</th>
             </tr>
           </thead>
 
@@ -471,73 +411,49 @@ const DepartmentList = () => {
                 {/* Department Head */}
                 <div className="flex flex-col gap-[8px]">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Department Head</label>
-                  <div className="relative">
-                    <select
-                      name="departmentHead"
-                      value={formData.departmentHead}
-                      onChange={handleInputChange}
-                      className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                    >
-                      <option value="">Select a department head</option>
-                      <option value="John Smith">John Smith</option>
-                      <option value="Alice Carol">Alice Carol</option>
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none" />
-                  </div>
+                  <FilterDropdown
+                    options={["John Smith", "Alice Carol"]}
+                    value={formData.departmentHead}
+                    onChange={(val) => handleInputChange({ target: { name: 'departmentHead', value: val } })}
+                    placeholder="Select a department head"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
 
                 {/* Location */}
                 <div className="flex flex-col gap-[8px]">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Location</label>
-                  <div className="relative">
-                    <select
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                    >
-                      <option value="">Select a location</option>
-                      <option value="Mumbai">Mumbai</option>
-                      <option value="Delhi">Delhi</option>
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none" />
-                  </div>
+                  <FilterDropdown
+                    options={["Mumbai", "Delhi"]}
+                    value={formData.location}
+                    onChange={(val) => handleInputChange({ target: { name: 'location', value: val } })}
+                    placeholder="Select a location"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
 
                 {/* Parent Department */}
                 <div className="flex flex-col gap-[8px]">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Parent department</label>
-                  <div className="relative">
-                    <select
-                      name="parentDepartment"
-                      value={formData.parentDepartment}
-                      onChange={handleInputChange}
-                      className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                    >
-                      <option value="">Select parent department</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Marketing">Marketing</option>
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none" />
-                  </div>
+                  <FilterDropdown
+                    options={["Finance", "Marketing"]}
+                    value={formData.parentDepartment}
+                    onChange={(val) => handleInputChange({ target: { name: 'parentDepartment', value: val } })}
+                    placeholder="Select parent department"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
 
                 {/* Status */}
                 <div className="flex flex-col gap-[8px]">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Status</label>
-                  <div className="relative">
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                    >
-                      <option value="">Select status</option>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none" />
-                  </div>
+                  <FilterDropdown
+                    options={["Active", "Inactive"]}
+                    value={formData.status}
+                    onChange={(val) => handleInputChange({ target: { name: 'status', value: val } })}
+                    placeholder="Select status"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
 
               </div>

@@ -98,7 +98,7 @@ const EmpUpdatePersonalInfo = () => {
                 return <EmpUpdateLeave />;
 
             case 'Performance':
-                return <EmpUpdatePerformance />;
+                return <EmpUpdatePerformance formData={formData} onChange={handleInputChange} />;
 
             case 'Documents':
                 return <EmpUpdateDocument />;

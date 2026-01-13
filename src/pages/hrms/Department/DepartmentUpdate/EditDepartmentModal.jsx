@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X } from "lucide-react";
+import FilterDropdown from "../../../../components/ui/FilterDropdown";
 
 const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({
@@ -89,22 +90,13 @@ const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
             <label className="text-[16px] font-base text-[#1E1E1E]">
               Department Head
             </label>
-            <div className="relative">
-              <select
-                name="departmentHead"
+            <FilterDropdown
+                options={["John Smith", "Alice Carol"]}
                 value={formData.departmentHead}
-                onChange={handleInputChange}
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-              >
-                <option value="">Select a department head</option>
-                <option value="John Smith">John Smith</option>
-                <option value="Alice Carol">Alice Carol</option>
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
-              />
-            </div>
+                onChange={(val) => handleInputChange({ target: { name: "departmentHead", value: val } })}
+                placeholder="Select a department head"
+                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+            />
           </div>
 
           {/* Location */}
@@ -112,22 +104,13 @@ const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
             <label className="text-[16px] font-base text-[#1E1E1E]">
               Location
             </label>
-            <div className="relative">
-              <select
-                name="location"
+            <FilterDropdown
+                options={["Mumbai", "Delhi"]}
                 value={formData.location}
-                onChange={handleInputChange}
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-              >
-                <option value="">Select a location</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Delhi">Delhi</option>
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
-              />
-            </div>
+                onChange={(val) => handleInputChange({ target: { name: "location", value: val } })}
+                placeholder="Select a location"
+                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+            />
           </div>
 
           {/* Parent Department */}
@@ -135,22 +118,13 @@ const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
             <label className="text-[16px] font-base text-[#1E1E1E]">
               Parent department
             </label>
-            <div className="relative">
-              <select
-                name="parentDepartment"
+            <FilterDropdown
+                options={["Finance", "Marketing"]}
                 value={formData.parentDepartment}
-                onChange={handleInputChange}
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-              >
-                <option value="">Select parent department</option>
-                <option value="Finance">Finance</option>
-                <option value="Marketing">Marketing</option>
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
-              />
-            </div>
+                onChange={(val) => handleInputChange({ target: { name: "parentDepartment", value: val } })}
+                placeholder="Select parent department"
+                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+            />
           </div>
 
           {/* Status */}
@@ -158,22 +132,13 @@ const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
             <label className="text-[16px] font-base text-[#1E1E1E]">
               Status
             </label>
-            <div className="relative">
-              <select
-                name="status"
+            <FilterDropdown
+                options={["Active", "Inactive"]}
                 value={formData.status}
-                onChange={handleInputChange}
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-              >
-                <option value="">Select status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
-              />
-            </div>
+                onChange={(val) => handleInputChange({ target: { name: "status", value: val } })}
+                placeholder="Select status"
+                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+            />
           </div>
         </div>
 

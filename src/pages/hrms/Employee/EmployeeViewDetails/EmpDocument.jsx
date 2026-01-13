@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, Upload } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const DocumentCard = ({ title, showView = true }) => {
     return (
@@ -80,55 +81,71 @@ const DocumentSection = ({ title, documents }) => {
 };
 
 const EmpDocuments = () => {
+    const [selectedCategory, setSelectedCategory] = useState("All Documents");
+
+    const categories = [
+        "All Documents",
+        "Identity Documents",
+        "Employment Documents",
+        "Payroll And Compliance",
+        "Education And Certifications",
+        "Other Documents"
+    ];
+
     return (
         <div className="h-full">
-            {/* Filter Button */}
-            <button
-                className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px]"
-                style={{
-                    width: '146px',
-                    height: '34px',
-                    borderRadius: '13px',
-                    padding: '5px 7px'
-                }}
-            >
-                <span>All Documents</span>
-                <svg width="10" height="5" viewBox="0 0 10 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 5L0 0H10L5 5Z" fill="#1F1F1F" />
-                </svg>
-            </button>
+            {/* Filter Dropdown */}
+            <div className="flex mb-[24px]">
+                 <FilterDropdown
+                    options={categories}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                    placeholder="All Documents"
+                    className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px] rounded-[13px] px-[12px] py-[5px] h-[34px] min-w-[156px] cursor-pointer"
+                    buttonTextClassName="whitespace-nowrap"
+                 />
+            </div>
 
             {/* Main Content */}
-            <div className="mt-[24px] flex flex-col gap-[8px] text-[16px] font-semibold">
+            <div className="flex flex-col gap-[8px] text-[16px] font-semibold">
 
-                <DocumentSection
-                    title="Identity Documents"
-                    documents={['Aadhar Card', 'PAN Card', 'Passport']}
-                />
+                {(selectedCategory === "All Documents" || selectedCategory === "Identity Documents") && (
+                    <DocumentSection
+                        title="Identity Documents"
+                        documents={['Aadhar Card', 'PAN Card', 'Passport']}
+                    />
+                )}
 
-                <DocumentSection
-                    title="Employment Documents"
-                    documents={['Offer Letter', 'Appointment Letter', 'Employee contract']}
-                />
+                {(selectedCategory === "All Documents" || selectedCategory === "Employment Documents") && (
+                    <DocumentSection
+                        title="Employment Documents"
+                        documents={['Offer Letter', 'Appointment Letter', 'Employee contract']}
+                    />
+                )}
 
-                <DocumentSection
-                    title="Payroll And Compliance"
-                    documents={['Form 16', 'PDF Declaration']}
-                />
+                {(selectedCategory === "All Documents" || selectedCategory === "Payroll And Compliance") && (
+                    <DocumentSection
+                        title="Payroll And Compliance"
+                        documents={['Form 16', 'PDF Declaration']}
+                    />
+                )}
 
-                <DocumentSection
-                    title="Education And Certifications"
-                    documents={['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']}
-                />
+                {(selectedCategory === "All Documents" || selectedCategory === "Education And Certifications") && (
+                    <DocumentSection
+                        title="Education And Certifications"
+                        documents={['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']}
+                    />
+                )}
 
                 {/* Other Documents Section - Just Upload */}
-                <div className="flex flex-col gap-4 mb-2">
-                    <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <UploadCard />
+                {(selectedCategory === "All Documents" || selectedCategory === "Other Documents") && (
+                    <div className="flex flex-col gap-4 mb-2">
+                        <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <UploadCard />
+                        </div>
                     </div>
-                </div>
-
+                )}
             </div>
         </div>
     );

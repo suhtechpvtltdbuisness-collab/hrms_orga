@@ -10,67 +10,9 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px' }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between px-4 py-3 bg-[#EEECFF] text-[#7D1EDB] rounded-[12px] text-sm font-normal outline-none hover:bg-purple-100 transition-colors"
-                style={{ minWidth }}
-            >
-                <span>{value || label}</span>
-                <ChevronDown size={16} className={`transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isOpen && (
-                <div
-                    className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light space-y-1"
-                    style={{
-                        width: minWidth,
-                        borderRadius: '8px',
-                        maxHeight: '320px',
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        boxShadow: '0px 4px 14px 0px #0000001A',
-                        fontFamily: 'Montserrat, sans-serif'
-                    }}
-                >
-                    <div
-                        onClick={() => { onChange(''); setIsOpen(false); }}
-                        className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-                        style={{ minHeight: '44px', fontSize: '16px', color: '#333333' }}
-                    >
-                        All
-                    </div>
-                    {options.map((opt) => (
-                        <div
-                            key={opt}
-                            onClick={() => { onChange(opt); setIsOpen(false); }}
-                            className="px-4 py-2 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-                            style={{ minHeight: '44px', fontSize: '16px', color: '#333333', lineHeight: '1.2' }}
-                        >
-                            {opt}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 const EmployeeList = () => {
     // Mock Data
@@ -329,11 +271,11 @@ const EmployeeList = () => {
             </div>
 
             {/* Table Section */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
-                <table className="w-full">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+                <table className="w-full table-fixed min-w-[1000px]">
                     <thead className="sticky top-0 bg-white z-10">
-                        <tr className="text-left">
-                            <th className="py-4 px-2 w-10 bg-white">
+                        <tr className="text-left border-b border-gray-200">
+                            <th className="py-3 px-1 w-[40px] bg-white">
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4 rounded border border-[#7D1EDB] accent-[#7D1EDB] cursor-pointer"
@@ -343,47 +285,47 @@ const EmployeeList = () => {
                                 />
                             </th>
 
-                            <th onClick={() => handleSort('srNo')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('srNo')} className="py-3 px-1 w-[80px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     SR NO <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'srNo' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('name')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('name')} className="py-3 px-1 w-[160px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     EMP NAME <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'name' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('empId')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('empId')} className="py-3 px-1 w-[100px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     EMP ID <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'empId' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('department')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('department')} className="py-3 px-1 w-[120px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     DEPARTMENT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'department' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('designation')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('designation')} className="py-3 px-1 w-[150px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     DESIGNATION <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'designation' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('joiningDate')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('joiningDate')} className="py-3 px-1 w-[120px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     JOINING DATE <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'joiningDate' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('contact')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('contact')} className="py-3 px-1 w-[180px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     CONTACT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'contact' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('status')} className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('status')} className="py-3 px-1 w-[100px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     STATUS <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'status' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th className="py-4 px-2 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
+                            <th className="py-3 px-1 w-[80px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>

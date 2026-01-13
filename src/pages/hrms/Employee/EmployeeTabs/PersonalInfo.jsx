@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -71,20 +72,18 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                     {/* Gender */}
                     <div>
                         <label className={labelClasses}>Gender</label>
-                        <div className="relative">
-                            <select
-                                name="gender"
-                                value={formData.gender || ''}
-                                onChange={onChange}
-                                className={`${inputClasses} appearance-none cursor-pointer`}
-                            >
-                                <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                        <FilterDropdown
+                            placeholder="Select Gender"
+                            options={[
+                                { label: 'Male', value: 'male' },
+                                { label: 'Female', value: 'female' },
+                                { label: 'Other', value: 'other' }
+                            ]}
+                            value={formData.gender}
+                            onChange={(val) => onChange({ target: { name: 'gender', value: val } })}
+                            className={`${inputClasses} flex items-center justify-between cursor-pointer`}
+                            buttonTextClassName="text-[#000000]"
+                        />
                     </div>
 
                     {/* Date of Birth */}
@@ -105,39 +104,35 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                     {/* Blood Group */}
                     <div>
                         <label className={labelClasses}>Blood Group</label>
-                        <div className="relative">
-                            <select
-                                name="bloodGroup"
-                                value={formData.bloodGroup || ''}
-                                onChange={onChange}
-                                className={`${inputClasses} appearance-none cursor-pointer`}
-                            >
-                                <option value="">Select Blood group</option>
-                                <option value="a+">A+</option>
-                                <option value="b+">B+</option>
-                                <option value="o+">O+</option>
-                                <option value="ab+">AB+</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                        <FilterDropdown
+                            placeholder="Select Blood group"
+                            options={[
+                                { label: 'A+', value: 'a+' },
+                                { label: 'B+', value: 'b+' },
+                                { label: 'O+', value: 'o+' },
+                                { label: 'AB+', value: 'ab+' }
+                            ]}
+                            value={formData.bloodGroup}
+                            onChange={(val) => onChange({ target: { name: 'bloodGroup', value: val } })}
+                            className={`${inputClasses} flex items-center justify-between cursor-pointer`}
+                            buttonTextClassName="text-[#000000]"
+                        />
                     </div>
 
                     {/* Marital Status */}
                     <div>
                         <label className={labelClasses}>Marital Status</label>
-                        <div className="relative">
-                            <select
-                                name="maritalStatus"
-                                value={formData.maritalStatus || ''}
-                                onChange={onChange}
-                                className={`${inputClasses} appearance-none cursor-pointer p-3`}
-                            >
-                                <option value="">Select Marital Status</option>
-                                <option value="single">Single</option>
-                                <option value="married">Married</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                        <FilterDropdown
+                            placeholder="Select Marital Status"
+                            options={[
+                                { label: 'Single', value: 'single' },
+                                { label: 'Married', value: 'married' }
+                            ]}
+                            value={formData.maritalStatus}
+                            onChange={(val) => onChange({ target: { name: 'maritalStatus', value: val } })}
+                            className={`${inputClasses} flex items-center justify-between cursor-pointer`}
+                            buttonTextClassName="text-[#000000]"
+                        />
                     </div>
 
                     {/* Address - Full Width */}

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ChevronDown, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const DocumentCard = ({ title, showView = true, onView, hasDocument }) => {
     return (
@@ -108,15 +109,39 @@ const DocumentSection = ({ title, documents, onView, onUpload }) => {
 
 const EmpUpdateDocument = () => {
     const [uploadedDocuments, setUploadedDocuments] = useState({});
+    const [selectedCategory, setSelectedCategory] = useState("All Documents");
+
+    const allSections = [
+        {
+            title: "Identity Documents",
+            documents: ['Aadhar Card', 'PAN Card', 'Passport']
+        },
+        {
+            title: "Employment Documents",
+            documents: ['Offer Letter', 'Appointment Letter', 'Employee contract']
+        },
+        {
+            title: "Payroll And Compliance",
+            documents: ['Form 16', 'PDF Declaration']
+        },
+        {
+            title: "Education And Certifications",
+            documents: ['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']
+        }
+    ];
+
+    const filterOptions = ["All Documents", ...allSections.map(s => s.title)];
+
+    const filteredSections = selectedCategory === "All Documents" || !selectedCategory
+        ? allSections
+        : allSections.filter(section => section.title === selectedCategory);
+
 
     const handleView = (documentName) => {
-        // Open document in new tab or show modal
         toast.success(`Viewing: ${documentName}`, {
             duration: 3000,
             position: 'top-right',
         });
-        // In production, you would open the actual document
-        // window.open(documentUrl, '_blank');
     };
 
     const handleUpload = (category, file) => {
@@ -133,70 +158,43 @@ const EmpUpdateDocument = () => {
             duration: 4000,
             position: 'top-right',
         });
-
-        // In production, you would upload to server here
-        // const formData = new FormData();
-        // formData.append('file', file);
-        // formData.append('category', category);
-        // await uploadDocument(formData);
     };
 
     return (
         <div className="h-full">
             {/* Filter Button */}
-            <button
-                className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px]"
-                style={{
-                    width: '146px',
-                    height: '34px',
-                    borderRadius: '13px',
-                    padding: '5px 7px'
-                }}
-            >
-                <span>All Documents</span>
-                <svg width="10" height="5" viewBox="0 0 10 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 5L0 0H10L5 5Z" fill="#1F1F1F" />
-                </svg>
-            </button>
+            <div className="flex">
+                <FilterDropdown
+                    placeholder="All Documents"
+                    options={filterOptions}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                    className="flex items-center justify-between bg-white border border-[#C2C2C2] text-[#1E1E1E] font-['Poppins'] text-[15px] rounded-[13px] px-[12px] py-[5px] h-[34px] min-w-[156px] cursor-pointer"
+                    buttonTextClassName="whitespace-nowrap"
+                />
+            </div>
 
             {/* Main Content */}
             <div className="mt-[24px] flex flex-col gap-[8px] text-[16px] font-semibold">
+                
+                {filteredSections.map((section, index) => (
+                    <DocumentSection
+                        key={index}
+                        title={section.title}
+                        documents={section.documents}
+                        onView={handleView}
+                        onUpload={handleUpload}
+                    />
+                ))}
 
-                <DocumentSection
-                    title="Identity Documents"
-                    documents={['Aadhar Card', 'PAN Card', 'Passport']}
-                    onView={handleView}
-                    onUpload={handleUpload}
-                />
-
-                <DocumentSection
-                    title="Employment Documents"
-                    documents={['Offer Letter', 'Appointment Letter', 'Employee contract']}
-                    onView={handleView}
-                    onUpload={handleUpload}
-                />
-
-                <DocumentSection
-                    title="Payroll And Compliance"
-                    documents={['Form 16', 'PDF Declaration']}
-                    onView={handleView}
-                    onUpload={handleUpload}
-                />
-
-                <DocumentSection
-                    title="Education And Certifications"
-                    documents={['Resume', 'Professional Certificates', 'Degree Certificate', 'PG Certificate']}
-                    onView={handleView}
-                    onUpload={handleUpload}
-                />
-
-                {/* Other Documents Section - Just Upload */}
-                <div className="flex flex-col gap-4 mb-2">
-                    <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <UploadCard onUpload={(file) => handleUpload('Other Documents', file)} />
+                 {(selectedCategory === "All Documents" || selectedCategory === "Other Documents") && (
+                    <div className="flex flex-col gap-4 mb-2">
+                        <h3 className="text-base font-normal text-[#1E1E1E] font-['Nunito_Sans']" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Other Documents</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <UploadCard onUpload={(file) => handleUpload('Other Documents', file)} />
+                        </div>
                     </div>
-                </div>
+                 )}
 
             </div>
         </div>
