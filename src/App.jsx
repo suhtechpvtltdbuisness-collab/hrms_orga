@@ -19,7 +19,9 @@ import EmpUpdatePersonalInfo from './pages/hrms/Employee/EmployeeUpdateDetails/E
 import ViewEmployee from './pages/hrms/Employee/EmployeeViewDetails/ViewEmployee';
 import DesignationView from './pages/hrms/Designation/DesignationViewDetails/DesignationView';
 import DesignationOverview from './pages/hrms/Designation/DesignationViewDetails/DesignationOverview';
-import DesignationUpdate from './pages/hrms/Designation/DesignationUpdateDetails/DesignationUpdate';
+import DesignationEmployees from './pages/hrms/Designation/DesignationViewDetails/DesignationEmployees';
+import DesignationOrgStructure from './pages/hrms/Designation/DesignationViewDetails/DesignationOrgStructure';
+import DesignationSettings from './pages/hrms/Designation/DesignationViewDetails/DesignationSettings';
 
 function App() {
   return (
@@ -48,10 +50,9 @@ function App() {
           <Route path="/hrms/designation-details" element={<DesignationView />}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<DesignationOverview />} />
-          </Route>
-          <Route path="/hrms/designation-update" element={<DesignationUpdate />}>
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<DesignationOverview />} />
+            <Route path="employees" element={<DesignationEmployees />} />
+            <Route path="org-structure" element={<DesignationOrgStructure />} />
+            <Route path="settings" element={<DesignationSettings />} />
           </Route>
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
         </Routes>

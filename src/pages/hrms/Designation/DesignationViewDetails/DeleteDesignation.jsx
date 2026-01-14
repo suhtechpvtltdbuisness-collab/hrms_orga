@@ -2,13 +2,12 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-const DeleteDepartment = ({ onDelete, onCancel }) => {
+const DeleteDesignation = ({ onDelete, onCancel }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(true);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
 
     const handleConfirmDelete = () => {
-
         const isSuccess = true;
 
         if (isSuccess) {
@@ -41,7 +40,7 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
                         </button>
 
                         <div className="w-full flex flex-col items-center mt-14 mb-8">
-                            <h2 className="text-[24px] font-semibold text-[#000000] text-center leading-tight">Delete Department</h2>
+                            <h2 className="text-[24px] font-semibold text-[#000000] text-center leading-tight">Deactivate Designation</h2>
                             <p className="text-[#15192080] text-[14px] font-base mt-3 text-center">Are you sure?</p>
                         </div>
 
@@ -56,7 +55,7 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
                                 onClick={handleConfirmDelete}
                                 className="flex-1 py-3 bg-[#7D1EDB] text-white text-[16px] rounded-full font-base hover:bg-[#7a26c9]"
                             >
-                                Yes, Delete
+                                Confirm
                             </button>
                         </div>
                     </div>
@@ -87,10 +86,10 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
                             </div>
                             <div className="text-left">
                                 <h2 className="text-[20px] font-semibold text-[#000000] mb-4 leading-tight">
-                                    Department Deleted Successfully!
+                                    Designation Deleted Successfully
                                 </h2>
-                                <p className="text-[14px] text-[#000000] font-light">
-                                    The selected department was deleted successfully.
+                                <p className="text-[14px] text-[#15192080] font-light">
+                                    The selected designation was deleted successfully.
                                 </p>
                             </div>
                         </div>
@@ -122,10 +121,10 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
                             </div>
                             <div className="text-left">
                                 <h2 className="text-[20px] font-semibold text-[#000000] mb-4 leading-tight">
-                                    Failed To Delete Department
+                                    Designation could not be Deleted
                                 </h2>
-                                <p className="text-[14px] text-[#000000] font-light">
-                                    Department deletion failed.
+                                <p className="text-[14px] text-[15192080] font-light">
+                                    The selected designation was unable to delete.
                                 </p>
                             </div>
                         </div>
@@ -136,4 +135,4 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
     );
 };
 
-export default DeleteDepartment;
+export default DeleteDesignation;

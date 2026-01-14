@@ -213,8 +213,8 @@ const EmpPayroll = () => {
       {/* Payroll History */}
       <h2 className="text-[16px] text-black">Payroll History</h2>
 
-      <div className="border border-[#E0E0E0] rounded-xl bg-white overflow-hidden">
-        <table className="w-full">
+      <div className="border border-[#E0E0E0] rounded-xl bg-white overflow-hidden overflow-x-auto">
+        <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-[#E0E0E0] text-[#757575] text-[13px]">
               <th className="px-4 py-3 text-left font-normal">Sr no</th>
@@ -240,7 +240,7 @@ const EmpPayroll = () => {
                     {row.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <button
                     onClick={() => handleViewPayslip(row.month)}
                     className="text-[#4F46E5] hover:underline cursor-pointer"
