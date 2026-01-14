@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Star } from "lucide-react";
+
+/* Accordion */
+const AccordionItem = ({ title, isOpen, onToggle, children }) => {
+  return (
+    <div>
+      <div
+        className={`border rounded-lg ${isOpen
+          ? "bg-white border-[#E0E0E0]"
+          : "bg-[#F5F5F5] border-[#CBCBCB]"
+          }`}
+      >
+        <button
+          onClick={onToggle}
+          className="w-full px-6 h-[52px] flex justify-between items-center"
+        >
+          <span className="font-nunito-semibold text-black">
+            {title}
+          </span>
+          {isOpen ? <ChevronUp size={22} /> : <ChevronDown size={22} />}
+        </button>
+      </div>
+
+      {isOpen && <div className="pt-4">{children}</div>}
+    </div>
+  );
+};
+
+/* Inputs */
+const InputField = ({ label, value }) => (
+  <div>
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
+      {label}
+    </label>
+    <div className='w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed'>
+        {value}
+    </div>
+  </div>
+);
+
+const SelectField = ({ label, value }) => (
+  <div>
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
+      {label}
+    </label>
+    <div className='w-full px-4 py-3 border border-[#D9D9D9] rounded-lg bg-[#F5F5F5] text-[#757575] font-nunito-semibold cursor-not-allowed'>
+        {value}
+    </div>
+  </div>
+);
+
+/* Stars */
+const StarRating = ({ rating }) => (
+  <div>
+    <label className="block text-[#757575] mb-1.5 font-nunito-semibold">
+      Overall Rating
+    </label>
+    <div className="flex items-center" style={{ gap: '2.67px', height: '48px' }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          width="26.67"
+          height="25.33"
+          fill={i <= rating ? "#FFD700" : "none"}
+          stroke={i <= rating ? "#FFD700" : "#B3B3B3"}
+          strokeWidth="1.6"
+        />
+      ))}
+    </div>
+  </div>
+);
+
+/* Main Component */
+const EmpPerformance = ({ data }) => {
+  const [isSummaryOpen, setIsSummaryOpen] = useState(true);
+
+  // Fallback values if data is not provided or fields are missing
+  const lastReviewDate = data?.lastReviewDate || "13 Nov 2025";
+  const performanceStatus = data?.performanceStatus || "Excellent";
+  const overallRating = data?.overallRating || 4;
+
+  const goals = data?.goals || [
+      { id: 1, goal: "Improve UI performance by 30%", progress: "80%", status: "On Track" },
+      { id: 2, goal: "Lead the website revamp project", progress: "100%", status: "Completed" },
+      { id: 3, goal: "Monitor 2 junior developers", progress: "50%", status: "In Progress" },
+  ];
+
+  const competencies = data?.competencies || [
+      { id: 1, competency: "Technical Skills", rating: 4, comments: "Strong in react & dev UI" },
+      { id: 2, competency: "Communication", rating: 4, comments: "Clear & Concise" },
+      { id: 3, competency: "Teamwork", rating: 5, comments: "Excellent Collaboration" },
+      { id: 4, competency: "Problem Solving", rating: 4, comments: "Good analytical approach" },
+      { id: 5, competency: "Leadership", rating: 3, comments: "Improving" },
+  ];
+
+
+  return (
+    <div className="flex flex-col gap-6">
+
+      {/* Performance Summary */}
+      <AccordionItem
+        title="Performance Summary"
+        isOpen={isSummaryOpen}
+        onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <InputField label="Last review Date" value={lastReviewDate} />
+          <SelectField label="Performance status" value={performanceStatus} />
+          <StarRating rating={overallRating} />
+        </div>
+      </AccordionItem>
+
+      {/* Goals & Objectives */}
+      <h2 className="font-nunito-semibold text-black">
+        Goals & Objectives
+      </h2>
+
+      <div className="overflow-x-auto border border-[#E0E0E0] rounded-xl bg-white">
+        <table className="w-full border-collapse min-w-[700px]">
+          <thead>
+            <tr className="border-b border-[#E0E0E0] text-[#757575]">
+              <th className="px-4 py-3 text-left font-nunito-semibold w-[80px]">Sr no</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold min-w-[300px]">Goal</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold w-[150px]">Progress</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold w-[150px]">Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {goals.map((goal, index) => (
+                <tr key={goal.id}>
+                <td className="px-4 py-3 font-nunito-semibold">{String(index + 1).padStart(2, '0')}</td>
+                <td className="px-4 py-3 font-nunito-semibold">
+                    {goal.goal}
+                </td>
+                <td className="px-4 py-3 font-nunito-semibold">{goal.progress}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{goal.status}</td>
+                </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Competency Evaluation */}
+      <h2 className="font-nunito-semibold text-black">
+        Competency Evaluation
+      </h2>
+
+      <div className="overflow-x-auto border border-[#E0E0E0] rounded-xl bg-white">
+        <table className="w-full border-collapse min-w-[700px]">
+          <thead>
+            <tr className="border-b border-[#E0E0E0] text-[#757575]">
+              <th className="px-4 py-3 text-left font-nunito-semibold">Sr no</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold">Competency</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold">Rating</th>
+              <th className="px-4 py-3 text-left font-nunito-semibold">Comments</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {competencies.map((row, i) => (
+              <tr key={i}>
+                <td className="px-4 py-3 font-nunito-semibold">{String(i + 1).padStart(2, '0')}</td>
+                <td className="px-4 py-3 font-nunito-semibold">{row.competency}</td>
+
+                <td className="px-4 py-3">
+                    <div className="flex" style={{ gap: '2px' }}>
+                    {[...Array(5)].map((_, idx) => (
+                      <Star
+                        key={idx}
+                        width="20"
+                        height="20"
+                        fill={idx < row.rating ? "#FFD700" : "none"}
+                        stroke={idx < row.rating ? "#FFD700" : "#B3B3B3"}
+                        strokeWidth="2.5"
+                      />
+                    ))}
+                  </div>
+                </td>
+
+                <td className="px-4 py-3 font-nunito-semibold">{row.comments}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  );
+};
+
+export default EmpPerformance;
