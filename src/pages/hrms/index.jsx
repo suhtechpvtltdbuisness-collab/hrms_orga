@@ -7,11 +7,11 @@ import { useNavigate } from 'react-router-dom';
 const HRMS = () => {
     const navigate = useNavigate();
 
-    // Defined shortcuts matching the image
+    
     const shortcuts = [
         { name: 'New Hiring' },
         { name: 'New Onboarding' },
-        { name: 'Organization Tree' },
+        { name: 'Organization Tree', badge: true },
         { name: 'Designation' },
         { name: 'Department', badge: true },
         { name: 'Employee List', badge: true },
@@ -24,7 +24,10 @@ const HRMS = () => {
             navigate('/hrms/employees');
         }
         else if (name === 'Department') {
-            navigate('/hrms/departments');  // Navigate to Department List
+            navigate('/hrms/departments');  
+        }
+         else if (name === 'Organization Tree') {
+            navigate('/hrms/organization-tree');  
         }
     };
 
@@ -35,7 +38,7 @@ const HRMS = () => {
                 <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>HRMS Dashboard</h1>
             </div>
 
-            {/* Banner / Map Section */}
+         
             <div className="w-full h-96 bg-[#D9D9D9] rounded-xl relative flex items-center justify-center shadow-inner overflow-hidden mb-6"></div>
 
             {/* Shortcuts */}
@@ -52,7 +55,13 @@ const HRMS = () => {
                                     navigate('/hrms/employees');
                                 }
                                 else if (shortcut.name === 'Department') {
-                                    navigate('/hrms/departments');  // Navigate to Department List
+                                    navigate('/hrms/departments');  
+                                }
+                                 else if (shortcut.name === 'Organization Tree') {
+                                    navigate('/hrms/organization-tree');  
+                                }
+                                 else if (shortcut.name === 'Organization Tree') {
+                                    navigate('/hrms/organization-tree');  
                                 }
                             }}
                         >
