@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Pencil,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Search,
   ChevronDown,
-  X
+  X,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
+import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
+import SuccessModal from './DepartmentUpdate/SuccessModal';
+import ErrorModal from './DepartmentUpdate/ErrorModal';
+import FilterDropdown from '../../../components/ui/FilterDropdown';
 
 const DepartmentList = () => {
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = showModal ? 'hidden' : 'auto';
@@ -27,17 +35,96 @@ const DepartmentList = () => {
     status: '',
   });
 
-  const departments = [
-    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
-    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active' },
-    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active' },
-    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active' },
-    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active' },
-    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active' },
-    { name: 'Finance', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active' },
-    { name: 'Finance', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active' },
-    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active' },
-  ];
+  const [departments, setDepartments] = useState([
+    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Financial Planning, Reporting And Analysis Department', createdOn: '15/01/2023', lastUpdated: '11/10/2024' },
+    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active', description: 'Employee Relations, Recruitment, and HR Strategy', createdOn: '20/02/2023', lastUpdated: '15/11/2024' },
+    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active', description: 'Brand Management, Digital Marketing, and Advertising', createdOn: '10/03/2023', lastUpdated: '01/12/2024' },
+    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active', description: 'Daily Business Operations and Logistics Management', createdOn: '05/04/2023', lastUpdated: '20/11/2024' },
+    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active', description: 'IT Infrastructure, Support, and Development', createdOn: '12/01/2023', lastUpdated: '10/10/2024' },
+    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active', description: 'Revenue Generation and Client Relationship Management', createdOn: '01/05/2023', lastUpdated: '05/12/2024' },
+    { name: 'Legal', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active', description: 'Legal Compliance and Corporate Affairs Management', createdOn: '18/06/2023', lastUpdated: '15/10/2024' },
+    { name: 'R&D', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active', description: 'Research and Development of New Products', createdOn: '22/07/2023', lastUpdated: '20/09/2024' },
+    { name: 'Logistics', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Supply Chain and Transportation Management', createdOn: '30/08/2023', lastUpdated: '11/09/2024' },
+    { name: 'Support', head: 'Sarah Jones', employees: 10, location: 'Bangalore', status: 'Active', description: 'Customer Service and Technical Support', createdOn: '14/09/2023', lastUpdated: '25/11/2024' },
+    { name: 'Product', head: 'Mike Ross', employees: 8, location: 'Delhi', status: 'Inactive', description: 'Product Roadmap and Lifecycle Management', createdOn: '05/10/2023', lastUpdated: '01/11/2024' },
+    { name: 'Design', head: 'Rachel Green', employees: 14, location: 'Pune', status: 'Active', description: 'Creative Design and User Experience', createdOn: '20/11/2023', lastUpdated: '10/12/2024' },
+  ]);
+
+  /* Sorting & Search Logic */
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    location: '',
+    head: ''
+  });
+
+  const LOCATION_OPTIONS = ["Delhi", "Mumbai", "Bangalore", "Kolkata"];
+  const HEAD_OPTIONS = ["John Smith", "Alice Carol", "Priya Singh"];
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  /* Filtered Logic */
+  const filteredDepartments = React.useMemo(() => {
+    return departments.filter(dept => {
+      const matchesSearch = !searchQuery || (
+        dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dept.head.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dept.location.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      const matchesLocation = !filters.location || dept.location.toLowerCase() === filters.location.toLowerCase();
+      const matchesHead = !filters.head || dept.head.toLowerCase() === filters.head.toLowerCase();
+
+      return matchesSearch && matchesLocation && matchesHead;
+    });
+  }, [departments, searchQuery, filters]);
+
+  /* Sorted Logic */
+  const sortedDepartments = React.useMemo(() => {
+    let sortableItems = [...filteredDepartments];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredDepartments, sortConfig]);
+
+  const itemsPerPage = 10;
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedDepartments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedDepartments.length / itemsPerPage);
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,8 +132,23 @@ const DepartmentList = () => {
   };
 
   const handleSubmit = () => {
+    if (!formData.departmentName || !formData.departmentHead) {
+      setShowErrorModal(true);
+      return;
+    }
+
+    const newDepartment = {
+      name: formData.departmentName,
+      head: formData.departmentHead,
+      employees: 0,
+      location: formData.location || 'Mumbai',
+      status: formData.status || 'Active'
+    };
+    setDepartments([...departments, newDepartment]);
+
     console.log('Form submitted:', formData);
     setShowModal(false);
+    setShowSuccessModal(true);
     setFormData({
       departmentName: '',
       departmentCode: '',
@@ -56,6 +158,36 @@ const DepartmentList = () => {
       parentDepartment: '',
       status: '',
     });
+  };
+
+  const handleEditClick = (dept) => {
+    setSelectedDepartment(dept);
+    setShowEditModal(true);
+  };
+
+  const handleEditSave = (data) => {
+    // Map form data back to department schema
+    const updatedDept = {
+      name: data.departmentName,
+      head: data.departmentHead,
+      location: data.location,
+      status: data.status,
+      description: data.description,
+    };
+
+    setDepartments(prevData => {
+      const index = prevData.findIndex(d => d === selectedDepartment);
+      if (index !== -1) {
+        const newData = [...prevData];
+        newData[index] = { ...newData[index], ...updatedDept };
+        return newData;
+      }
+      return prevData;
+    });
+
+    console.log('Updated department data:', data);
+    setShowEditModal(false);
+    setShowSuccessModal(true);
   };
 
   return (
@@ -81,80 +213,110 @@ const DepartmentList = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex justify-between items-center mb-4 h-12 shrink-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 shrink-0 transition-all">
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative w-full md:w-[280px] lg:w-[350px]">
           <div
             className="flex items-center bg-[#F9FAFB] border border-[#F9FAFB] text-[#B3B3B3]"
             style={{
-              width: '380px',
               height: '48px',
               padding: '2px 32px 2px 24px',
               borderRadius: '32px',
-              border: '1px solid transparent'
+              border: '1px solid #EEECFF'
             }}
           >
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by department name..."
-              className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-base font-popins"
+              className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-light font-popins"
             />
           </div>
         </div>
 
         {/* Filter Dropdowns */}
-        <div className="flex gap-3 font-popins">
-          <button
-            className="flex items-center gap-2 px-4 py-3 text-[14px] font-base text-[#7D1EDB] rounded-lg hover:bg-purple-100 transition-colors"
-            style={{ backgroundColor: '#EEECFF', minWidth: '140px', justifyContent: 'space-between' }}
-          >
-            All Locations
-            <ChevronDown size={16} />
-          </button>
-          <button
-            className="flex items-center gap-2 px-4 py-3 text-[14px] font-base text-[#7D1EDB] rounded-lg hover:bg-purple-100 transition-colors"
-            style={{ backgroundColor: '#EEECFF', minWidth: '120px', justifyContent: 'space-between' }}
-          >
-            All Heads
-            <ChevronDown size={16} />
-          </button>
+        <div className="flex flex-wrap gap-3 font-popins w-full md:w-auto">
+          {/* Location Filter */}
+          <FilterDropdown
+            label="All Locations"
+            options={LOCATION_OPTIONS}
+            value={filters.location}
+            onChange={(val) => setFilters(prev => ({ ...prev, location: val }))}
+            minWidth="147px"
+          />
+
+          {/* Head Filter */}
+          <FilterDropdown
+            label="All Heads"
+            options={HEAD_OPTIONS}
+            value={filters.head}
+            onChange={(val) => setFilters(prev => ({ ...prev, head: val }))}
+            minWidth="147px"
+          />
         </div>
       </div>
+
 
       {/* Table */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <table className="w-full relative border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="text-left text-[14px] font-popins">
-              {['DEPARTMENT NAME', 'DEPARTMENT HEAD', 'EMPLOYEES', 'LOCATION', 'STATUS', 'ACTION'].map((head, i) => (
-                <th
-                  key={i}
-                  className="py-4 px-4 text-sm font-normal text-[#707070] uppercase tracking-wider bg-white"
-                >
-                  <div className="flex items-center cursor-pointer hover:text-gray-700">
-                    {head}
-                    {head !== 'ACTION' && head !== 'STATUS' && <ChevronDown className="ml-1 w-3 h-3" />}
-                  </div>
-                </th>
-              ))}
+              <th onClick={() => handleSort('name')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "25%" }}>
+                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
+                  DEPARTMENT NAME <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'name' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
+                </div>
+              </th>
+              <th onClick={() => handleSort('head')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "20%" }}>
+                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
+                  DEPARTMENT HEAD <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'head' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
+                </div>
+              </th>
+              <th onClick={() => handleSort('employees')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
+                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
+                  EMPLOYEES <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'employees' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
+                </div>
+              </th>
+              <th onClick={() => handleSort('location')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
+                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
+                  LOCATION <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'location' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
+                </div>
+              </th>
+              <th onClick={() => handleSort('status')} className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none" style={{ width: "15%" }}>
+                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
+                  STATUS <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'status' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} style={{ width: '10px', height: '16px' }} />
+                </div>
+              </th>
+              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white" style={{ width: "10%" }}>ACTION</th>
             </tr>
           </thead>
 
           <tbody>
-            {departments.map((dept, index) => (
-              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-base">
-                <td className="py-4 px-4  text-[#7268FF] cursor-pointer">{dept.name}</td>
-                <td className="py-4 px-4  text-[#1E1E1E]">{dept.head}</td>
-                <td className="py-4 px-4  text-[#1E1E1E]">{dept.employees}</td>
-                <td className="py-4 px-4  text-[#1E1E1E]">{dept.location}</td>
-                <td className="py-4 px-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-[18px] text-[16px] h-[34px] w-[74px] font-normal bg-[#76DB1E33] text-[#34C759]">
+            {currentItems.map((dept, index) => (
+              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-[54px]">
+                <td className="px-6 py-4">
+                  <span
+                    className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/hrms/department-details/overview', { state: { department: dept } });
+                    }}
+                  >
+                    {dept.name}
+                  </span>
+                </td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.head}</td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees}</td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.location}</td>
+                <td className="py-2 px-4">
+                  <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-[34px] min-w-[74px] font-normal ${dept.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' : 'bg-[#FF3B301A] text-[#FF3B30]'}`}>
                     {dept.status}
                   </span>
                 </td>
                 <td className="py-4 px-4">
-                  <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                    <Pencil size={18} />
+                  <button onClick={() => handleEditClick(dept)} className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer">
+                    <img src="/pencil.svg" alt="edit" style={{ height: '20px', width: '20px' }} />
                   </button>
                 </td>
               </tr>
@@ -164,179 +326,208 @@ const DepartmentList = () => {
       </div>
 
       {/* Pagination */}
-      <div className="relative flex items-center justify-center mt-2 pt-2 text-[16px] font-popins text-[#707070] shrink-0">
-        <div className="absolute left-0">Showing 1-10 Of 100</div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-            <ChevronLeft size={16} /> Previous
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center mt-2 pt-2 text-[16px] font-popins text-[#707070] shrink-0 gap-4">
+        <div className="text-center md:text-left">
+          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, departments.length)} Of {departments.length}
+        </div>
+        <div className="flex items-center justify-center md:justify-end lg:justify-center gap-2">
+          <button
+            onClick={handlePrev}
+            disabled={currentPage === 1}
+            className={`flex items-center gap-1 transition-colors ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:text-gray-900'}`}
+          >
+            <ArrowLeft size={14} /> Previous
           </button>
-          <div className="flex gap-1 ">
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-600 text-white font-medium">1</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">2</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">3</button>
-            <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">6</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600">7</button>
+
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg ${currentPage === number
+                  ? 'bg-purple-600 text-white font-medium'
+                  : 'text-[#1E1E1E] hover:bg-gray-100'
+                  }`}
+              >
+                {number}
+              </button>
+            ))}
           </div>
-          <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-            Next <ChevronRight size={16} />
+
+          <button
+            onClick={handleNext}
+            disabled={currentPage === totalPages}
+            className={`flex items-center gap-1 transition-colors ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-[#1E1E1E] hover:text-gray-900'}`}
+          >
+            Next <ArrowRight size={14} />
           </button>
         </div>
+        <div className="hidden lg:block"></div>
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-center items-center">
-          <div className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative">
+      {
+        showModal && (
+          <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
+            <div className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold text-[#1E1E1E]">Add New Department</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
-              {/* Department Name */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Department Name</label>
-                <input
-                  type="text"
-                  name="departmentName"
-                  value={formData.departmentName}
-                  onChange={handleInputChange}
-                  placeholder="Enter department name"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-gray-400"
-                />
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-[18px] font-semibold text-[#393C46]">Add New Department</h2>
+                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
               </div>
 
-              {/* Department Code */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Department Code</label>
-                <input
-                  type="text"
-                  name="departmentCode"
-                  value={formData.departmentCode}
-                  onChange={handleInputChange}
-                  placeholder="Enter department code"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-gray-400"
-                />
-              </div>
+              {/* Form Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-              {/* Department Head */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Department Head</label>
-                <div className="relative">
-                  <select
-                    name="departmentHead"
+                {/* Department Name */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Department Name</label>
+                  <input
+                    type="text"
+                    name="departmentName"
+                    value={formData.departmentName}
+                    onChange={handleInputChange}
+                    placeholder="Enter department name"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
+                  />
+                </div>
+
+                {/* Department Code */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Department Code</label>
+                  <input
+                    type="text"
+                    name="departmentCode"
+                    value={formData.departmentCode}
+                    onChange={handleInputChange}
+                    placeholder="Enter department code"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
+                  />
+                </div>
+
+                {/* Department Head */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Department Head</label>
+                  <FilterDropdown
+                    options={["John Smith", "Alice Carol"]}
                     value={formData.departmentHead}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-gray-600"
-                  >
-                    <option value="">Select a department head</option>
-                    <option value="John Smith">John Smith</option>
-                    <option value="Alice Carol">Alice Carol</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    onChange={(val) => handleInputChange({ target: { name: 'departmentHead', value: val } })}
+                    placeholder="Select a department head"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
-              </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Location</label>
-                <div className="relative">
-                  <select
-                    name="location"
+                {/* Location */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Location</label>
+                  <FilterDropdown
+                    options={["Mumbai", "Delhi"]}
                     value={formData.location}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-gray-600"
-                  >
-                    <option value="">Select a location</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Delhi">Delhi</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    onChange={(val) => handleInputChange({ target: { name: 'location', value: val } })}
+                    placeholder="Select a location"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
-              </div>
 
-              {/* Parent Department */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Parent department</label>
-                <div className="relative">
-                  <select
-                    name="parentDepartment"
+                {/* Parent Department */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Parent department</label>
+                  <FilterDropdown
+                    options={["Finance", "Marketing"]}
                     value={formData.parentDepartment}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-gray-600"
-                  >
-                    <option value="">Select parent department</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Marketing">Marketing</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    onChange={(val) => handleInputChange({ target: { name: 'parentDepartment', value: val } })}
+                    placeholder="Select parent department"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
-              </div>
 
-              {/* Status */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1E1E1E]">Status</label>
-                <div className="relative">
-                  <select
-                    name="status"
+                {/* Status */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[16px] font-base text-[#1E1E1E]">Status</label>
+                  <FilterDropdown
+                    options={["Active", "Inactive"]}
                     value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-gray-600"
-                  >
-                    <option value="">Select status</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    onChange={(val) => handleInputChange({ target: { name: 'status', value: val } })}
+                    placeholder="Select status"
+                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                  />
                 </div>
+
+              </div>
+
+              {/* Description */}
+              <div className="flex flex-col gap-[8px] mb-8">
+                <label className="text[16px]m font-base text-[#1E1E1E]">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter department description"
+                  rows="3"
+                  className="w-full h-[80px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-8 py-2 border border-[#7D1EDB] rounded-full text-[#7D1EDB] font-medium hover:bg-purple-50 transition-colors"
+                  style={{ borderRadius: '30px' }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSubmit}
+                  className="px-8 py-2 bg-[#7D1EDB] text-white rounded-full font-medium hover:bg-purple-700 transition-colors shadow-sm"
+                  style={{ borderRadius: '30px' }}
+                >
+                  Save
+                </button>
               </div>
 
             </div>
-
-            {/* Description */}
-            <div className="space-y-2 mb-8">
-              <label className="text-sm font-medium text-[#1E1E1E]">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Enter department description"
-                rows="3"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-gray-400 resize-none"
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-8 py-2 border border-[#7D1EDB] rounded-full text-[#7D1EDB] font-medium hover:bg-purple-50 transition-colors"
-                style={{ borderRadius: '30px' }}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSubmit}
-                className="px-8 py-2 bg-[#7D1EDB] text-white rounded-full font-medium hover:bg-purple-700 transition-colors shadow-sm"
-                style={{ borderRadius: '30px' }}
-              >
-                Save
-              </button>
-            </div>
-
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+      {/* Edit Modal */}
+      {
+        showEditModal && (
+          <EditDepartmentModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleEditSave}
+            initialData={selectedDepartment ? {
+              departmentName: selectedDepartment.name,
+              departmentCode: "DEP-00X",
+              departmentHead: selectedDepartment.head,
+              location: selectedDepartment.location,
+              description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances",
+              parentDepartment: "Finance",
+              status: selectedDepartment.status
+            } : null}
+          />
+        )
+      }
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+      />
+
+    </div >
   );
 };
 
