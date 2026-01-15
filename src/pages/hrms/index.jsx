@@ -11,7 +11,7 @@ const HRMS = () => {
     const shortcuts = [
         { name: 'New Hiring' },
         { name: 'New Onboarding' },
-        { name: 'Organization Tree' },
+        { name: 'Organization Tree' , badge: true },
         { name: 'Designation' },
         { name: 'Settings' },
         { name: 'Department', badge: true },
@@ -29,6 +29,10 @@ const HRMS = () => {
         }
         else if (name === 'Settings') {
             navigate('/hrms/settings');  // Navigate to Settings
+        }
+        
+        else if (name === 'Organization Tree') {
+            navigate('/hrms/organization-tree');  // Navigate to Settings
         }
     };
 
@@ -63,6 +67,9 @@ const HRMS = () => {
                                 }
                                 else if (shortcut.name === 'Settings') {
                                     navigate('/hrms/settings');  // Navigate to Settings
+                                }
+                                else if (shortcut.name === 'Organization Tree') {
+                                    navigate('/hrms/organization-tree');  // Navigate to Settings
                                 }
                             }}
                         >
