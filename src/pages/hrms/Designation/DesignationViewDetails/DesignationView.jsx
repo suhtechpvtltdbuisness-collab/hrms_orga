@@ -159,45 +159,49 @@ const DesignationView = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-8 mb-4 px-2 font-normal shrink-0">
-        <div className="w-[calc(100%-200px)]">
+      <div className="w-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-4 px-2 font-normal shrink-0">
+        <div>
           <div className="flex items-center gap-2 mb-1">
             <img src="/images/department.svg" alt="dept" className="w-5 h-5" />
-            <p className="text-[#7F7F7F] text-[18px]">Department</p>
+            <p className="text-[#7F7F7F] text-[16px] md:text-[18px]">Department</p>
           </div>
-          <p className="text-[#1E1E1E] text-[17px]">
+          <p className="text-[#1E1E1E] text-[16px] md:text-[17px] wrap-break-word">
             {formData?.department || designationInfo.department}
           </p>
         </div>
         <div>
           <div className="flex items-center gap-2 mb-1">
             <img src="/images/levels.svg" alt="level" className="w-5 h-5" />
-            <p className="text-[#7F7F7F] text-[18px]">Level</p>
+            <p className="text-[#7F7F7F] text-[16px] md:text-[18px] pr-2">Level</p>
           </div>
-          <p className="text-[#1E1E1E] text-[17px]">
+          <p className="text-[#1E1E1E] text-[16px] md:text-[17px]">
             {formData?.level || designationInfo.level}
           </p>
         </div>
         <div>
           <div className="flex items-center gap-2 mb-1">
             <img src="/images/report.svg" alt="report" className="w-5 h-5" />
-            <p className="text-[#7F7F7F] text-[18px]">Reports To</p>
+            <p className="text-[#7F7F7F] text-[16px] md:text-[18px]">Reports To</p>
           </div>
-          <p className="text-[#1E1E1E] text-[17px]">
+          <p className="text-[#1E1E1E] text-[16px] md:text-[17px] wrap-break-word">
             {formData?.reportsTo || designationInfo.reportsTo}
           </p>
         </div>
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img src="/images/employees.svg" alt="emp" className="w-5 h-5" />
-            <p className="text-[#7F7F7F] text-[18px]">Employees</p>
-          </div>
-          <p className="text-[#1E1E1E] text-[17px]">
-            {formData?.employees || designationInfo.employees}
-          </p>
-        </div>
-        <div className="flex ml-52 h-[24px] mt-4">
-          <img src="/images/dots.svg" alt="dots" />
+        
+        {/* merged Employees + Dots */}
+        <div className="flex justify-between items-start lg:col-span-2">
+             <div>
+                <div className="flex items-center gap-2 mb-1">
+                    <img src="/images/employees.svg" alt="emp" className="w-5 h-5" />
+                    <p className="text-[#7F7F7F] text-[16px] md:text-[18px]">Employees</p>
+                </div>
+                <p className="text-[#1E1E1E] text-[16px] md:text-[17px]">
+                    {formData?.employees || designationInfo.employees}
+                </p>
+            </div>
+             <div className="flex h-[24px] mt-1 md:mt-4">
+                 <img src="/images/dots.svg" alt="dots" className="cursor-pointer" />
+            </div>
         </div>
       </div>
 
