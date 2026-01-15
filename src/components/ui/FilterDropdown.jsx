@@ -32,7 +32,7 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
     };
 
     return (
-        <div className={`relative ${className?.includes('w-full') ? 'w-full' : ''}`} ref={dropdownRef}>
+        <div className={`relative ${className?.includes('w-full') ? 'w-full' : 'w-fit'}`} ref={dropdownRef}>
             <button
                 type="button"
                 disabled={disabled}
