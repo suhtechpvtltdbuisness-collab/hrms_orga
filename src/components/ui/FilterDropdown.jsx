@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName }) => {
+const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -16,6 +16,7 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
     }, []);
 
     const handleSelect = (optionValue) => {
+        if (disabled) return;
         onChange(optionValue);
         setIsOpen(false);
     };
@@ -31,11 +32,12 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
     };
 
     return (
-        <div className={`relative ${className?.includes('w-full') ? 'w-full' : ''}`} ref={dropdownRef}>
+        <div className={`relative ${className?.includes('w-full') ? 'w-full' : 'w-fit'}`} ref={dropdownRef}>
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={className || "flex items-center justify-between px-4 py-3 bg-[#EEECFF] text-[#7D1EDB] rounded-[12px] text-sm font-normal outline-none hover:bg-purple-100 transition-colors"}
+                disabled={disabled}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className={`${className || "flex items-center justify-between px-4 py-3 bg-[#EEECFF] text-[#7D1EDB] rounded-[12px] text-sm font-normal outline-none hover:bg-purple-100 transition-colors"} ${disabled ? 'opacity-60 cursor-not-allowed hover:bg-[#EEECFF]' : ''}`}
                 style={{ minWidth: className ? 'auto' : minWidth }}
             >
                 <span className={!value && placeholder ? "text-gray-400" : (buttonTextClassName || "")}>

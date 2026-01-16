@@ -1,5 +1,6 @@
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const DepartmentSettings = () => {
     const { departmentInfo, isEditing, formData, handleInputChange } = useOutletContext();
@@ -132,7 +133,17 @@ const DepartmentSettings = () => {
                     {/* Status */}
                     <div>
                         <label className="block text-[#1E1E1E] mb-1">Status</label>
-                        <div className="px-4 py-2 rounded-lg text-[#1E1E1E]" style={{ background: '#F2F2F7', border: '1px solid #D9D9D9' }}>{departmentInfo.createdOn || departmentInfo.status}</div>
+                        {isEditing ? (
+                            <FilterDropdown
+                                options={['Active', 'Inactive']}
+                                value={formData?.status || 'Active'}
+                                onChange={(val) => handleInputChange('status', val)}
+                                className="w-full px-2 py-2 border border-[#D9D9D9] bg-[#F2F2F7] rounded-lg text-[#1E1E1E] flex items-center justify-between"
+                                minWidth="100%"
+                            />
+                        ) : (
+                            <div className="px-4 py-2 rounded-lg text-[#1E1E1E]" style={{ background: '#F2F2F7', border: '1px solid #D9D9D9' }}>{departmentInfo.status}</div>
+                        )}
                     </div>
                 </div>
             </div>

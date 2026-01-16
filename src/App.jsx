@@ -14,12 +14,14 @@ import DepartmentOverview from './pages/hrms/Department/DepartmentViewDetails/De
 import DepartmentEmployees from './pages/hrms/Department/DepartmentViewDetails/DepartmentEmployees';
 import DepartmentOrgStructure from './pages/hrms/Department/DepartmentViewDetails/DepartmentOrgStructure';
 import DepartmentSettings from './pages/hrms/Department/DepartmentViewDetails/DepartmentSettings';
-import EmpPersonalInfo from './pages/hrms/Employee/EmployeeViewDetails/EmpPersonalInfo';
 import EmpUpdatePersonalInfo from './pages/hrms/Employee/EmployeeUpdateDetails/EmpUpdatePersonalInfo';
 import ViewEmployee from './pages/hrms/Employee/EmployeeViewDetails/ViewEmployee';
 import DesignationView from './pages/hrms/Designation/DesignationViewDetails/DesignationView';
 import DesignationOverview from './pages/hrms/Designation/DesignationViewDetails/DesignationOverview';
-import DesignationUpdate from './pages/hrms/Designation/DesignationUpdateDetails/DesignationUpdate';
+import DesignationEmployees from './pages/hrms/Designation/DesignationViewDetails/DesignationEmployees';
+import DesignationOrgStructure from './pages/hrms/Designation/DesignationViewDetails/DesignationOrgStructure';
+import DesignationSettings from './pages/hrms/Designation/DesignationViewDetails/DesignationSettings';
+// import DesignationUpdate from './pages/hrms/Designation/DesignationUpdateDetails/DesignationUpdate';
 import OrganizationTree from './pages/hrms/Organization/OrganizationTree/OrganizationTree';
 import NodeDetails from './pages/hrms/Organization/OrganizationTree/NodeDetails';
 
@@ -63,10 +65,9 @@ function App() {
           <Route path="/hrms/designation-details" element={<DesignationView />}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<DesignationOverview />} />
-          </Route>
-          <Route path="/hrms/designation-update" element={<DesignationUpdate />}>
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<DesignationOverview />} />
+            <Route path="employees" element={<DesignationEmployees />} />
+            <Route path="org-structure" element={<DesignationOrgStructure />} />
+            <Route path="settings" element={<DesignationSettings />} />
           </Route>
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
         </Routes>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 
 const DepartmentOverview = () => {
@@ -151,17 +152,15 @@ const DepartmentOverview = () => {
                         <div>
                             <label className="block text-[#1E1E1E] mb-1">Status</label>
                             {isEditing ? (
-                                <select
+                                <FilterDropdown
+                                    options={['Active', 'Inactive']}
                                     value={formData?.status || 'Active'}
-                                    onChange={(e) => handleInputChange('status', e.target.value)}
-                                    className="px-4 py-2 rounded-lg text-[#1E1E1E] w-full outline-none focus:ring-1 focus:ring-purple-500 appearance-none bg-white"
-                                    style={{ background: '#F2F2F7', border: '1px solid #D9D9D9' }}
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
+                                    onChange={(val) => handleInputChange('status', val)}
+                                    className="w-full px-2 py-2 border border-[#D9D9D9] bg-[#F2F2F7] rounded-lg text-[#1E1E1E] flex items-center justify-between"
+                                    minWidth="100%"
+                                />
                             ) : (
-                                <div className="px-4 py-2 rounded-lg text-[#1E1E1E]" style={{ background: '#F2F2F7', border: '1px solid #D9D9D9' }}>{departmentInfo.status}</div>
+                                <div className="px-2 py-2 rounded-lg text-[#1E1E1E]" style={{ background: '#F2F2F7', border: '1px solid #D9D9D9' }}>{departmentInfo.status}</div>
                             )}
                         </div>
                     </div>

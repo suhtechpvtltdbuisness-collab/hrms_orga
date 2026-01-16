@@ -1,14 +1,11 @@
 import React from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 
-import DeleteDesignation from './DeleteDesignation';
-
-const DesignationOverview = () => {
+const DesignationEmployees = () => {
   const { designationInfo, isEditing, formData, handleInputChange } =
     useOutletContext();
-
-  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const navigate = useNavigate();
 
   const DEPARTMENT_OPTIONS = [
     "Engineering",
@@ -30,7 +27,6 @@ const DesignationOverview = () => {
     "CEO",
     "Product Manager"
   ];
-
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     if (dateString.includes('/')) {
@@ -45,7 +41,6 @@ const DesignationOverview = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    // Check if already in DD/MM/YYYY
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return dateString;
     
     const date = new Date(dateString);
@@ -57,24 +52,16 @@ const DesignationOverview = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const getValue = (key) =>
-    isEditing ? formData?.[key] || "" : designationInfo?.[key] || "";
-
-  const handleDeleteClick = () => {
-    setShowDeleteModal(true);
-  };
-
   return (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-4 pl-2 pb-4 ">
-      {/* Title */}
+      {/* Employee Information Card */}
       <h2
         className="text-[20px] font-semibold text-[#000000] mb-4 px-2 w-full xl:w-[75%]"
         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
       >
-        Designation Information
+        Employee Information
       </h2>
 
-      {/* Form Content */}
       <div className="bg-white px-2 w-full xl:w-[75%]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           {/* Row 1 */}
@@ -182,10 +169,11 @@ const DesignationOverview = () => {
                 </div>
             ) : (
                 <div
-                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
+                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal flex justify-between items-center"
                   style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "230px" }}
                 >
                   {formatDate(designationInfo.createdOn)}
+                  <img src="/images/calender.svg" alt="calendar" className="w-5 h-5 ml-2" />
                 </div>
             )}
           </div>
@@ -217,10 +205,11 @@ const DesignationOverview = () => {
                 </div>
             ) : (
                 <div
-                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
+                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal flex justify-between items-center"
                   style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "230px" }}
                 >
                   {formatDate(designationInfo.lastUpdated)}
+                  <img src="/images/calender.svg" alt="calendar" className="w-5 h-5 ml-2" />
                 </div>
             )}
           </div>
@@ -294,28 +283,15 @@ const DesignationOverview = () => {
           )}
         </div>
 
-        {/* Deactivate Button */}
-        <button 
-          onClick={handleDeleteClick}
-          className="px-6 py-3 bg-[#FF383C] text-white text-[17px] font-Poppins font-medium rounded-full hover:bg-[#E03125] transition-colors"
-        >
-          Deactivate Designation
-        </button>
-
-        {/* Delete Modal */}
-        {showDeleteModal && (
-          <DeleteDesignation
-            onCancel={() => setShowDeleteModal(false)}
-            onDelete={() => {
-              setTimeout(() => {
-                setShowDeleteModal(false);
-              }, 2000);
-            }}
-          />
-        )}
+        {/* Assign Employee Button */}
+        <div>
+           <button className="px-6 py-3 bg-[#8A2BE2] text-white text-[16px] font-semibold rounded-full hover:bg-[#7a25c9] transition-colors">
+            Assign Employee To Designation
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default DesignationOverview;
+export default DesignationEmployees;
