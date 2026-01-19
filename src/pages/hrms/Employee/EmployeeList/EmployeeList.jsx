@@ -11,6 +11,9 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import AssignReportingManager from '../ReportingManager/AssignReportingManager';
+import AssignedModal from '../ReportingManager/AssignedModal';
+import SuccessModal from '../ReportingManager/SuccessModal';
 
 
 
@@ -44,6 +47,44 @@ const EmployeeList = () => {
         designation: '',
         status: ''
     });
+
+    // Action Menu State
+    const [activeActionMenu, setActiveActionMenu] = useState(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (activeActionMenu && !event.target.closest('.action-menu-container')) {
+                setActiveActionMenu(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [activeActionMenu]);
+
+    // Modal States
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isAssignedModalOpen, setIsAssignedModalOpen] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [selectedEmployeeForAssign, setSelectedEmployeeForAssign] = useState(null);
+
+    const handleOpenAssignModal = (employee) => {
+        setSelectedEmployeeForAssign(employee);
+        setIsAssignModalOpen(true);
+        setActiveActionMenu(null);
+    };
+
+    const handleAssignSubmit = () => {
+        setIsAssignModalOpen(false);
+        setIsAssignedModalOpen(true);
+    };
+
+    const handleAssignedOk = () => {
+        setIsAssignedModalOpen(false);
+        setIsSuccessModalOpen(true);
+    };
 
     const STATUS_OPTIONS = ["Active", "Inactive", "Probation",];
     const DEPARTMENT_OPTIONS = ["Technical ", "Product", "Business", "Operations", "Finance", "Security"];
@@ -285,47 +326,47 @@ const EmployeeList = () => {
                                 />
                             </th>
 
-                            <th onClick={() => handleSort('srNo')} className="py-3 px-1 w-[80px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('srNo')} className="py-3 px-1 w-[80px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     SR NO <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'srNo' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('name')} className="py-3 px-1 w-[160px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('name')} className="py-3 px-1 w-[160px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     EMP NAME <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'name' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('empId')} className="py-3 px-1 w-[100px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('empId')} className="py-3 px-1 w-[100px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     EMP ID <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'empId' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('department')} className="py-3 px-1 w-[120px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('department')} className="py-3 px-1 w-[120px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     DEPARTMENT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'department' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('designation')} className="py-3 px-1 w-[150px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('designation')} className="py-3 px-1 w-[150px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     DESIGNATION <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'designation' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('joiningDate')} className="py-3 px-1 w-[120px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('joiningDate')} className="py-3 px-1 w-[120px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     JOINING DATE <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'joiningDate' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('contact')} className="py-3 px-1 w-[180px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('contact')} className="py-3 px-1 w-[180px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     CONTACT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'contact' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th onClick={() => handleSort('status')} className="py-3 px-1 w-[100px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
+                            <th onClick={() => handleSort('status')} className="py-3 px-1 w-[100px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
                                 <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
                                     STATUS <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'status' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
                                 </div>
                             </th>
-                            <th className="py-3 px-1 w-[80px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
+                            <th className="py-3 px-1 w-[80px] text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -359,18 +400,55 @@ const EmployeeList = () => {
                                         </span>
                                     </td>
                                     <td className="py-4 px-2">
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => navigate('/hrms/employees-details')}
-                                                className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer">
-                                                <Eye size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => navigate("/hrms/employees-details-update")}
-                                                className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
-                                            >
-                                                <img src="/images/pencil_Icon.svg" alt="edit" style={{ width: '15px', height: '15px' }} />
-                                            </button>
+                                        <div className="flex items-center gap-3 relative">
+
+
+                                            {/* Dots Menu */}
+                                            <div className="relative action-menu-container">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveActionMenu(activeActionMenu === employee.srNo ? null : employee.srNo);
+                                                    }}
+                                                    className="focus:outline-none flex items-center justify-center"
+                                                >
+                                                    <img src="/images/dots.svg" alt="more" className="w-[5px] h-[18px] px-2 box-content cursor-pointer" />
+                                                </button>
+
+                                                {activeActionMenu === employee.srNo && (
+                                                    <div className="absolute right-0 top-full mt-4 w-[250px] bg-white rounded-lg shadow-[0px_4px_20px_0px_rgba(0,0,0,0.1)] z-50 py-2">
+                                                        <button
+                                                            className="w-full text-left px-4 py-2.5 text-[16px] text-[#333333] hover:bg-[#F5F5F5] font-light transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenAssignModal(employee);
+                                                            }}
+                                                        >
+                                                            Assign reporting manager
+                                                        </button>
+                                                        <button
+                                                            className="w-full text-left px-4 py-2.5 text-[16px] text-[#333333] hover:bg-[#F5F5F5] font-light transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate('/hrms/employees-details');
+                                                                setActiveActionMenu(null);
+                                                            }}
+                                                        >
+                                                            View
+                                                        </button>
+                                                        <button
+                                                            className="w-full text-left px-4 py-2.5 text-[16px] text-[#333333] hover:bg-[#F5F5F5] font-light transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate("/hrms/employees-details-update");
+                                                                setActiveActionMenu(null);
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -444,6 +522,28 @@ const EmployeeList = () => {
 
                 <div className="hidden lg:block"></div>
             </div>
+
+             {/* Modals */}
+             <AssignReportingManager 
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                onAssign={handleAssignSubmit}
+                employee={selectedEmployeeForAssign}
+            />
+            <AssignedModal
+                isOpen={isAssignedModalOpen}
+                onClose={() => setIsAssignedModalOpen(false)}
+                onOk={handleAssignedOk}
+                onViewTeam={() => {
+                    setIsAssignedModalOpen(false);
+                    navigate('/hrms/team-list');
+                }} 
+            />
+            <SuccessModal
+                isOpen={isSuccessModalOpen}
+                onClose={() => setIsSuccessModalOpen(false)}
+                message="Assigned reporting manager Successfully"
+            />
         </div>
     );
 };

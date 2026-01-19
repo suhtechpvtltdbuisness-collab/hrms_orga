@@ -94,30 +94,34 @@ const DesignationView = () => {
       className="bg-white mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans"
       style={{ fontFamily: '"Nunito Sans", sans-serif' }}
     >
+      {/* Fixed Breadcrumb Section */}
       <div className="px-4 pt-4 shrink-0">
-      {/* Breadcrumb */}
-      <div
-        className="flex items-center text-[14px] text-[#7D1EDB] mb-4 shrink-0"
-        style={{ fontFamily: "Mulish, sans-serif" }}
-      >
         <div
-          className="flex items-center gap-3"
-          onClick={() => navigate("/hrms/designations")}
+          className="flex items-center text-[14px] text-[#7D1EDB] mb-4"
+          style={{ fontFamily: "Mulish, sans-serif" }}
         >
-          <img
-            src="/images/arrow_left_alt.svg"
-            alt="Back"
-            className="cursor-pointer"
-          />
-          <span className="font-normal cursor-pointer hover:text-purple-500">
-            Designation List
+          <div
+            className="flex items-center gap-3"
+            onClick={() => navigate("/hrms/designations")}
+          >
+            <img
+              src="/images/arrow_left_alt.svg"
+              alt="Back"
+              className="cursor-pointer"
+            />
+            <span className="font-normal cursor-pointer hover:text-purple-500">
+              Designation List
+            </span>
+          </div>
+          <ChevronLeft size={16} className="mx-1 rotate-180" />
+          <span className="text-[#667085] text-[14px] font-normal">
+            Designation Details
           </span>
         </div>
-        <ChevronLeft size={16} className="mx-1 rotate-180" />
-        <span className="text-[#667085] text-[14px] font-normal">
-          Designation Details
-        </span>
       </div>
+
+      {/* Scrollable Content Section */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
 
       {/* Header */}
       <div className="flex justify-between items-start shrink-0">
@@ -224,11 +228,11 @@ const DesignationView = () => {
           </button>
         ))}
       </div>
-      </div>
 
       <Outlet
         context={{ designationInfo, isEditing, formData, handleInputChange }}
       />
+      </div>
     </div>
   );
 };

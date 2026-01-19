@@ -24,6 +24,8 @@ import DesignationSettings from './pages/hrms/Designation/DesignationViewDetails
 // import DesignationUpdate from './pages/hrms/Designation/DesignationUpdateDetails/DesignationUpdate';
 import OrganizationTree from './pages/hrms/Organization/OrganizationTree/OrganizationTree';
 import NodeDetails from './pages/hrms/Organization/OrganizationTree/NodeDetails';
+import Notifications from './pages/hrms/Notifications/Notifications';
+import TeamList from './pages/hrms/Employee/ReportingManager/TeamList';
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
           <Route path="/hrms/settings" element={<Settings />} />
           <Route path="/hrms/employees-details" element={<Navigate to="/hrms/employees-details/personal-information" />} />
           <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
+          <Route path="/hrms/notifications" element={<Notifications />} />
+          <Route path="/hrms/team-list" element={<TeamList />} />
           {/* Add other routes here */}
           <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
           <Route path="/hrms/department-details" element={<DepartmentDetails />}>

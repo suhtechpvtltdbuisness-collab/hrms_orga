@@ -69,7 +69,7 @@ const EditDesignationModal = ({ isOpen, onClose, designation }) => {
 
     return (
         <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
-            <div className="bg-white rounded-xl p-6 w-[95%] md:w-[720px] shadow-xl relative" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="bg-white rounded-xl p-6 w-[95%] md:w-[720px] shadow-xl relative max-h-[90vh] overflow-y-auto custom-scrollbar" style={{ fontFamily: 'Inter, sans-serif' }}>
                 
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
