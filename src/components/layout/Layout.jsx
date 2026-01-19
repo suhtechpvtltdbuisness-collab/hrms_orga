@@ -44,7 +44,7 @@ const Layout = ({ children }) => {
           </div>
 
           {/* Page Content Container */}
-          <main className="flex-1 overflow-x-hidden -mr-3.75">
+          <main className="flex-1 overflow-x-auto -mr-3.75">
             {/* Inner content container - align with Topbar's margin */}
             <div className="w-full mx-auto">
               {children || <Outlet />}

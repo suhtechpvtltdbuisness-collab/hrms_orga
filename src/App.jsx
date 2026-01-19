@@ -26,6 +26,7 @@ import OrganizationTree from './pages/hrms/Organization/OrganizationTree/Organiz
 import NodeDetails from './pages/hrms/Organization/OrganizationTree/NodeDetails';
 import Notifications from './pages/hrms/Notifications/Notifications';
 import TeamList from './pages/hrms/Employee/ReportingManager/TeamList';
+import NewJobOpening from './pages/hrms/NewJobOpening/NewJobOpening';
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
             <Route path="org-structure" element={<DesignationOrgStructure />} />
             <Route path="settings" element={<DesignationSettings />} />
           </Route>
+          <Route path="/hrms/job-opening/new" element={<NewJobOpening />} />
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
         </Routes>
       </Layout>

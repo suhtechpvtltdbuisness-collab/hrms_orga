@@ -49,40 +49,43 @@ const ActivityHeatmap = () => {
   ];
 
   return (
-    <div className="w-full bg-[#FEFEFE] border border-[#E4E0E0] rounded-xl p-4 sm:p-6 overflow-x-auto mb-4">
+    <div className="w-full bg-[#FEFEFE] border border-[#E4E0E0] rounded-xl p-3 sm:p-4 md:p-6 overflow-x-auto mb-4">
       {/* Activity Level Legend */}
-      <div className="flex justify-end items-center gap-2 mb-4">
-        <span className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          Activity Level
-        </span>
-        <div className="flex items-center gap-1">
-          {legendBoxes.map((box, idx) => (
-            <div key={idx} className="flex items-center gap-1">
-              <div
-                className="w-5 h-5 rounded"
-                style={{ backgroundColor: box.color }}
-              />
-              {box.label && (
-                <span className="text-xs text-gray-600 ml-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {box.label}
-                </span>
-              )}
-            </div>
-          ))}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
+        <h3 className="text-base font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>Activity Heatmap</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-medium text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Activity Level
+          </span>
+          <div className="flex items-center gap-1">
+            {legendBoxes.map((box, idx) => (
+              <div key={idx} className="flex items-center gap-1">
+                <div
+                  className="w-4 h-4 sm:w-5 sm:h-5 rounded"
+                  style={{ backgroundColor: box.color }}
+                />
+                {box.label && (
+                  <span className="text-[10px] sm:text-xs text-gray-500 ml-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {box.label}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Heatmap Grid Container */}
-      <div className="min-w-[900px]">
+      <div className="min-w-[760px] lg:min-w-full overflow-x-auto">
         {/* Header Row - Days */}
-        <div className="grid grid-cols-[160px_repeat(12,1fr)] gap-2 mb-3">
-          <div className="text-sm font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="grid grid-cols-[120px_repeat(12,1fr)] sm:grid-cols-[160px_repeat(12,1fr)] gap-2 mb-3">
+          <div className="text-xs sm:text-sm font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Department
           </div>
           {days.map((day, idx) => (
             <div
               key={idx}
-              className="text-sm font-medium text-gray-800 text-center"
+              className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-800 text-center"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               {day}
@@ -94,15 +97,15 @@ const ActivityHeatmap = () => {
         {departments.map((dept, deptIdx) => (
           <div
             key={deptIdx}
-            className="grid grid-cols-[160px_repeat(12,1fr)] gap-2 mb-3"
+            className="grid grid-cols-[120px_repeat(12,1fr)] sm:grid-cols-[160px_repeat(12,1fr)] gap-2 mb-3"
           >
             {/* Department Label with Color Indicator */}
             <div className="flex items-center gap-2">
               <div
-                className="w-1 h-8 rounded"
+                className="w-1 h-6 sm:h-8 rounded"
                 style={{ backgroundColor: dept.color }}
               />
-              <span className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              <span className="text-xs sm:text-sm font-medium text-gray-800 truncate" title={dept.name} style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {dept.name}
               </span>
             </div>
