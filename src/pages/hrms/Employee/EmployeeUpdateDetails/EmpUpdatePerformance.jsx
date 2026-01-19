@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 /* Accordion */
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
@@ -146,11 +147,6 @@ const EmpUpdatePerformance = ({ formData, onChange }) => {
     1: "Poor"
   };
 
-  // State Management
-  // If formData provides arrays, use them; otherwise defaults.
-  // Note: We need a local state to handle edits before saving to parent? 
-  // Ideally, if isControlled is true, we should be updating parent directly or using a local buffer.
-  // Given the previous setup, let's treat formData as the source of truth if available.
   
   const goals = isControlled && formData.goals ? formData.goals : defaultGoals;
   const competencies = isControlled && formData.competencies ? formData.competencies : defaultCompetencies;
@@ -158,8 +154,6 @@ const EmpUpdatePerformance = ({ formData, onChange }) => {
   const performanceStatus = isControlled ? (formData.performanceStatus || "") : "";
   const overallRating = isControlled ? (formData.overallRating || 0) : 0;
 
-  // Initial Sync: Not needed if we trust formData, but if formData comes empty, we might want to populate it?
-  // Let's assume the utils/employeeData default handles the initial population.
 
   const calculateAverageRating = (newCompetencies) => {
     if (!newCompetencies || newCompetencies.length === 0) return 0;
@@ -188,11 +182,6 @@ const EmpUpdatePerformance = ({ formData, onChange }) => {
             const newRating = calculateAverageRating(updatedCompetencies);
             const newStatus = ratingToStatusMap[newRating] || "Average";
             
-            // Batch updates if possible, or sequential
-            // React state updates in parent might be async, but here we trigger events.
-            // CAUTION: Multiple onChange calls in sequence might override each other if parent state update isn't functional (setState(prev => ...))
-            // EmpUpdatePersonalInfo uses setFormData(prev => ({...prev, [name]: value})), so it is safe to call multiple times.
-            
             onChange({ target: { name: "overallRating", value: newRating } });
             onChange({ target: { name: "performanceStatus", value: newStatus } });
         }
@@ -216,11 +205,18 @@ const EmpUpdatePerformance = ({ formData, onChange }) => {
         onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <InputField
-            label="Last review Date"
-            value={lastReviewDate}
-            onChange={handleDateChange}
-          />
+          <div>
+            <label className="block text-[#757575] mb-1.5" style={{ fontFamily: '"Nunito Sans", sans-serif', fontWeight: 600, fontSize: '15px', lineHeight: '100%', letterSpacing: '0%' }}>
+              Last review Date
+            </label>
+            <div className="relative">
+              <CustomDatePicker
+                value={lastReviewDate}
+                onChange={(val) => handleDateChange({ target: { value: val } })}
+                className="bg-white border-[#D9D9D9]"
+              />
+            </div>
+          </div>
           {/* Read Only Status */}
           <SelectField
             label="Performance status"

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -71,6 +72,9 @@ const EmpUpdateEmployment = () => {
         securitySettings: false,
     });
 
+    const [dates, setDates] = useState({});
+    const handleDateChange = (field, val) => setDates(prev => ({ ...prev, [field]: val }));
+
     const toggleSection = (section) => {
         setSections((prev) => ({
             ...prev,
@@ -93,14 +97,56 @@ const EmpUpdateEmployment = () => {
                     <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
                     <InputField label="Reporting Manager" placeholder="Enter name" />
 
-                    <InputField label="Date of Joining" type="date" placeholder="Select Date" />
+                    <InputField label="Reporting Manager" placeholder="Enter name" />
+
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Date of Joining</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.joiningDate}
+                                onChange={(val) => handleDateChange('joiningDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
                     <InputField label="Work Location" placeholder="Enter location" />
                     <InputField label="Branch" placeholder="Enter Branch name" />
-                    <InputField label="Prohibition Period" placeholder="Select Date" type="date" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Prohibition Period</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.prohibitionPeriod}
+                                onChange={(val) => handleDateChange('prohibitionPeriod', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
 
-                    <InputField label="Confirm Date" type="date" placeholder="Select Date" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Confirm Date</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.confirmDate}
+                                onChange={(val) => handleDateChange('confirmDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
                     <InputField label="Employment Status" placeholder="Active" />
-                    <InputField label="Prohibition End Date" type="date" placeholder="Select Date" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Prohibition End Date</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.prohibitionEndDate}
+                                onChange={(val) => handleDateChange('prohibitionEndDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
                 </div>
             </AccordionItem>
 
@@ -129,8 +175,29 @@ const EmpUpdateEmployment = () => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                     <InputField label="Contract Types" placeholder="Enter contract type" />
-                    <InputField label="Contract Start Date" type="date" placeholder="Select Date" />
-                    <InputField label="Contract End Date" type="date" placeholder="Select Date" />
+                    <InputField label="Contract Types" placeholder="Enter contract type" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Contract Start Date</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.contractStartDate}
+                                onChange={(val) => handleDateChange('contractStartDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Contract End Date</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.contractEndDate}
+                                onChange={(val) => handleDateChange('contractEndDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
 
                     <InputField label="Contract Duration" placeholder="Enter duration" />
                     <InputField label="Contract Pay" placeholder="Enter pay amount" />
@@ -214,7 +281,19 @@ const EmpUpdateEmployment = () => {
                     <InputField label="Additional Roles" placeholder="Enter additional roles" />
                     <InputField label="Module Access" placeholder="Enter module access" />
 
-                    <InputField label="Role Effective From" type="date" placeholder="Select Date" />
+                    <InputField label="Module Access" placeholder="Enter module access" />
+
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Role Effective From</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={dates.roleEffectiveDate}
+                                onChange={(val) => handleDateChange('roleEffectiveDate', val)}
+                                placeholder="Select Date"
+                                className="bg-white border-[#D9D9D9]"
+                            />
+                        </div>
+                    </div>
                 </div>
             </AccordionItem>
 

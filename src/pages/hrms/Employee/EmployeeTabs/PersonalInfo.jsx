@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -90,14 +91,12 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                     <div>
                         <label className={labelClasses}>Date of Birth</label>
                         <div className="relative">
-                            <input
-                                type="date"
-                                name="dob"
-                                value={formData.dob || ''}
-                                onChange={onChange}
-                                className={`${inputClasses} appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
+                            <CustomDatePicker
+                                value={formData.dob}
+                                onChange={(val) => onChange({ target: { name: 'dob', value: val } })}
+                                placeholder="Select Date"
+                                className="bg-white border-gray-200"
                             />
-                            <img src="/images/calender.svg" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" alt="calendar" />
                         </div>
                     </div>
 
