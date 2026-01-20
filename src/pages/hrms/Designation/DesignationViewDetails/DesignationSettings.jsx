@@ -85,7 +85,7 @@ const DesignationSettings = () => {
 
           {/* Reporting Manager Designation */}
           <div>
-            <label className="block text-[#1E1E1E] mb-2 text-[16px] font-normal">
+            <label className="block text-[#1E1E1E] mb-2 text-[16px] font-normal whitespace-nowrap">
               Reporting Manager Designation
             </label>
             {isEditing ? (

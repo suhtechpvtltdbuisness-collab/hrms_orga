@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import noRecordsImage from '../../../../assets/no-records.svg';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -97,6 +98,7 @@ const StarRating = ({ label, rating = 0 }) => {
 
 const Performance = () => {
     const [isSummaryOpen, setIsSummaryOpen] = useState(true);
+    const [lastReviewDate, setLastReviewDate] = useState('');
     const goalsData = [];
     const competencyData = [];
 
@@ -109,7 +111,17 @@ const Performance = () => {
                 onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-[#B3B3B3]">
-                    <InputField label="Last review Date" type="date" placeholder="Select Date" />
+                    <div>
+                        <label className="block text-base font-normal text-[#656565] mb-1.5 leading-[140%]">Last review Date</label>
+                        <div className="relative">
+                            <CustomDatePicker
+                                value={lastReviewDate}
+                                onChange={setLastReviewDate}
+                                placeholder="Select Date"
+                                className="bg-white border-gray-200"
+                            />
+                        </div>
+                    </div>
                     <SelectField
                         label="Performance status"
                         placeholder="Select status"

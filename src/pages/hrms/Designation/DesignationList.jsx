@@ -589,7 +589,7 @@ const DesignationList = () => {
       {showModal && (
         <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
           <div
-            className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative"
+            className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             {/* Modal Header */}

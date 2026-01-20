@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false }) => {
+const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false, maxHeight = '320px' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -53,7 +53,7 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
                         width: '100%',
                         minWidth: className ? '100%' : minWidth,
                         borderRadius: '8px',
-                        maxHeight: '320px',
+                        maxHeight: maxHeight,
                         overflowY: 'auto',
                         overflowX: 'hidden',
                         boxShadow: '0px 4px 14px 0px #0000001A',

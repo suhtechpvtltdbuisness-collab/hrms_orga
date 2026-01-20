@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import FilterDropdown from '../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../components/ui/CustomDatePicker';
 
 const NewJobOpening = () => {
     const navigate = useNavigate();
@@ -23,6 +25,11 @@ const NewJobOpening = () => {
         jobVisibility: 'Public'
     });
 
+    const DEPARTMENT_OPTIONS = ["Engineering", "Product Design", "Marketing", "Sales", "HR"];
+    const EMPLOYMENT_TYPE_OPTIONS = ["Full-time", "Part-time", "Contract", "Internship"];
+    const EXPERIENCE_OPTIONS = ["0-1 years", "1-3 years", "3-5 years", "5-7 years", "7+ years"];
+    const SOURCE_OPTIONS = ["Company Website", "LinkedIn", "Indeed", "Naukri", "Other"];
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -43,7 +50,7 @@ const NewJobOpening = () => {
 
     return (
         <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-
+            
             {/* Breadcrumb */}
             <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
                 <div className="flex items-center gap-3" onClick={() => navigate('/hrms')}>
@@ -107,20 +114,15 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Department
                                 </label>
-                                <select
-                                    name="department"
-                                    value={formData.department}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-500 appearance-none bg-white"
-                                    style={{ fontFamily: 'Poppins, sans-serif', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                                >
-                                    <option value="">Select department</option>
-                                    <option value="Engineering">Engineering</option>
-                                    <option value="Product Design">Product Design</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Sales">Sales</option>
-                                    <option value="HR">HR</option>
-                                </select>
+                                <div className="relative">
+                                    <FilterDropdown
+                                        options={DEPARTMENT_OPTIONS}
+                                        value={formData.department}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, department: val }))}
+                                        placeholder="Select department"
+                                        className="w-full h-[42px] flex items-center justify-between px-4 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                             </div>
 
                             {/* Employment Type */}
@@ -128,19 +130,15 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Employment Type
                                 </label>
-                                <select
-                                    name="employmentType"
-                                    value={formData.employmentType}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-500 appearance-none bg-white"
-                                    style={{ fontFamily: 'Poppins, sans-serif', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                                >
-                                    <option value="">Select type</option>
-                                    <option value="Full-time">Full-time</option>
-                                    <option value="Part-time">Part-time</option>
-                                    <option value="Contract">Contract</option>
-                                    <option value="Internship">Internship</option>
-                                </select>
+                                <div className="relative">
+                                    <FilterDropdown
+                                        options={EMPLOYMENT_TYPE_OPTIONS}
+                                        value={formData.employmentType}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, employmentType: val }))}
+                                        placeholder="Select type"
+                                        className="w-full h-[42px] flex items-center justify-between px-4 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                             </div>
 
                             {/* Designation */}
@@ -265,20 +263,15 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Experience(in years)
                                 </label>
-                                <select
-                                    name="experience"
-                                    value={formData.experience}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-500 appearance-none bg-white"
-                                    style={{ fontFamily: 'Poppins, sans-serif', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                                >
-                                    <option value="">Select experience</option>
-                                    <option value="0-1">0-1 years</option>
-                                    <option value="1-3">1-3 years</option>
-                                    <option value="3-5">3-5 years</option>
-                                    <option value="5-7">5-7 years</option>
-                                    <option value="7+">7+ years</option>
-                                </select>
+                                <div className="relative">
+                                    <FilterDropdown
+                                        options={EXPERIENCE_OPTIONS}
+                                        value={formData.experience}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, experience: val }))}
+                                        placeholder="Select experience"
+                                        className="w-full h-[42px] flex items-center justify-between px-4 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                             </div>
 
                             {/* Current Salary */}
@@ -327,14 +320,14 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Application Deadline
                                 </label>
-                                <input
-                                    type="date"
-                                    name="applicationDeadline"
-                                    value={formData.applicationDeadline}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-500"
-                                    style={{ fontFamily: 'Poppins, sans-serif' }}
-                                />
+                                <div className="relative">
+                                    <CustomDatePicker
+                                        value={formData.applicationDeadline}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, applicationDeadline: val }))}
+                                        placeholder="Select Date"
+                                        className="bg-white border-gray-300 w-full px-4 py-2.5 rounded-lg text-sm"
+                                    />
+                                </div>
                             </div>
 
                             {/* Application Source */}
@@ -342,20 +335,18 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Application Source
                                 </label>
-                                <select
-                                    name="applicationSource"
-                                    value={formData.applicationSource}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-700 appearance-none bg-white"
-                                    style={{ fontFamily: 'Poppins, sans-serif', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                                >
-                                    <option value="Company Website">Company Website</option>
-                                    <option value="LinkedIn">LinkedIn</option>
-                                    <option value="Indeed">Indeed</option>
-                                    <option value="Naukri">Naukri</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div className="relative">
+                                    <FilterDropdown
+                                        options={SOURCE_OPTIONS}
+                                        value={formData.applicationSource}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, applicationSource: val }))}
+                                        placeholder="Select source"
+                                        className="w-full h-[42px] flex items-center justify-between px-4 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                             </div>
+                            
+                            {/* Job Visibility handled separately - NOT replacing with dropdown as it is Radio */}
 
                             {/* Job Visibility */}
                             <div>

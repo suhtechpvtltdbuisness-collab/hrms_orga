@@ -83,17 +83,22 @@ const DepartmentDetails = () => {
     };
 
     return (
-        <div className="bg-white p-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+        <div className="bg-white mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
 
-            {/* Breadcrumb */}
-            <div className="flex items-center text-[14px] text-[#7D1EDB] mb-4 shrink-0" style={{ fontFamily: 'Mulish, sans-serif' }}>
-                <div className="flex items-center gap-3" onClick={() => navigate('/hrms/departments')}>
-                    <img src="/images/arrow_left_alt.svg" alt="Back" className="cursor-pointer" />
-                    <span className="font-normal cursor-pointer hover:text-purple-500">Department List</span>
+            {/* Fixed Breadcrumb */}
+            <div className="px-4 pt-4 shrink-0">
+                <div className="flex items-center text-[14px] text-[#7D1EDB] mb-4 shrink-0" style={{ fontFamily: 'Mulish, sans-serif' }}>
+                    <div className="flex items-center gap-3" onClick={() => navigate('/hrms/departments')}>
+                        <img src="/images/arrow_left_alt.svg" alt="Back" className="cursor-pointer" />
+                        <span className="font-normal cursor-pointer hover:text-purple-500">Department List</span>
+                    </div>
+                    <ChevronLeft size={16} className="mx-1 rotate-180" />
+                    <span className="text-[#667085] text-[14px] font-normal">Department Details</span>
                 </div>
-                <ChevronLeft size={16} className="mx-1 rotate-180" />
-                <span className="text-[#667085] text-[14px] font-normal">Department Details</span>
             </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
 
             {/* Header */}
             <div className="flex justify-between items-start mb-6 shrink-0">
@@ -157,6 +162,7 @@ const DepartmentDetails = () => {
                     <span>Delete Department</span>
                     <img src="/images/Trash.svg" alt="trash" style={{ height: '18px', width: '17px' }} />
                 </button>
+            </div>
             </div>
 
             {/* Delete Modal */}

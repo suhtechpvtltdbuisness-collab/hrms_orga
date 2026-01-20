@@ -1,6 +1,7 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
 
 import DeleteDesignation from './DeleteDesignation';
 
@@ -33,10 +34,6 @@ const DesignationOverview = () => {
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
-    if (dateString.includes('/')) {
-        const parts = dateString.split('/');
-        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    }
     if (dateString.includes(' ')) {
         return dateString.split(' ')[0];
     }
@@ -45,7 +42,7 @@ const DesignationOverview = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    // Check if already in DD/MM/YYYY
+    //DD/MM/YYYY
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return dateString;
     
     const date = new Date(dateString);
@@ -148,37 +145,12 @@ const DesignationOverview = () => {
               Created On
             </label>
             {isEditing ? (
-                <div className="relative">
-                    <input
-                        type="date"
+                <div style={{ width: '230px' }}>
+                    <CustomDatePicker
                         value={formatDateForInput(formData?.createdOn)}
-                        onChange={(e) => handleInputChange('createdOn', e.target.value)}
-                        className="px-4 py-2 rounded-lg text-[#1E1E1E] outline-none focus:ring-1 focus:ring-purple-500 appearance-none bg-[#F2F2F7] border border-[#D9D9D9]"
-                        style={{
-                            background: '#F2F2F7',
-                            border: '1px solid #D9D9D9',
-                            WebkitAppearance: 'none',
-                            width: '230px'
-                        }}
-                        onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                        onChange={(val) => handleInputChange('createdOn', val)}
+                        placeholder="Select Date"
                     />
-                    <img
-                        src="/images/calender.svg"
-                        alt="calendar"
-                        className="absolute top-1/2 transform -translate-y-1/2 pointer-events-none w-5 h-5"
-                        style={{ left: "195px" }}
-                    />
-                     <style jsx>{`
-                        input[type="date"]::-webkit-calendar-picker-indicator {
-                            opacity: 0;
-                            position: absolute;
-                            right: 0;
-                            top: 0;
-                            width: 100%;
-                            height: 100%;
-                            cursor: pointer;
-                        }
-                    `}</style>
                 </div>
             ) : (
                 <div
@@ -194,25 +166,11 @@ const DesignationOverview = () => {
               Last Updated On
             </label>
             {isEditing ? (
-                <div className="relative">
-                    <input
-                        type="date"
+                <div style={{ width: '230px' }}>
+                    <CustomDatePicker
                         value={formatDateForInput(formData?.lastUpdated)}
-                        onChange={(e) => handleInputChange('lastUpdated', e.target.value)}
-                        className="px-4 py-2 rounded-lg text-[#1E1E1E] outline-none focus:ring-1 focus:ring-purple-500 appearance-none bg-[#F2F2F7] border border-[#D9D9D9]"
-                        style={{
-                            background: '#F2F2F7',
-                            border: '1px solid #D9D9D9',
-                            WebkitAppearance: 'none',
-                            width: '230px'
-                        }}
-                        onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    />
-                    <img
-                        src="/images/calender.svg"
-                        alt="calendar"
-                        className="absolute top-1/2 transform -translate-y-1/2 pointer-events-none w-5 h-5"
-                        style={{ left: "195px" }}
+                        onChange={(val) => handleInputChange('lastUpdated', val)}
+                        placeholder="Select Date"
                     />
                 </div>
             ) : (
@@ -234,9 +192,13 @@ const DesignationOverview = () => {
           {isEditing ? (
             <textarea
               value={formData?.description || ""}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              className="px-4 py-4 rounded-lg text-[#1E1E1E] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none"
-              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", height: "80px" }}
+              onChange={(e) => {
+                  handleInputChange("description", e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              className="px-4 py-4 rounded-lg text-[#1E1E1E] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none overflow-hidden"
+              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", minHeight: "80px" }}
             />
           ) : (
             <div
