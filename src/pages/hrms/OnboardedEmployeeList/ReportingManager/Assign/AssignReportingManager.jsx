@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { X, Calendar } from 'lucide-react';
-import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import FilterDropdown from '../../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../../components/ui/CustomDatePicker';
 
-const AssignReportingManager = ({ isOpen, onClose, onAssign, employee }) => {
+const AssignReportingManager = ({ isOpen, onClose, onAssign, employee, isEdit }) => {
   const [formData, setFormData] = useState({
     name: '',
     department: '',
@@ -10,6 +11,28 @@ const AssignReportingManager = ({ isOpen, onClose, onAssign, employee }) => {
     joiningDate: '',
     reportingManager: ''
   });
+
+  React.useEffect(() => {
+    if (isOpen) {
+        if (isEdit && employee) {
+            setFormData({
+                name: employee.name || '',
+                department: employee.department || '',
+                designation: employee.designation || '',
+                joiningDate: employee.joiningDate || '', // Assuming format match or basic string
+                reportingManager: 'John Doe' // Mock existing manager for edit
+            });
+        } else {
+            setFormData({
+                name: '',
+                department: '',
+                designation: '',
+                joiningDate: '',
+                reportingManager: ''
+            });
+        }
+    }
+  }, [isOpen, isEdit, employee]);
 
   const DEPARTMENT_OPTIONS = ["Technical", "Product", "Business", "Operations", "Finance", "Security"];
   const DESIGNATION_OPTIONS = ["Frontend Developer", "Backend Developer", "DevOps", "UI/UX Designer", "Product Management"];
@@ -93,13 +116,12 @@ const AssignReportingManager = ({ isOpen, onClose, onAssign, employee }) => {
                  <div>
                     <label className="block text-[14px] font-medium text-[#1E1E1E] mb-2">Joining Date</label>
                     <div className="relative">
-                        <input 
-                            type="date"
+                        <CustomDatePicker 
                             value={formData.joiningDate}
-                            onChange={(e) => handleInputChange('joiningDate', e.target.value)}
-                            className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB] appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                            onChange={(val) => handleInputChange('joiningDate', val)}
+                            placeholder="Select Date"
+                            className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E]"
                         />
-                         <img src="/images/calender.svg" alt="calendar" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" />
                     </div>
                 </div>
                  <div>

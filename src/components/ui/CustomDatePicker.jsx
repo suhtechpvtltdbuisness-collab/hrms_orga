@@ -6,6 +6,21 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const dropdownRef = useRef(null);
+  const [position, setPosition] = useState('bottom');
+
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const dropdownHeight = 400; // ample space for calendar
+        
+        if (spaceBelow < dropdownHeight) {
+            setPosition('top');
+        } else {
+            setPosition('bottom');
+        }
+    }
+  }, [isOpen]);
 
   // Initialize selectedDate from props
   useEffect(() => {
@@ -169,9 +184,11 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
         />
       </div>
 
+
+
       {/* Popup */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-10 bg-white border border-[#D0D0D0] rounded-[20px] overflow-hidden w-[240px]">
+        <div className={`absolute left-0 z-10 bg-white border border-[#D0D0D0] rounded-[20px] overflow-hidden w-[240px] shadow-lg ${position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
             {/* Header */}
             <div className="px-5 pt-4 pb-2 border-b border-[#CAC4D0]">
                 <p className="text-[#49454F] text-xs font-medium mb-1">Select date</p>
@@ -179,18 +196,15 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
                     <h2 className="text-[#1D1B20] text-xl font-medium">
                         {headerDateString}
                     </h2>
-                    <button className="text-[#49454F] hover:bg-[#F5F5F5] p-1 rounded-full">
-                        <img src="/images/edit_calender.svg" alt="edit" className="w-[18px] h-[18px]" />
-                    </button>
                 </div>
             </div>
 
             <div className="bg-white px-4 py-2">
                 {/* Month Navigation */}
                  <div className="flex items-center justify-between px-1 mb-2">
-                     <div className="flex items-center gap-1 cursor-pointer">
+                     <div className="flex items-center gap-1">
                          <span className="text-[#49454F] text-sm font-medium">{monthYearString}</span>
-                         <span className="text-[#49454F] text-[10px]">▼</span>
+                         {/* <span className="text-[#49454F] text-[10px]">▼</span> */}
                      </div>
                      <div className="flex gap-2">
                          <button onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">

@@ -10,14 +10,18 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import FilterDropdown from '../../../../components/ui/FilterDropdown';
-import AssignReportingManager from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignReportingManager';
-import AssignedModal from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignedModal';
-import SuccessModal from '../../OnboardedEmployeeList/ReportingManager/Assign/SuccessModal';
+import FilterDropdown from '../../../components/ui/FilterDropdown';
+import AssignReportingManager from './ReportingManager/Assign/AssignReportingManager';
+import AssignedModal from './ReportingManager/Assign/AssignedModal';
+import SuccessModal from './ReportingManager/Assign/SuccessModal';
+
+import EditReportingManager from './ReportingManager/Update/EditReportingManager';
+import UpdateSuccessModal from './ReportingManager/Update/SuccessModal';
+import UpdateErrorModal from './ReportingManager/Update/ErrorModal';
 
 
 
-const EmployeeList = () => {
+const OnboardedEmployeeList = () => {
     // Mock Data
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
@@ -69,9 +73,13 @@ const EmployeeList = () => {
     const [isAssignedModalOpen, setIsAssignedModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [selectedEmployeeForAssign, setSelectedEmployeeForAssign] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isUpdateSuccessModalOpen, setIsUpdateSuccessModalOpen] = useState(false);
 
-    const handleOpenAssignModal = (employee) => {
+    const handleOpenAssignModal = (employee, isEdit = false) => {
         setSelectedEmployeeForAssign(employee);
+        setIsEditMode(isEdit);
         setIsAssignModalOpen(true);
         setActiveActionMenu(null);
     };
@@ -84,6 +92,17 @@ const EmployeeList = () => {
     const handleAssignedOk = () => {
         setIsAssignedModalOpen(false);
         setIsSuccessModalOpen(true);
+    };
+
+    const handleOpenEditModal = (employee) => {
+        setSelectedEmployeeForAssign(employee);
+        setIsEditModalOpen(true);
+        setActiveActionMenu(null);
+    };
+
+    const handleUpdateSubmit = () => {
+        setIsEditModalOpen(false);
+        setIsUpdateSuccessModalOpen(true);
     };
 
     const STATUS_OPTIONS = ["Active", "Inactive", "Probation",];
@@ -196,7 +215,7 @@ const EmployeeList = () => {
         const doc = new jsPDF();
 
         doc.setFontSize(18);
-        doc.text('Employee List', 14, 22);
+        doc.text('Onboarded Employee List', 14, 22);
 
         const tableColumn = ["Sr No", "Name", "Emp ID", "Department", "Designation", "Joining Date", "Contact", "Status"];
         const tableRows = employees.map(emp => [
@@ -216,14 +235,14 @@ const EmployeeList = () => {
             startY: 30,
         });
 
-        doc.save('Employee_List.pdf');
+        doc.save('Onboarded_Employee_List.pdf');
     };
 
     return (
         <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
+                <h1 className="text-xl font-semibold text-gray-800">Onboarded Employee List</h1>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                     {/* Export Button */}
@@ -241,19 +260,7 @@ const EmployeeList = () => {
                         <Download size={18} />
                     </button>
 
-                    {/* Add Employee Button */}
-                    <Link
-                        to="/hrms/employees/add"
-                        className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB] w-full sm:w-auto min-w-[177px]"
-                        style={{
-                            height: '48px',
-                            padding: '10px 16px',
-                            borderRadius: '26px'
-                        }}
-                    >
-                        <span>Add Employee</span>
-                        <Plus size={18} />
-                    </Link>
+
                 </div>
             </div>
 
@@ -399,27 +406,52 @@ const EmployeeList = () => {
                                             {employee.status}
                                         </span>
                                     </td>
-                                    <td className="py-4 px-2">
-                                            <div className="flex items-center justify-center gap-3">
-                                                <button
+                                    <td className="py-4 px-2 relative action-menu-container">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveActionMenu(activeActionMenu === employee.srNo ? null : employee.srNo);
+                                            }}
+                                            className="p-1 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
+                                        >
+                                            <img src="/images/dots.svg" alt="More" className="w-[18px] h-[18px]" />
+                                        </button>
+
+                                        {/* Action Menu Dropdown */}
+                                        {activeActionMenu === employee.srNo && (
+                                            <div className="absolute right-4 top-14 z-50 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-[220px]">
+                                                <button 
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate('/hrms/employees-details');
+                                                        navigate('/hrms/onboarded-employee-list/team-list');
+                                                        setActiveActionMenu(null);
                                                     }}
-                                                    className="focus:outline-none transition-transform hover:scale-110"
+                                                    className="w-full px-4 py-3 text-left text-sm font-light text-[#333333] hover:bg-gray-50 flex items-center gap-2"
                                                 >
-                                                    <img src="/images/view.svg" alt="View" className="w-5 h-5 cursor-pointer" />
+                                                    View
                                                 </button>
-                                                <button
+                                                <button 
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate("/hrms/employees-details-update");
+                                                        // Pass existing details for editing
+                                                        handleOpenEditModal(employee);
                                                     }}
-                                                    className="focus:outline-none transition-transform hover:scale-110"
+                                                    className="w-full px-4 py-3 text-left text-sm font-light text-[#333333] hover:bg-gray-50 flex items-center gap-2"
                                                 >
-                                                    <img src="/images/pencil_Icon.svg" alt="Edit" className="w-4 h-4 cursor-pointer" />
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Open empty modal for new assignment
+                                                        handleOpenAssignModal(employee);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm font-light text-[#333333] hover:bg-gray-50 flex items-center gap-2"
+                                                >
+                                                    Assign reporting manager
                                                 </button>
                                             </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))
@@ -430,19 +462,7 @@ const EmployeeList = () => {
                                         <img src="/images/emptyEmpList.png" alt="No Employees" className="mb-6 max-w-[400px]" />
                                         <h3 className="text-2xl font-medium text-black mb-2">No Employees found</h3>
                                         <p className="text-[#B3B3B3] text-lg mb-8">Get started by adding employees to the system</p>
-                                        <Link
-                                            to="/hrms/employees/add"
-                                            className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                                            style={{
-                                                width: '177px',
-                                                height: '48px',
-                                                padding: '10px 16px',
-                                                borderRadius: '26px'
-                                            }}
-                                        >
-                                            <Plus size={18} />
-                                            <span>Add Employee</span>
-                                        </Link>
+
                                     </div>
                                 </td>
                             </tr>
@@ -514,8 +534,21 @@ const EmployeeList = () => {
                 onClose={() => setIsSuccessModalOpen(false)}
                 message="Assigned reporting manager Successfully"
             />
+            
+            {/* Update Modals */}
+            <EditReportingManager 
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSave={handleUpdateSubmit}
+                employee={selectedEmployeeForAssign}
+            />
+            <UpdateSuccessModal
+                isOpen={isUpdateSuccessModalOpen}
+                onClose={() => setIsUpdateSuccessModalOpen(false)}
+            />
+            {/* <UpdateErrorModal /> - Use if needed for error state */}
         </div>
     );
 };
 
-export default EmployeeList;
+export default OnboardedEmployeeList;

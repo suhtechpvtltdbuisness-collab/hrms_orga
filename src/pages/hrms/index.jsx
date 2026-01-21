@@ -19,10 +19,14 @@ const HRMS = () => {
         { name: 'Schedule Interview' },
         { name: 'Attendance' },
         { name: 'New Job Opening' },
+        { name: 'Onboarded Employee List' , },
     ];
     const handleShortcut = (name) => {
         if (name === 'Employee List') {
             navigate('/hrms/employees');
+        }
+        else if (name === 'Onboarded Employee List') {
+            navigate('/hrms/onboarded-employees');
         }
         else if (name === 'Department') {
             navigate('/hrms/departments');  // Navigate to Department List
@@ -58,6 +62,9 @@ const HRMS = () => {
                             onClick={() => {
                                 if (shortcut.name === 'Employee List') {
                                     navigate('/hrms/employees');
+                                }
+                                else if (shortcut.name === 'Onboarded Employee List') {
+                                    navigate('/hrms/onboarded-employee-list');
                                 }
                                 else if (shortcut.name === 'Department') {
                                     navigate('/hrms/departments');
