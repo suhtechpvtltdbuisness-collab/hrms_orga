@@ -12,9 +12,10 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
     if (isOpen && dropdownRef.current) {
         const rect = dropdownRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        const dropdownHeight = 400; // ample space for calendar
+        const dropdownHeight = 350; // Estimated height
         
-        if (spaceBelow < dropdownHeight) {
+        // Only flip to top if there isn't enough space below AND there IS enough space above
+        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
             setPosition('top');
         } else {
             setPosition('bottom');
@@ -43,7 +44,8 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
     }
   }, [value]);
 
-  const toggleCalendar = () => {
+  const toggleCalendar = (e) => {
+    e.stopPropagation();
     setIsOpen(!isOpen);
     // Reset view date to selected or today when opening
     if (!isOpen) {
@@ -146,22 +148,17 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
   const monthYearString = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  // Close outside or on scroll
+  // Close outside
   useEffect(() => {
     const handleClickOutside = (event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
             setIsOpen(false);
         }
     };
-    const handleScroll = () => {
-        if (isOpen) setIsOpen(false);
-    };
 
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('scroll', handleScroll, true); // Capture scroll events from any element
     return () => {
         document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('scroll', handleScroll, true);
     };
   }, [isOpen]);
 
@@ -188,7 +185,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
       {/* Popup */}
       {isOpen && (
-        <div className={`absolute left-0 z-10 bg-white border border-[#D0D0D0] rounded-[20px] overflow-hidden w-[240px] shadow-lg ${position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+        <div className={`absolute left-0 z-50 bg-white border border-[#D0D0D0] mt-1 rounded-[20px] overflow-hidden w-[230px] shadow-lg ${position === 'bottom' ? 'top-full mb-2' : 'bottom-full mt-2'}`}>
             {/* Header */}
             <div className="px-5 pt-4 pb-2 border-b border-[#CAC4D0]">
                 <p className="text-[#49454F] text-xs font-medium mb-1">Select date</p>
@@ -204,7 +201,6 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
                  <div className="flex items-center justify-between px-1 mb-2">
                      <div className="flex items-center gap-1">
                          <span className="text-[#49454F] text-sm font-medium">{monthYearString}</span>
-                         {/* <span className="text-[#49454F] text-[10px]">▼</span> */}
                      </div>
                      <div className="flex gap-2">
                          <button onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
@@ -217,7 +213,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
                  </div>
 
                  {/* Days Grid */}
-                 <div className="grid grid-cols-7 gap-y-1 mb-2 text-center">
+                 <div className="grid grid-cols-7 gap-y-1 mb-2 text-center justify-items-center">
                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
                          <div key={d} className="text-[#49454F] text-xs font-medium w-7 h-7 flex items-center justify-center">{d}</div>
                      ))}
