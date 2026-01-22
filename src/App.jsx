@@ -25,8 +25,9 @@ import DesignationSettings from './pages/hrms/Designation/DesignationViewDetails
 import OrganizationTree from './pages/hrms/Organization/OrganizationTree/OrganizationTree';
 import NodeDetails from './pages/hrms/Organization/OrganizationTree/NodeDetails';
 import Notifications from './pages/hrms/Notifications/Notifications';
-import TeamList from './pages/hrms/Employee/ReportingManager/TeamList';
 import NewJobOpening from './pages/hrms/NewJobOpening/NewJobOpening';
+import TeamList from './pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList';
+import OnboardedEmployeeList from './pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList';
 
 function App() {
   return (
@@ -44,7 +45,6 @@ function App() {
           <Route path="/hrms/employees-details" element={<Navigate to="/hrms/employees-details/personal-information" />} />
           <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
           <Route path="/hrms/notifications" element={<Notifications />} />
-          <Route path="/hrms/team-list" element={<TeamList />} />
           {/* Add other routes here */}
           <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
           <Route path="/hrms/department-details" element={<DepartmentDetails />}>
@@ -76,6 +76,10 @@ function App() {
           </Route>
           <Route path="/hrms/job-opening/new" element={<NewJobOpening />} />
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
+
+          {/* Onboarding Employee List */}
+          <Route path="/hrms/onboarded-employee-list" element={<OnboardedEmployeeList />} />
+          <Route path="/hrms/onboarded-employee-list/team-list" element={<TeamList />} />
         </Routes>
       </Layout>
     </Router>

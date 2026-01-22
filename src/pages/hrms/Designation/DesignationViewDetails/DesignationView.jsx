@@ -203,9 +203,7 @@ const DesignationView = () => {
                     {formData?.employees || designationInfo.employees}
                 </p>
             </div>
-             <div className="flex h-[24px] mt-1 md:mt-4">
-                 <img src="/images/dots.svg" alt="dots" className="cursor-pointer" />
-            </div>
+
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar, ChevronDown } from 'lucide-react';
 import FilterDropdown from '../../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../../components/ui/CustomDatePicker';
 
 const AddProject = ({ isOpen, onClose, onAdd, employee }) => {
   const [formData, setFormData] = useState({
@@ -82,25 +83,23 @@ const AddProject = ({ isOpen, onClose, onAdd, employee }) => {
                  <div>
                     <label className="block text-[16px] font-medium text-[#1E1E1E] mb-2">Start Date</label>
                     <div className="relative">
-                        <input 
-                            type="date"
+                        <CustomDatePicker
                             value={formData.startDate}
-                            onChange={(e) => handleInputChange('startDate', e.target.value)}
-                            className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB] appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                            onChange={(val) => handleInputChange('startDate', val)}
+                            placeholder="Select Date"
+                            className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E]"
                         />
-                         <img src="/images/calender.svg" alt="calendar" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" />
                     </div>
                 </div>
                  <div>
                     <label className="block text-[16px] font-medium text-[#1E1E1E] mb-2">End Date</label>
                     <div className="relative">
-                        <input 
-                            type="date"
-                            value={formData.endDate}
-                            onChange={(e) => handleInputChange('endDate', e.target.value)}
-                            className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB] appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                        <CustomDatePicker
+                             value={formData.endDate}
+                             onChange={(val) => handleInputChange('endDate', val)}
+                             placeholder="Select Date"
+                             className="w-full h-[48px] px-4 rounded-[12px] bg-white border border-[#D9D9D9] text-[#1E1E1E]"
                         />
-                         <img src="/images/calender.svg" alt="calendar" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5" />
                     </div>
                 </div>
             </div>

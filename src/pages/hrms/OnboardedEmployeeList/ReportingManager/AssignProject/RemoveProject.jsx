@@ -6,7 +6,7 @@ const RemoveProject = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#100F0F59] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-      <div className="bg-white rounded-[20px] w-[90%] max-w-[500px] p-8 relative shadow-2xl text-center">
+      <div className="bg-white rounded-[20px] w-[90%] max-w-[450px] p-8 relative shadow-2xl text-center">
         {/* Close Button */}
         <button 
            onClick={onClose} 
@@ -16,30 +16,27 @@ const RemoveProject = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         {/* Content */}
-        <div className="mt-4 mb-8">
-            <h2 className="text-[20px] font-bold text-[#000000] mb-2" style={{ fontFamily: '"Poppins", sans-serif' }}>
+        <div className="mt-8 mb-4">
+            <h2 className="text-[20px] font-semibold text-[#000000]" style={{ fontFamily: '"Poppins", sans-serif' }}>
                 Remove employee from project
             </h2>
-            <p className="text-[14px] text-[#757575] font-normal">
-                Are you sure?
-            </p>
         </div>
 
         {/* Buttons */}
         <div className="flex items-center justify-center gap-4">
             <button 
                 onClick={onClose}
-                className="px-8 h-[48px] min-w-[140px] rounded-full border border-[#7D1EDB] text-[#7D1EDB] font-medium text-[16px] hover:bg-purple-50 transition-colors"
+                className="px-8 h-[48px] min-w-[180px] rounded-full border border-[#7D1EDB] text-[#7D1EDB] font-medium text-[16px] hover:bg-purple-50 transition-colors"
                 style={{ fontFamily: '"Poppins", sans-serif' }}
             >
                 Cancel
             </button>
             <button 
                 onClick={onConfirm}
-                className="px-8 h-[48px] min-w-[140px] rounded-full bg-[#7D1EDB] text-white font-medium text-[16px] hover:bg-[#6c1ac0] transition-colors"
+                className="px-8 h-[48px] min-w-[180px] rounded-full bg-[#7D1EDB] text-white font-medium text-[16px] hover:bg-[#6c1ac0] transition-colors"
                 style={{ fontFamily: '"Poppins", sans-serif' }}
             >
-                Confirm
+                Remove
             </button>
         </div>
       </div>
