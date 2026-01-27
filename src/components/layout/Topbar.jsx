@@ -49,7 +49,7 @@ const Topbar = () => {
                     <div className="relative">
                         <img
                             className="h-13 w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
-                            src="https://avatar.iran.liara.run/public/boy?username=Ankit"
+                            src="/images/ankit.png"
                             alt="Ankit Kumar"
                         />
                     </div>

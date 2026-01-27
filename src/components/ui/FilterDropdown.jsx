@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false, maxHeight = '320px' }) => {
+const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false, maxHeight = '320px', dropdownWidth, optionFontFamily, align = 'left', showArrow = true }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -43,21 +43,21 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
                 <span className={!value && placeholder ? "text-gray-400" : (buttonTextClassName || "")}>
                     {getDisplayValue()}
                 </span>
-                <ChevronDown size={20} className={`transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
+                {showArrow && <ChevronDown size={20} className={`transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />}
             </button>
 
             {isOpen && (
                 <div
-                    className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light space-y-1"
+                    className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-2 bg-white z-20 flex flex-col font-medium space-y-1`}
                     style={{
-                        width: '100%',
-                        minWidth: className ? '100%' : minWidth,
+                        width: dropdownWidth || '100%',
+                        minWidth: dropdownWidth || (className ? '100%' : minWidth),
                         borderRadius: '8px',
                         maxHeight: maxHeight,
                         overflowY: 'auto',
                         overflowX: 'hidden',
                         boxShadow: '0px 4px 14px 0px #0000001A',
-                        fontFamily: 'Montserrat, sans-serif'
+                        fontFamily: optionFontFamily || "'Nunito Sans', sans-serif"
                     }}
                 >
                     {!placeholder && (

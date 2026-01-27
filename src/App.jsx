@@ -28,6 +28,8 @@ import Notifications from './pages/hrms/Notifications/Notifications';
 import NewJobOpening from './pages/hrms/NewJobOpening/NewJobOpening';
 import TeamList from './pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList';
 import OnboardedEmployeeList from './pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList';
+import AttendanceList from './pages/hrms/Attendance/AttendanceList';
+import AddAttendance from './pages/hrms/Attendance/AddAttendance';
 
 function App() {
   return (
@@ -77,9 +79,14 @@ function App() {
           <Route path="/hrms/job-opening/new" element={<NewJobOpening />} />
           <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
 
+
           {/* Onboarding Employee List */}
           <Route path="/hrms/onboarded-employee-list" element={<OnboardedEmployeeList />} />
           <Route path="/hrms/onboarded-employee-list/team-list" element={<TeamList />} />
+
+          {/* Attendance Route */}
+          <Route path="/hrms/attendance" element={<AttendanceList />} />
+          <Route path="/hrms/attendance/add" element={<AddAttendance />} />
         </Routes>
       </Layout>
     </Router>
