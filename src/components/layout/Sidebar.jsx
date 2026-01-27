@@ -52,7 +52,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         fixed top-0 left-0 h-screen z-20
         bg-white border-r border-gray-100 shadow-sm
         transition-all duration-300 flex flex-col rounded-xl
-        ${isOpen ? 'w-70 px-5 py-5' : 'w-16 py-4'}
+        ${isOpen ? 'w-65 px-5 py-5' : 'w-16 py-4'}
       `}
     >
       {/* Logo */}

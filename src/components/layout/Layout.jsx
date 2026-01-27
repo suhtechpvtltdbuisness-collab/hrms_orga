@@ -34,7 +34,7 @@ const Layout = ({ children }) => {
 
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-67' : 'ml-13'
+        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-61' : 'ml-12'
           }`}
       >
         <div className="px-4 pt-4 pb-0">

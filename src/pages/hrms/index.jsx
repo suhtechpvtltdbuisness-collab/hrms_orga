@@ -78,8 +78,12 @@ const HRMS = () => {
                                 else if (shortcut.name === 'Organization Tree') {
                                     navigate('/hrms/organization-tree');  // Navigate to Settings
                                 }
+
                                 else if (shortcut.name === 'New Job Opening') {
                                     navigate('/hrms/job-opening/new');
+                                }
+                                else if (shortcut.name === 'Attendance') {
+                                    navigate('/hrms/attendance');
                                 }
                             }}
                         >
