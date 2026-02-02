@@ -247,8 +247,20 @@ const AttendanceList = () => {
                  ))
              ) : (
                 <tr>
-                    <td colSpan="6" className="py-8 text-center text-gray-500">
-                        No attendance records found
+                    <td colSpan="6" className="text-center py-4">
+                        <div className="flex flex-col items-center justify-center">
+                            <img
+                                src="/images/emptyAttendance.png"
+                                alt="No Records Found"
+                                className="w-[320px] h-auto mb-2"
+                            />
+                            <h3 className="text-[22px] font-bold text-[#000000] mb-2" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                                No Records found
+                            </h3>
+                            <p className="text-[14px] text-[#B0B0B0] mb-2 font-medium" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                                There are no records to show at the moment.
+                            </p>
+                        </div>
                     </td>
                 </tr>
              )}

@@ -30,6 +30,9 @@ import TeamList from './pages/hrms/OnboardedEmployeeList/ReportingManager/TeamLi
 import OnboardedEmployeeList from './pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList';
 import AttendanceList from './pages/hrms/Attendance/AttendanceList';
 import AddAttendance from './pages/hrms/Attendance/AddAttendance';
+import EmployeeAttendanceTool from './pages/hrms/Attendance/EmployeeAttendanceTool';
+import UploadAttendance from './pages/hrms/Attendance/UploadAttendance/UploadAttendance';
+import RequestAttendance from './pages/hrms/Attendance/RequestAttendance/RequestAttendance';
 
 function App() {
   return (
@@ -87,6 +90,9 @@ function App() {
           {/* Attendance Route */}
           <Route path="/hrms/attendance" element={<AttendanceList />} />
           <Route path="/hrms/attendance/add" element={<AddAttendance />} />
+          <Route path="/hrms/employee-attendance-tool" element={<EmployeeAttendanceTool />} />
+          <Route path="/hrms/upload-attendance" element={<UploadAttendance />} />
+          <Route path="/hrms/request-attendance" element={<RequestAttendance />} />
         </Routes>
       </Layout>
     </Router>
