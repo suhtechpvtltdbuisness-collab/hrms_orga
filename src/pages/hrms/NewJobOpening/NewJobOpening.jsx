@@ -55,7 +55,7 @@ const NewJobOpening = () => {
             <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
                 <div className="flex items-center gap-3" onClick={() => navigate('/hrms')}>
                     <ArrowLeft size={14} className="text-gray-900 cursor-pointer" />
-                    <span className="cursor-pointer hover:text-purple-500">Dashboard</span>
+                    <span className="cursor-pointer hover:text-purple-500"> HRMS Dashboard</span>
                 </div>
                 <ChevronRight size={16} className="mx-1" />
                 <span className="text-[#667085] text-[14px] font-base">Job Opening</span>
