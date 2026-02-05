@@ -261,7 +261,7 @@ const DesignationList = () => {
 
   return (
     <div
-      className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-12rem)] flex flex-col font-popins"
+      className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
        {/* Breadcrumb */}

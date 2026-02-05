@@ -33,6 +33,20 @@ import AddAttendance from './pages/hrms/Attendance/AddAttendance';
 import EmployeeAttendanceTool from './pages/hrms/Attendance/EmployeeAttendanceTool';
 import UploadAttendance from './pages/hrms/Attendance/UploadAttendance/UploadAttendance';
 import RequestAttendance from './pages/hrms/Attendance/RequestAttendance/RequestAttendance';
+import LeavePeriod from './pages/hrms/LeaveManagement/LeavePeriod';
+import NewLeavePeriod from './pages/hrms/LeaveManagement/NewLeavePeriod';
+import ShiftAssignment from './pages/hrms/ShiftManagement/ShiftAssignment';
+import ShiftType from './pages/hrms/ShiftManagement/ShiftType';
+import ShiftRequest from './pages/hrms/ShiftManagement/ShiftRequest';
+import NewShiftRequest from './pages/hrms/ShiftManagement/NewShiftRequest';
+import AppraisalTemplate from './pages/hrms/EmployeePerformance/AppraisalTemplate';
+import EnergyPointLogList from './pages/hrms/EmployeePerformance/EnergyPointLogList';
+import EnergyPointRule from './pages/hrms/EmployeePerformance/EnergyPointRule';
+import NewEnergyPointRule from './pages/hrms/EmployeePerformance/NewEnergyPointRule';
+import ShiftTypeDetail from './pages/hrms/ShiftManagement/ShiftTypeDetail';
+import SalaryComponent from './pages/hrms/Payroll/SalaryComponent';
+import SalaryStructure from './pages/hrms/Payroll/SalaryStructure';
+import SalaryStructureAssignment from './pages/hrms/Payroll/SalaryStructureAssignment';
 
 function App() {
   return (
@@ -93,6 +107,25 @@ function App() {
           <Route path="/hrms/employee-attendance-tool" element={<EmployeeAttendanceTool />} />
           <Route path="/hrms/upload-attendance" element={<UploadAttendance />} />
           <Route path="/hrms/request-attendance" element={<RequestAttendance />} />
+          
+          {/* Leave Management */}
+          <Route path="/hrms/leave-period" element={<LeavePeriod />} />
+          <Route path="/hrms/leave-period/new" element={<NewLeavePeriod />} />
+
+          {/* Shift Management */}
+          <Route path="/hrms/shift-assignment" element={<ShiftAssignment />} />
+          <Route path="/hrms/shift-type" element={<ShiftType />} />
+          <Route path="/hrms/shift-type/new" element={<ShiftTypeDetail />} />
+          <Route path="/hrms/shift-type/:id" element={<ShiftTypeDetail />} />
+          <Route path="/hrms/salary-component" element={<SalaryComponent />} />
+          <Route path="/hrms/salary-structure" element={<SalaryStructure />} />
+          <Route path="/hrms/salary-structure-assignment" element={<SalaryStructureAssignment />} />
+          <Route path="/hrms/shift-request" element={<ShiftRequest />} />
+          <Route path="/hrms/shift-request/new" element={<NewShiftRequest />} />
+          <Route path="/hrms/appraisal-template" element={<AppraisalTemplate />} />
+          <Route path="/hrms/energy-point-log" element={<EnergyPointLogList />} />
+          <Route path="/hrms/energy-point-rule" element={<EnergyPointRule />} />
+          <Route path="/hrms/energy-point-rule/new" element={<NewEnergyPointRule />} />
         </Routes>
       </Layout>
     </Router>
