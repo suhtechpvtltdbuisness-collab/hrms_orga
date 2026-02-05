@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false, maxHeight = '320px', dropdownWidth, optionFontFamily, align = 'left', showArrow = true }) => {
+const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', className, placeholder, buttonTextClassName, disabled = false, maxHeight = '320px', dropdownWidth, optionFontFamily, align = 'left', showArrow = true, disableAllOption = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -48,7 +48,7 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
 
             {isOpen && (
                 <div
-                    className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-2 bg-white z-20 flex flex-col font-medium space-y-1`}
+                    className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-2 bg-white z-20 flex flex-col font-normal`}
                     style={{
                         width: dropdownWidth || '100%',
                         minWidth: dropdownWidth || (className ? '100%' : minWidth),
@@ -60,11 +60,11 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
                         fontFamily: optionFontFamily || "'Nunito Sans', sans-serif"
                     }}
                 >
-                    {!placeholder && (
+                    {!placeholder && !disableAllOption && (
                         <div
                             onClick={() => handleSelect('')}
                             className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-                            style={{ minHeight: '44px', fontSize: '16px', color: '#333333' }}
+                            style={{ minHeight: '40px', fontSize: '14px', color: '#333333' }}
                         >
                             All
                         </div>
@@ -77,8 +77,8 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
                             <div
                                 key={idx}
                                 onClick={() => handleSelect(optionValue)}
-                                className="px-4 py-2 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-                                style={{ minHeight: '44px', fontSize: '16px', color: '#333333', lineHeight: '1.2' }}
+                                className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
+                                style={{ minHeight: '40px', fontSize: '14px', color: '#333333', lineHeight: '1' }}
                             >
                                 {optionLabel}
                             </div>

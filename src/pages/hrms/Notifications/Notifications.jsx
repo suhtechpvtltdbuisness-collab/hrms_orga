@@ -55,7 +55,7 @@ const Notifications = () => {
   ];
 
   return (
-      <div className="bg-white mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+      <div className="bg-white mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
       <div className="px-6 pt-6 shrink-0">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[14px] text-[#7D1EDB] mb-6 font-normal">
