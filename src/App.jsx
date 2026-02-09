@@ -40,13 +40,21 @@ import ShiftType from './pages/hrms/ShiftManagement/ShiftType';
 import ShiftRequest from './pages/hrms/ShiftManagement/ShiftRequest';
 import NewShiftRequest from './pages/hrms/ShiftManagement/NewShiftRequest';
 import AppraisalTemplate from './pages/hrms/EmployeePerformance/AppraisalTemplate';
+import NewAppraisalTemplate from './pages/hrms/EmployeePerformance/NewAppraisalTemplate';
+import NewAppraisal from './pages/hrms/EmployeePerformance/NewAppraisal';
 import EnergyPointLogList from './pages/hrms/EmployeePerformance/EnergyPointLogList';
 import EnergyPointRule from './pages/hrms/EmployeePerformance/EnergyPointRule';
 import NewEnergyPointRule from './pages/hrms/EmployeePerformance/NewEnergyPointRule';
+import EnergyPointSettings from './pages/hrms/EmployeePerformance/EnergyPointSettings';
 import ShiftTypeDetail from './pages/hrms/ShiftManagement/ShiftTypeDetail';
 import SalaryComponent from './pages/hrms/Payroll/SalaryComponent';
 import SalaryStructure from './pages/hrms/Payroll/SalaryStructure';
 import SalaryStructureAssignment from './pages/hrms/Payroll/SalaryStructureAssignment';
+import PayrollEntry from './pages/hrms/Payroll/PayrollEntry';
+import SalarySlip from './pages/hrms/Payroll/SalarySlip';
+import AdditionalSalary from './pages/hrms/Payroll/AdditionalSalary';
+import PayrollAccounting from './pages/hrms/Payroll/PayrollAccounting';
+import BankIntegration from './pages/hrms/Payroll/BankIntegration';
 
 function App() {
   return (
@@ -119,13 +127,22 @@ function App() {
           <Route path="/hrms/shift-type/:id" element={<ShiftTypeDetail />} />
           <Route path="/hrms/salary-component" element={<SalaryComponent />} />
           <Route path="/hrms/salary-structure" element={<SalaryStructure />} />
+
           <Route path="/hrms/salary-structure-assignment" element={<SalaryStructureAssignment />} />
+          <Route path="/hrms/payroll-entry" element={<PayrollEntry />} />
+          <Route path="/hrms/salary-slip" element={<SalarySlip />} />
           <Route path="/hrms/shift-request" element={<ShiftRequest />} />
           <Route path="/hrms/shift-request/new" element={<NewShiftRequest />} />
           <Route path="/hrms/appraisal-template" element={<AppraisalTemplate />} />
+          <Route path="/hrms/appraisal-template/new" element={<NewAppraisalTemplate />} />
+          <Route path="/hrms/appraisal/new" element={<NewAppraisal />} />
           <Route path="/hrms/energy-point-log" element={<EnergyPointLogList />} />
           <Route path="/hrms/energy-point-rule" element={<EnergyPointRule />} />
           <Route path="/hrms/energy-point-rule/new" element={<NewEnergyPointRule />} />
+          <Route path="/hrms/energy-point-setting" element={<EnergyPointSettings />} />
+          <Route path="/hrms/additional-salary" element={<AdditionalSalary />} />
+          <Route path="/hrms/payroll-accounting" element={<PayrollAccounting />} />
+          <Route path="/hrms/bank-integration" element={<BankIntegration />} />
         </Routes>
       </Layout>
     </Router>

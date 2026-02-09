@@ -65,10 +65,10 @@ const ShiftAssignment = () => {
      };
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
             
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -92,15 +92,15 @@ const ShiftAssignment = () => {
                 <button
                     className="flex items-center justify-center gap-2 py-2 px-4 rounded-full text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                 >
-                    <span className='text-[16px] font-medium text-white font-popins'>Save</span>
+                    <span className='text-[16px] font-medium text-white'style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
                 </button>
             </div>
 
             {/* Table */}
             <div className="flex-1 min-h-0 overflow-y-auto border border-[#CECECE] rounded-lg">
                 <table className="w-full relative border-collapse">
-                    <thead className="sticky top-0 z-10 bg-white">
-                        <tr className="text-left text-[14px] font-popins border-b border-[#CECECE]">
+                    <thead className="sticky top-0 z-10 bg-white"style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <tr className="text-left text-[14px] border-b border-[#CECECE]">
                             <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[10%]">
                                 <input 
                                     type="checkbox" 
@@ -138,7 +138,7 @@ const ShiftAssignment = () => {
                                     {shift.name}
                                 </td>
                                 <td className="py-3 px-6 text-center">
-                                    <span className="inline-block px-2 py-1 bg-[#E4F8D2] text-[#76DB1E] rounded-full text-sm font-medium">
+                                    <span className="inline-block px-2 py-1.5 bg-[#E4F8D2] text-[#76DB1E] rounded-full text-sm font-medium">
                                         {shift.status}
                                     </span>
                                 </td>

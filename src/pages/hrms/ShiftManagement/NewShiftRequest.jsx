@@ -11,10 +11,10 @@ const NewShiftRequest = () => {
     const [shiftType, setShiftType] = useState('Day');
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-inter" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
             
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
