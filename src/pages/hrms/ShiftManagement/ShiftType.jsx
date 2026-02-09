@@ -29,10 +29,10 @@ const ShiftType = () => {
     };
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col " >
             
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -57,7 +57,7 @@ const ShiftType = () => {
                     className="flex items-center justify-center gap-2 rounded-full py-2 px-4 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                     onClick={() => navigate('/hrms/shift-type/new')}
                 >
-                    <span className='text-[16px] font-medium text-white font-popins'>Add Shift Type</span>
+                    <span className='text-[16px] font-medium text-white'style={{ fontFamily: 'Poppins, sans-serif' }}>Add Shift Type</span>
                     <Plus size={18} />
                 </button>
             </div>
@@ -65,7 +65,7 @@ const ShiftType = () => {
             {/* Table */}
             <div className="h-fit min-h-0 overflow-y-auto border border-[#CECECE] rounded-lg">
                 <table className="w-full relative border-collapse">
-                    <thead className="sticky top-0 z-10 bg-white">
+                    <thead className="sticky top-0 z-10 bg-white"style={{ fontFamily: 'Poppins, sans-serif' }}>
                         <tr className="text-left text-[14px] font-popins border-b border-[#CECECE]">
                             <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[5%]">
                             </th>

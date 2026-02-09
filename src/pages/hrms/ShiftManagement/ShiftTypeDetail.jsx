@@ -80,9 +80,9 @@ const ShiftTypeDetail = () => {
     };
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
              {/* Breadcrumb */}
-             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -107,12 +107,12 @@ const ShiftTypeDetail = () => {
                     className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                     onClick={() => navigate('/hrms/shift-type')}
                 >
-                    <span className='text-[16px] font-normal text-white font-popins'>Save</span>
+                    <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
                 </button>
             </div>
 
             {/* Form Content */}
-            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2 font-inter">
+            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-3">
                     <div className="w-full grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4">
                          {/* Start Time */}

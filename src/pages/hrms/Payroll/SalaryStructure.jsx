@@ -12,8 +12,8 @@ const SalaryStructure = () => {
         company: '',
         isActive: true,
         taxSlab: '',
-        effectiveFrom: new Date(),
-        basedOnPaymentDays: false
+        effectiveFrom: '26/01/2026',
+        basedOnPaymentDays: true
     });
 
     // Mock
@@ -61,15 +61,27 @@ const SalaryStructure = () => {
         const updater = type === 'earning' ? setEarnings : setDeductions;
         const list = type === 'earning' ? earnings : deductions;
         
-        updater(list.map(item => 
-            item.id === id ? { ...item, [field]: value } : item
-        ));
+        if (field === 'component') {
+            // Allow only alphabets and spaces
+            if (/^[a-zA-Z\s]*$/.test(value)) {
+                updater(list.map(item => 
+                    item.id === id ? { ...item, [field]: value } : item
+                ));
+            }
+        } else if (field === 'amount') {
+            // Allow only numbers
+            if (/^[0-9]*$/.test(value)) {
+                updater(list.map(item => 
+                    item.id === id ? { ...item, [field]: value } : item
+                ));
+            }
+        }
     };
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -94,46 +106,46 @@ const SalaryStructure = () => {
                     className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                     onClick={() => {}}
                 >
-                    <span className='text-[16px] font-normal text-white font-popins cursor-pointer'>Save</span>
+                    <span className='text-[16px] font-normal text-white cursor-pointer'style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
                 </button>
             </div>
 
             {/* Form Content - Scrollable Area */}
-            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2 font-inter">
+            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2">
                 
                 {/* Basic Information */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Basic Information</h2>
-                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3" style={{ fontFamily: '"Inter", sans-serif' }}>
                         {/* Salary Structure Name */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Salary Structure Name</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Salary Structure Name</label>
                             <input 
                                 type="text"
                                 name="structureName"
                                 value={formData.structureName}
                                 onChange={handleChange}
                                 placeholder="Enter name"
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                         {/* Company */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Company</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Company</label>
                             <input 
                                 type="text"
                                 name="company"
                                 value={formData.company}
                                 onChange={handleChange}
                                 placeholder="Enter company name"
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                     </div>
                     {/* Is Active Toggle */}
                     <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex items-center justify-between max-w-sm">
-                            <span className="text-[16px] font-normal font-inter text-[#1E1E1E]">Is Active</span>
+                            <span className="text-[16px] font-normal text-[#1E1E1E]">Is Active</span>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
                                     type="checkbox" 
@@ -154,7 +166,7 @@ const SalaryStructure = () => {
                         <h2 className="text-[16px] font-medium text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Earnings Table</h2>
                         <button 
                             onClick={addEarning}
-                            className="bg-[#7D1EDB] text-white py-2 px-3 rounded-full text-[14px] font-normal font-inter cursor-pointer hover:bg-purple-700 transition-colors"
+                            className="bg-[#7D1EDB] text-white py-2 px-3 rounded-full text-[14px] font-normal cursor-pointer hover:bg-purple-700 transition-colors"
                         >
                             Add Earnings
                         </button>
@@ -164,16 +176,16 @@ const SalaryStructure = () => {
                         <table className="w-full">
                             <thead className="bg-white border-b border-[#CECECE]">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-[14px] font-normal text-[#757575] font-inter w-16">Sr.No.</th>
-                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575] font-inter">Salary Component</th>
-                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575] font-inter">Amount/Formula</th>
-                                    <th className="px-4 py-3 text-right text-[14px] font-normal text-[#757575] font-inter w-24">Actions</th>
+                                    <th className="px-4 py-3 text-left text-[14px] font-normal text-[#757575] w-16" style={{ fontFamily: '"Poppins", sans-serif' }}>Sr.No.</th>
+                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Salary Component</th>
+                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Amount/Formula</th>
+                                    <th className="px-4 py-3 text-right text-[14px] font-normal text-[#757575] w-24" style={{ fontFamily: '"Poppins", sans-serif' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {earnings.map((row, index) => (
-                                    <tr key={row.id} className="last:border-b-0">
-                                        <td className="px-4 py-3 text-[14px] text-[#1E1E1E] font-inter">
+                                    <tr key={row.id} className="last:border-b-0"style={{ fontFamily: '"Inter", sans-serif' }}>
+                                        <td className="px-4 py-3 text-[14px] text-[#1E1E1E]">
                                             {String(index + 1).padStart(2, '0')}
                                         </td>
                                         <td className="px-4 py-3 text-center">
@@ -181,7 +193,7 @@ const SalaryStructure = () => {
                                                 type="text" 
                                                 value={row.component}
                                                 onChange={(e) => handleTableChange('earning', row.id, 'component', e.target.value)}
-                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
+                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] focus:outline-none bg-transparent"
                                                 placeholder="Component"
                                             />
                                         </td>
@@ -190,7 +202,7 @@ const SalaryStructure = () => {
                                                 type="text" 
                                                 value={row.amount}
                                                 onChange={(e) => handleTableChange('earning', row.id, 'amount', e.target.value)}
-                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
+                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] focus:outline-none bg-transparent"
                                                 placeholder="Amount"
                                             />
                                         </td>
@@ -215,7 +227,7 @@ const SalaryStructure = () => {
                         <h2 className="text-[16px] font-medium text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Deduction Table</h2>
                         <button 
                             onClick={addDeduction}
-                            className="bg-[#7D1EDB] text-white py-2 px-3 rounded-full text-[14px] font-normal font-inter cursor-pointer hover:bg-purple-700 transition-colors"
+                            className="bg-[#7D1EDB] text-white py-2 px-3 rounded-full text-[14px] font-normal cursor-pointer hover:bg-purple-700 transition-colors"
                         >
                             Add Deductions
                         </button>
@@ -225,16 +237,16 @@ const SalaryStructure = () => {
                         <table className="w-full">
                             <thead className="bg-white border-b border-[#CECECE]">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-[14px] font-normal text-[#757575] font-inter w-16">Sr.No.</th>
-                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575] font-inter">Salary Component</th>
-                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575] font-inter">Amount/Formula</th>
-                                    <th className="px-4 py-3 text-right text-[14px] font-normal text-[#757575] font-inter w-24">Actions</th>
+                                    <th className="px-4 py-3 text-left text-[14px] font-normal text-[#757575] w-16" style={{ fontFamily: '"Poppins", sans-serif' }}>Sr.No.</th>
+                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Salary Component</th>
+                                    <th className="px-4 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Amount/Formula</th>
+                                    <th className="px-4 py-3 text-right text-[14px] font-normal text-[#757575] w-24" style={{ fontFamily: '"Poppins", sans-serif' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {deductions.map((row, index) => (
-                                    <tr key={row.id} className="last:border-b-0">
-                                        <td className="px-4 py-3 text-[14px] text-[#1E1E1E] font-inter">
+                                    <tr key={row.id} className="last:border-b-0"style={{ fontFamily: '"Inter", sans-serif' }}>
+                                        <td className="px-4 py-3 text-[14px] text-[#1E1E1E]">
                                             {String(index + 1).padStart(2, '0')}
                                         </td>
                                         <td className="px-4 py-3 text-center">
@@ -242,7 +254,7 @@ const SalaryStructure = () => {
                                                 type="text" 
                                                 value={row.component}
                                                 onChange={(e) => handleTableChange('deduction', row.id, 'component', e.target.value)}
-                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
+                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] focus:outline-none bg-transparent"
                                                 placeholder="Component"
                                             />
                                         </td>
@@ -251,7 +263,7 @@ const SalaryStructure = () => {
                                                 type="text" 
                                                 value={row.amount}
                                                 onChange={(e) => handleTableChange('deduction', row.id, 'amount', e.target.value)}
-                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
+                                                className="w-full text-center text-[14px] font-normal text-[#1E1E1E] focus:outline-none bg-transparent"
                                                 placeholder="Amount"
                                             />
                                         </td>
@@ -273,7 +285,7 @@ const SalaryStructure = () => {
                 {/* Conditions */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Conditions</h2>
-                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3"style={{ fontFamily: '"Inter", sans-serif' }}>
                         {/* Tax Slab */}
                         <div>
                             <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Tax Slab</label>
@@ -283,23 +295,23 @@ const SalaryStructure = () => {
                                 value={formData.taxSlab}
                                 onChange={handleChange}
                                 placeholder="Enter tax slab"
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal  text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                         {/* Effective From */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1 bg-white">Effective From</label>
+                            <label className="block text-[16px] font-normal  text-[#1E1E1E] mb-1 bg-white">Effective From</label>
                             <CustomDatePicker 
                                 value={formData.effectiveFrom}
                                 onChange={handleDateChange}
-                                className="w-full"
+                                className="w-full bg-white"
                             />
                         </div>
                     </div>
                     {/* Based On Payment Days Toggle */}
                     <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex items-center justify-between max-w-sm">
-                            <span className="text-[16px] font-normal font-inter text-[#1E1E1E]">Based On Payment Days</span>
+                            <span className="text-[16px] font-normal text-[#1E1E1E]"style={{ fontFamily: '"Inter", sans-serif' }}>Based On Payment Days</span>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
                                     type="checkbox" 

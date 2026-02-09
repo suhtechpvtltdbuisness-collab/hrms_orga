@@ -43,7 +43,7 @@ const HRMS = () => {
             title: "Peformance",
             icon: "/images/report.svg",
             items: [
-                { name: "Appraisal", path: "" },
+                { name: "Appraisal", path: "/hrms/appraisal/new" },
                 { name: "Appraisal Template", path: "/hrms/appraisal-template" },
                 { name: "Energy Point Rule", path: "/hrms/energy-point-rule" },
                 { name: "Energy Point Log", path: "/hrms/energy-point-log" },
@@ -73,11 +73,11 @@ const HRMS = () => {
                 { name: "Salary Component", path: "/hrms/salary-component" },
                 { name: "Salary Structure", path: "/hrms/salary-structure" },
                 { name: "Salary Structure Assignment", path: "/hrms/salary-structure-assignment" },
-                { name: "Payroll Entry", path: "/hrms" },
-                { name: "Salary Slip", path: "/hrms" },
-                { name: "Additional Salary", path: "/hrms" },
-                { name: "Payroll Accounting", path: "/hrms" },
-                { name: "Bank Integration For Salary Payout", path: "/hrms" }
+                { name: "Payroll Entry", path: "/hrms/payroll-entry" },
+                { name: "Salary Slip", path: "/hrms/salary-slip" },
+                { name: "Additional Salary", path: "/hrms/additional-salary" },
+                { name: "Payroll Accounting", path: "/hrms/payroll-accounting" },
+                { name: "Bank Integration For Salary Payout", path: "/hrms/bank-integration" }
             ]
         },
         {

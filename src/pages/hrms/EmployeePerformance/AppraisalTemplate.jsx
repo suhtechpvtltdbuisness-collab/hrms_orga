@@ -33,6 +33,7 @@ const AppraisalTemplate = () => {
                 <button
                     className="flex items-center justify-center gap-2 rounded-full py-3 px-4 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                     style={{ fontFamily: 'Poppins, sans-serif' }}
+                    onClick={() => navigate('/hrms/appraisal-template/new')}
                 >
                     <span className='text-[16px] font-normal text-white'>Add Appraisal Template</span>
                     <Plus size={18} />
@@ -52,6 +53,7 @@ const AppraisalTemplate = () => {
                     <button
                         className="flex items-center justify-center px-4 py-3 bg-[#7D1EDB] text-white rounded-full font-medium hover:bg-purple-700 transition-all shadow-sm"
                         style={{ fontFamily: 'Poppins, sans-serif' }}
+                        onClick={() => navigate('/hrms/appraisal-template/new')}
                     >
                         Create appraisal template
                     </button>

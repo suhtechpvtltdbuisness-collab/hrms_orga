@@ -43,9 +43,9 @@ const SalaryStructureAssignment = () => {
     const STRUCTURE_OPTIONS = ['Monthly Salary Structure', 'Contract Structure'];
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -73,27 +73,27 @@ const SalaryStructureAssignment = () => {
                     className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
                     onClick={() => {}}
                 >
-                    <span className='text-[16px] font-normal text-white font-popins'>Save</span>
+                    <span className='text-[16px] font-normal text-white'style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
                 </button>
             </div>
 
             {/* Form Content - Scrollable Area */}
-            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2 font-inter">
+            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2">
                 
                 {/* Employee Information */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Employee Information</h2>
                     
                     {/* First Row: Employee, Name, Department */}
-                    <div className="w-full lg:w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <div className="w-full lg:w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3"style={{ fontFamily: 'Inter, sans-serif' }}>
                         {/* Employee */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Employee</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Employee</label>
                             <FilterDropdown
                                 options={EMPLOYEE_OPTIONS}
                                 value={formData.employee}
                                 onChange={(val) => handleDropdownChange('employee', val)}
-                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
+                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
                                 showArrow={true}
                                 dropdownWidth="100%"
                                 align='left'
@@ -102,23 +102,23 @@ const SalaryStructureAssignment = () => {
                         </div>
                         {/* Employee Name */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Employee Name</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Employee Name</label>
                             <input 
                                 type="text"
                                 name="employeeName"
                                 value={formData.employeeName}
                                 onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                         {/* Department */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Department</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Department</label>
                             <FilterDropdown
                                 options={DEPARTMENT_OPTIONS}
                                 value={formData.department}
                                 onChange={(val) => handleDropdownChange('department', val)}
-                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
+                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
                                 showArrow={true}
                                 dropdownWidth="100%"
                                 align='left'
@@ -131,12 +131,12 @@ const SalaryStructureAssignment = () => {
                     <div className="w-full lg:w-[33%] md:w-[50%] mb-3">
                          {/* Designation */}
                          <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Designation</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Designation</label>
                             <FilterDropdown
                                 options={DESIGNATION_OPTIONS}
                                 value={formData.designation}
                                 onChange={(val) => handleDropdownChange('designation', val)}
-                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
+                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
                                 showArrow={true}
                                 dropdownWidth="100%"
                                 align='left'
@@ -149,15 +149,15 @@ const SalaryStructureAssignment = () => {
                 {/* Structure Information */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Structure Information</h2>
-                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3"style={{ fontFamily: 'Inter, sans-serif' }}>
                          {/* Salary Structure */}
                          <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Salary Structure</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Salary Structure</label>
                             <FilterDropdown
                                 options={STRUCTURE_OPTIONS}
                                 value={formData.salaryStructure}
                                 onChange={(val) => handleDropdownChange('salaryStructure', val)}
-                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
+                                className="w-full h-[38px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
                                 showArrow={true}
                                 dropdownWidth="100%"
                                 align='left'
@@ -172,7 +172,7 @@ const SalaryStructureAssignment = () => {
                                 name="company"
                                 value={formData.company}
                                 onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                     </div>
@@ -181,25 +181,25 @@ const SalaryStructureAssignment = () => {
                 {/* Timeline */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Timeline</h2>
-                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="w-full lg:w-[66%] grid grid-cols-1 md:grid-cols-2 gap-3 mb-3"style={{ fontFamily: 'Inter, sans-serif' }}>
                         {/* From Date */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">From Date</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">From Date</label>
                             <CustomDatePicker 
                                 value={formData.fromDate}
                                 onChange={handleDateChange}
-                                className="w-full"
+                                className="w-full bg-white"
                             />
                         </div>
                         {/* Base Salary */}
                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Base Salary</label>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Base Salary</label>
                             <input 
                                 type="text"
                                 name="baseSalary"
                                 value={formData.baseSalary}
                                 onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
                         </div>
                     </div>
