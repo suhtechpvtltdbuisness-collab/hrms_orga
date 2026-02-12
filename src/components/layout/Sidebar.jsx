@@ -9,6 +9,7 @@ import {
   BarChart3,
   Megaphone,
   MessageSquare,
+  Receipt,
   UserCircle,
   Settings,
   HelpCircle,
@@ -49,7 +50,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   return (
     <aside
       className={`
-        fixed top-0 left-0 h-screen z-20
+        fixed top-0 left-0 h-screen z-50
         bg-white border-r border-gray-100 shadow-sm
         transition-all duration-300 flex flex-col rounded-xl
         ${isOpen ? 'w-65 px-5 py-5' : 'w-16 py-4'}
@@ -91,8 +92,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <Link
               key={item.name}
               to={item.path}
+              onClick={() => {
+                if (window.innerWidth < 1260 && isOpen) {
+                  toggleSidebar();
+                }
+              }}
               className={`
-                flex items-center rounded-2xl transition-all duration-200
+                flex items-center rounded-full transition-all duration-200
                 ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
                 ${active
                   ? 'bg-[#EEF2FF] text-[#7D1EDB]'

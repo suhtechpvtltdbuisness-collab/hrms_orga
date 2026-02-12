@@ -32,9 +32,17 @@ const Layout = ({ children }) => {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
+      {/* Backdrop for mobile/tablet */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-40 min-[1260px]:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-61' : 'ml-12'
+        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-12 min-[1260px]:ml-61' : 'ml-12'
           }`}
       >
         <div className="px-4 pt-4 pb-0">

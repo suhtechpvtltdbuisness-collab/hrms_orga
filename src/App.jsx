@@ -55,97 +55,173 @@ import SalarySlip from './pages/hrms/Payroll/SalarySlip';
 import AdditionalSalary from './pages/hrms/Payroll/AdditionalSalary';
 import PayrollAccounting from './pages/hrms/Payroll/PayrollAccounting';
 import BankIntegration from './pages/hrms/Payroll/BankIntegration';
+//ACCOUNTS
+// Chart of Accounts
+import ChartOfAccounts from './pages/hrms/accounts/chartOfAccounts/ChartOfAccounts';
+import AddAccount from './pages/hrms/accounts/chartOfAccounts/AddAccount';
+import AccountLedger from './pages/hrms/accounts/chartOfAccounts/AccountLedger';
+// Bank & Cash
+import BankAndCashAccount from './pages/hrms/Accounts/BankAndCash/BankAndCashAccount';
+import AddBankAccount from './pages/hrms/Accounts/BankAndCash/AddBankAccount';
+// Journal
+import JournalEntry from './pages/hrms/Accounts/Journal/JournalEntry';
+import AddJournalEntry from './pages/hrms/Accounts/Journal/AddJournalEntry';
+
+// Expense
+import Expense from './pages/hrms/Expenses/Expense/Expense';
+import AddExpense from './pages/hrms/Expenses/Expense/AddExpense';
+import ExpenseCategory from './pages/hrms/Expenses/ExpenseCategory/ExpenseCategory';
+import AddExpenseCategory from './pages/hrms/Expenses/ExpenseCategory/AddExpenseCategory';
+
+//Invoice
+import SalesInvoice from './pages/hrms/Invoices/SalesInvoice/SalesInvoice';
+import AddSalesInvoice from './pages/hrms/Invoices/SalesInvoice/AddSalesInvoice';
+import PurchaseInvoice from './pages/hrms/Invoices/PurchaseInvoice/PurchaseInvoice';
+import AddPurchaseInvoice from './pages/hrms/Invoices/PurchaseInvoice/AddPurchaseInvoice';
+import RecurringInvoice from './pages/hrms/Invoices/RecurringInvoice/RecurringInvoice';
+import AddRecurringInvoice from './pages/hrms/Invoices/RecurringInvoice/AddRecurringInvoice';
+import InvoicePaymentAllocation from './pages/hrms/Invoices/InvoicePaymentAllocation/InvoicePaymentAllocation';
+import RecordPayment from './pages/hrms/Invoices/InvoicePaymentAllocation/RecordPayment';
+
 
 function App() {
   return (
-    <Router>
-      <Toaster />
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/hrms" replace />} />
-          <Route path="/hrms" element={<HRMS />} />
-          <Route path="/hrms/departments" element={<DepartmentList />} />
-          <Route path="/hrms/designations" element={<DesignationList />} />
-          <Route path="/hrms/employees" element={<EmployeeList />} />
-          <Route path="/hrms/employees/add" element={<AddEmployee />} />
-          <Route path="/hrms/settings" element={<Settings />} />
-          <Route path="/hrms/employees-details" element={<Navigate to="/hrms/employees-details/personal-information" />} />
-          <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
-          <Route path="/hrms/notifications" element={<Notifications />} />
-          {/* Add other routes here */}
-          <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
-          <Route path="/hrms/department-details" element={<DepartmentDetails />}>
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<DepartmentOverview />} />
-            <Route path="employees" element={<DepartmentEmployees />} />
-            <Route path="org-structure" element={<DepartmentOrgStructure />} />
-            <Route path="settings" element={<DepartmentSettings />} />
 
-          </Route>
+      <Router>
+        <Toaster />
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/hrms" replace />} />
+            <Route path="/hrms" element={<HRMS />} />
+            <Route path="/hrms/departments" element={<DepartmentList />} />
+            <Route path="/hrms/designations" element={<DesignationList />} />
+            <Route path="/hrms/employees" element={<EmployeeList />} />
+            <Route path="/hrms/employees/add" element={<AddEmployee />} />
+            <Route path="/hrms/settings" element={<Settings />} />
+            <Route path="/hrms/employees-details" element={<Navigate to="/hrms/employees-details/personal-information" />} />
+            <Route path="/hrms/employees-details-update" element={<EmpUpdatePersonalInfo />} />
+            <Route path="/hrms/notifications" element={<Notifications />} />
+            {/* Add other routes here */}
+            <Route path="/hrms/employees/add/:tab" element={<AddEmployee />} />
+            <Route path="/hrms/department-details" element={<DepartmentDetails />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<DepartmentOverview />} />
+              <Route path="employees" element={<DepartmentEmployees />} />
+              <Route path="org-structure" element={<DepartmentOrgStructure />} />
+              <Route path="settings" element={<DepartmentSettings />} />
+  
+            </Route>
+  
+            <Route
+              path="/hrms/organization-tree"
+              element={<OrganizationTree />}
+  
+  
+  
+            />
+            <Route
+              path="/hrms/organization-tree/node-details"
+              element={<NodeDetails />}
+            />
+            <Route path="/hrms/designation-details" element={<DesignationView />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<DesignationOverview />} />
+              <Route path="employees" element={<DesignationEmployees />} />
+              <Route path="org-structure" element={<DesignationOrgStructure />} />
+              <Route path="settings" element={<DesignationSettings />} />
+            </Route>
+            <Route path="/hrms/job-opening/new" element={<NewJobOpening />} />
+            <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
+  
+  
+            {/* Onboarding Employee List */}
+            <Route path="/hrms/onboarded-employee-list" element={<OnboardedEmployeeList />} />
+            <Route path="/hrms/onboarded-employee-list/team-list" element={<TeamList />} />
+  
+            {/* Attendance Route */}
+            <Route path="/hrms/attendance" element={<AttendanceList />} />
+            <Route path="/hrms/attendance/add" element={<AddAttendance />} />
+            <Route path="/hrms/employee-attendance-tool" element={<EmployeeAttendanceTool />} />
+            <Route path="/hrms/upload-attendance" element={<UploadAttendance />} />
+            <Route path="/hrms/request-attendance" element={<RequestAttendance />} />
+            
+            {/* Leave Management */}
+            <Route path="/hrms/leave-period" element={<LeavePeriod />} />
+            <Route path="/hrms/leave-period/new" element={<NewLeavePeriod />} />
+  
+            {/* Shift Management */}
+            <Route path="/hrms/shift-assignment" element={<ShiftAssignment />} />
+            <Route path="/hrms/shift-type" element={<ShiftType />} />
+            <Route path="/hrms/shift-type/new" element={<ShiftTypeDetail />} />
+            <Route path="/hrms/shift-type/:id" element={<ShiftTypeDetail />} />
+            <Route path="/hrms/salary-component" element={<SalaryComponent />} />
+            <Route path="/hrms/salary-structure" element={<SalaryStructure />} />
+  
+            <Route path="/hrms/salary-structure-assignment" element={<SalaryStructureAssignment />} />
+            <Route path="/hrms/payroll-entry" element={<PayrollEntry />} />
+            <Route path="/hrms/salary-slip" element={<SalarySlip />} />
+            <Route path="/hrms/shift-request" element={<ShiftRequest />} />
+            <Route path="/hrms/shift-request/new" element={<NewShiftRequest />} />
+            <Route path="/hrms/appraisal-template" element={<AppraisalTemplate />} />
+            <Route path="/hrms/appraisal-template/new" element={<NewAppraisalTemplate />} />
+            <Route path="/hrms/appraisal/new" element={<NewAppraisal />} />
+            <Route path="/hrms/energy-point-log" element={<EnergyPointLogList />} />
+            <Route path="/hrms/energy-point-rule" element={<EnergyPointRule />} />
+            <Route path="/hrms/energy-point-rule/new" element={<NewEnergyPointRule />} />
+            <Route path="/hrms/energy-point-setting" element={<EnergyPointSettings />} />
+            <Route path="/hrms/additional-salary" element={<AdditionalSalary />} />
+            <Route path="/hrms/payroll-accounting" element={<PayrollAccounting />} />
+            <Route path="/hrms/bank-integration" element={<BankIntegration />} />
+  
+            
+            {/* Accounts */}
+            <Route path="/hrms/chart-of-accounts" element={<ChartOfAccounts />} />
+            <Route path="/hrms/chart-of-accounts/add" element={<AddAccount />} />
+            <Route path="/hrms/chart-of-accounts/ledger" element={<AccountLedger />} />
+            <Route path="/hrms/bank-and-cash" element={<BankAndCashAccount />} />
+            <Route path="/hrms/bank-and-cash/add" element={<AddBankAccount />} />
+            <Route path="/hrms/journal-entry" element={<JournalEntry />} />
+            <Route path="/hrms/journal-entry/add" element={<AddJournalEntry />} />
+            <Route path="/hrms/journal-entry/edit/:id" element={<AddJournalEntry />} />
 
-          <Route
-            path="/hrms/organization-tree"
-            element={<OrganizationTree />}
+            {/* Invoices */}
+            {/* Expense Routes */}
+            <Route path="/hrms/expenses/expense" element={<Expense />} />
+            <Route path="/hrms/expenses/expense/new" element={<AddExpense />} />
+            <Route path="/hrms/expenses/expense/:id" element={<AddExpense />} />
+            
+            <Route path="/hrms/expenses/category" element={<ExpenseCategory />} />
+            <Route path="/hrms/expenses/category/new" element={<AddExpenseCategory />} />
+            <Route path="/hrms/expenses/category/:id" element={<AddExpenseCategory />} />
+
+            <Route path="/hrms/sales-invoice" element={<SalesInvoice />} />
+            <Route path="/hrms/sales-invoice/new" element={<AddSalesInvoice />} />
+            <Route path="/hrms/sales-invoice/view/:id" element={<AddSalesInvoice />} />
+            <Route path="/hrms/sales-invoice/edit/:id" element={<AddSalesInvoice />} />
+
+            {/* Purchase Invoices */}
+            <Route path="/hrms/purchase-invoice" element={<PurchaseInvoice />} />
+            <Route path="/hrms/purchase-invoice/new" element={<AddPurchaseInvoice />} />
+            <Route path="/hrms/purchase-invoice/view/:id" element={<AddPurchaseInvoice />} />
+            <Route path="/hrms/purchase-invoice/edit/:id" element={<AddPurchaseInvoice />} />
+
+            {/* Recurring Invoices */}
+            <Route path="/hrms/recurring-invoice" element={<RecurringInvoice />} />
+            <Route path="/hrms/recurring-invoice/new" element={<AddRecurringInvoice />} />
+            <Route path="/hrms/recurring-invoice/view/:id" element={<AddRecurringInvoice />} />
+            <Route path="/hrms/recurring-invoice/edit/:id" element={<AddRecurringInvoice />} />
+
+            {/* Invoice Payment Allocation */}
+            <Route path="/hrms/invoice-payment-allocation" element={<InvoicePaymentAllocation />} />
+            <Route path="/hrms/invoice-payment-allocation/new" element={<RecordPayment />} />
+            <Route path="/hrms/invoice-payment-allocation/view/:id" element={<RecordPayment />} />
+            <Route path="/hrms/invoice-payment-allocation/edit/:id" element={<RecordPayment />} />
 
 
+          </Routes>
+        </Layout>
+      </Router>
 
-          />
-          <Route
-            path="/hrms/organization-tree/node-details"
-            element={<NodeDetails />}
-          />
-          <Route path="/hrms/designation-details" element={<DesignationView />}>
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<DesignationOverview />} />
-            <Route path="employees" element={<DesignationEmployees />} />
-            <Route path="org-structure" element={<DesignationOrgStructure />} />
-            <Route path="settings" element={<DesignationSettings />} />
-          </Route>
-          <Route path="/hrms/job-opening/new" element={<NewJobOpening />} />
-          <Route path="/hrms/employees-details/:tab" element={<ViewEmployee />} />
-
-
-          {/* Onboarding Employee List */}
-          <Route path="/hrms/onboarded-employee-list" element={<OnboardedEmployeeList />} />
-          <Route path="/hrms/onboarded-employee-list/team-list" element={<TeamList />} />
-
-          {/* Attendance Route */}
-          <Route path="/hrms/attendance" element={<AttendanceList />} />
-          <Route path="/hrms/attendance/add" element={<AddAttendance />} />
-          <Route path="/hrms/employee-attendance-tool" element={<EmployeeAttendanceTool />} />
-          <Route path="/hrms/upload-attendance" element={<UploadAttendance />} />
-          <Route path="/hrms/request-attendance" element={<RequestAttendance />} />
-          
-          {/* Leave Management */}
-          <Route path="/hrms/leave-period" element={<LeavePeriod />} />
-          <Route path="/hrms/leave-period/new" element={<NewLeavePeriod />} />
-
-          {/* Shift Management */}
-          <Route path="/hrms/shift-assignment" element={<ShiftAssignment />} />
-          <Route path="/hrms/shift-type" element={<ShiftType />} />
-          <Route path="/hrms/shift-type/new" element={<ShiftTypeDetail />} />
-          <Route path="/hrms/shift-type/:id" element={<ShiftTypeDetail />} />
-          <Route path="/hrms/salary-component" element={<SalaryComponent />} />
-          <Route path="/hrms/salary-structure" element={<SalaryStructure />} />
-
-          <Route path="/hrms/salary-structure-assignment" element={<SalaryStructureAssignment />} />
-          <Route path="/hrms/payroll-entry" element={<PayrollEntry />} />
-          <Route path="/hrms/salary-slip" element={<SalarySlip />} />
-          <Route path="/hrms/shift-request" element={<ShiftRequest />} />
-          <Route path="/hrms/shift-request/new" element={<NewShiftRequest />} />
-          <Route path="/hrms/appraisal-template" element={<AppraisalTemplate />} />
-          <Route path="/hrms/appraisal-template/new" element={<NewAppraisalTemplate />} />
-          <Route path="/hrms/appraisal/new" element={<NewAppraisal />} />
-          <Route path="/hrms/energy-point-log" element={<EnergyPointLogList />} />
-          <Route path="/hrms/energy-point-rule" element={<EnergyPointRule />} />
-          <Route path="/hrms/energy-point-rule/new" element={<NewEnergyPointRule />} />
-          <Route path="/hrms/energy-point-setting" element={<EnergyPointSettings />} />
-          <Route path="/hrms/additional-salary" element={<AdditionalSalary />} />
-          <Route path="/hrms/payroll-accounting" element={<PayrollAccounting />} />
-          <Route path="/hrms/bank-integration" element={<BankIntegration />} />
-        </Routes>
-      </Layout>
-    </Router>
   );
 }
 
