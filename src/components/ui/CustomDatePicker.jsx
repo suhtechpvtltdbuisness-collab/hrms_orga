@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CustomDatePicker = ({ value, onChange, placeholder = "Select date", className }) => {
+const CustomDatePicker = ({ value, onChange, placeholder = "Select date", className, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -46,6 +46,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
   const toggleCalendar = (e) => {
     e.stopPropagation();
+    if (disabled) return;
     setIsOpen(!isOpen);
     // Reset view date to selected or today when opening
     if (!isOpen) {
@@ -165,13 +166,14 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {/* Input Trigger */}
-      <div className="relative cursor-pointer" onClick={toggleCalendar}>
+      <div className={`relative ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} onClick={toggleCalendar}>
         <input
             type="text"
             readOnly
+            disabled={disabled}
             value={value || ''}
             placeholder={placeholder}
-            className={`w-full px-4 py-2 rounded-lg text-[#1E1E1E] outline-none focus:ring-1 focus:ring-purple-500 bg-[#F2F2F7] border border-[#D9D9D9] cursor-pointer ${className || ''}`}
+            className={`w-full px-4 py-2 rounded-lg text-[#1E1E1E] outline-none focus:ring-1 focus:ring-purple-500 bg-white border border-[#D9D9D9] ${disabled ? 'cursor-not-allowed bg-gray-50 opacity-70' : 'cursor-pointer'} ${className || ''}`}
             style={{ width: '100%' }}
         />
         <img

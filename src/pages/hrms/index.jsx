@@ -91,6 +91,45 @@ const HRMS = () => {
                 { name: "Settings", path: "/hrms/settings" },
             ]
         },
+        {
+            title: "Accounts",
+            icon: "/images/report.svg",
+            items: [
+                { name: "Chart of Accounts", path: "/hrms/chart-of-accounts" },
+                { name: "Journal Entries", path: "/hrms/journal-entry" },
+                { name: "Bank And Cash Accounts", path: "/hrms/bank-and-cash" },
+            ]
+        },
+        {
+            title: "Invoices",
+            icon: "/images/report.svg",
+            items: [
+                { name: "Sales Invoices", path: "/hrms/sales-invoice" },
+                { name: "Purchase Invoices", path: "/hrms/purchase-invoice" },
+                { name: "Recurring Billing", path: "/hrms/recurring-invoice" },
+                { name: "Invoice Payment Allocation", path: "/hrms/invoice-payment-allocation" },
+            ]
+        },
+        {
+            title: "Expenses",
+            icon: "/images/report.svg",
+            items: [
+                { name: "Expense", path: "/hrms/expenses/expense" },
+                { name: "Expense Claims", path: "" },
+                { name: "Reimbursement", path: "" },
+                { name: "Expense Categories", path: "/hrms/expenses/category" },
+            ]
+        },
+        {
+            title: "Financial Reports",
+            icon: "/images/report.svg",
+            items: [
+                { name: "Profit & Loss", path: "" },
+                { name: "Balance Sheet", path: "" },
+                { name: "Cash Flow", path: "" },
+                { name: "Budget VS Actual Expenses", path: "" },
+            ]
+        },
     ];
 
     const handleNavigation = (path) => {
