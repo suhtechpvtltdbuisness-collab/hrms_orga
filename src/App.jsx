@@ -61,11 +61,11 @@ import ChartOfAccounts from './pages/hrms/accounts/chartOfAccounts/ChartOfAccoun
 import AddAccount from './pages/hrms/accounts/chartOfAccounts/AddAccount';
 import AccountLedger from './pages/hrms/accounts/chartOfAccounts/AccountLedger';
 // Bank & Cash
-import BankAndCashAccount from './pages/hrms/Accounts/BankAndCash/BankAndCashAccount';
-import AddBankAccount from './pages/hrms/Accounts/BankAndCash/AddBankAccount';
+import BankAndCashAccount from './pages/hrms/accounts/BankAndCash/BankAndCashAccount';
+import AddBankAccount from './pages/hrms/accounts/BankAndCash/AddBankAccount';
 // Journal
-import JournalEntry from './pages/hrms/Accounts/Journal/JournalEntry';
-import AddJournalEntry from './pages/hrms/Accounts/Journal/AddJournalEntry';
+import JournalEntry from './pages/hrms/accounts/Journal/JournalEntry';
+import AddJournalEntry from './pages/hrms/accounts/Journal/AddJournalEntry';
 
 // Expense
 import Expense from './pages/hrms/Expenses/Expense/Expense';
