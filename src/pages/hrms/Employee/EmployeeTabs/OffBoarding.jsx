@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar } from "lucide-react";
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 import { useState } from 'react';
 
 const InputField = ({ label, placeholder, defaultValue, readOnly = false, type = "text" }) => (
@@ -80,6 +81,8 @@ const CheckboxField = ({ label, description }) => (
 import DeleteEmployee from '../DeleteEmployee/DeleteEmployee';
 
 const OffBoarding = () => {
+    const [dates, setDates] = useState({});
+    const handleDateChange = (field, val) => setDates(prev => ({ ...prev, [field]: val }));
 
     return (
         <div className="h-full font-sans flex flex-col p-2 bg-white rounded-xl relative">
@@ -91,7 +94,20 @@ const OffBoarding = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <InputField label="Employee ID" placeholder="EMP-1001" />
-                <DatePicker label="Date of Joining" placeholder="15/01/2023" />
+                <InputField label="Employee ID" placeholder="EMP-1001" />
+                <div className="flex flex-col gap-1.5 w-full relative">
+                    <label className="text-base font-normal text-[#1E1E1E] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
+                        Date of Joining
+                    </label>
+                    <div className="relative">
+                        <CustomDatePicker
+                            value={dates.joiningDate}
+                            onChange={(val) => handleDateChange('joiningDate', val)}
+                            placeholder="15/01/2023"
+                            className="bg-white border-gray-200"
+                        />
+                    </div>
+                </div>
                 <InputField label="Department" placeholder="Product Design" />
                 <InputField label="Manager" placeholder="Priya Sharma" />
                 <InputField label="Phone" placeholder="+91 9845364758" />
@@ -104,7 +120,19 @@ const OffBoarding = () => {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
-                <DatePicker label="Exit Date" placeholder="Select date" />
+                <div className="flex flex-col gap-1.5 w-full relative">
+                    <label className="text-base font-normal text-[#656565] leading-[140%]" style={{ fontFamily: '"Inter", sans-serif' }}>
+                        Exit Date
+                    </label>
+                    <div className="relative">
+                        <CustomDatePicker
+                            value={dates.exitDate}
+                            onChange={(val) => handleDateChange('exitDate', val)}
+                            placeholder="Select date"
+                            className="bg-white border-gray-200"
+                        />
+                    </div>
+                </div>
                 <SelectField label="Type" placeholder="Select Type" options={['Resignation', 'Termination', 'Absconding']} />
             </div>
 

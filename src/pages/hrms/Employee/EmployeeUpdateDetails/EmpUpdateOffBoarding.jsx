@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown } from "lucide-react";
 import DeleteEmployee from '../DeleteEmployee/DeleteEmployee';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const InputField = ({ label, placeholder, value, onChange, type = "text" }) => (
     <div className="flex flex-col gap-1.5 w-full">
@@ -29,18 +30,11 @@ const DatePicker = ({ label, placeholder, value, onChange }) => (
             {label}
         </label>
         <div className="relative">
-            <input
-                type="date"
-                placeholder={placeholder}
+            <CustomDatePicker
                 value={value}
-                onChange={onChange}
-                className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-black text-base focus:outline-none focus:border-purple-500 transition-all appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                style={{ fontFamily: '"Inter", sans-serif' }}
-            />
-            <img
-                src="/images/calender.svg"
-                alt="calendar"
-                className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5 bg-white"
+                onChange={(val) => onChange({ target: { value: val } })}
+                placeholder={placeholder}
+                className="bg-white border-[#D9D9D9]"
             />
         </div>
     </div>

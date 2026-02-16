@@ -75,11 +75,11 @@ const EmpUpdateActivityLog = () => {
                 <div className="relative">
                     <FilterDropdown
                         placeholder="Select Date range"
-                        options={['Last 24 Hours', 'Last Week', 'Last Month']}
-                        value={selectedRange === "Select Date range" ? "" : selectedRange}
+                        options={['Select Date range', 'Last 24 Hours', 'Last Week', 'Last Month']}
+                        value={selectedRange}
                         onChange={setSelectedRange}
                         className="bg-white border border-gray-200 text-gray-700 py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all cursor-pointer text-sm font-normal flex items-center justify-between min-w-[180px]"
-                        buttonTextClassName="whitespace-nowrap"
+                        buttonTextClassName={`whitespace-nowrap ${selectedRange === "Select Date range" ? "text-gray-700" : ""}`}
                     />
                 </div>
             </div>

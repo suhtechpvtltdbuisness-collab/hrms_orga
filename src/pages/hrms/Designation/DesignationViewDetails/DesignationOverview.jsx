@@ -1,45 +1,96 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
+import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
+
+import DeleteDesignation from './DeleteDesignation';
 
 const DesignationOverview = () => {
   const { designationInfo, isEditing, formData, handleInputChange } =
     useOutletContext();
 
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+
+  const DEPARTMENT_OPTIONS = [
+    "Engineering",
+    "Product",
+    "Sales",
+    "Finance",
+    "Human Resources",
+    "Legal",
+    "Design",
+    "Administration",
+    "Data & Analysis",
+  ];
+  const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
+  const MANAGER_DESIGNATION_OPTIONS = [
+    "Director Of Product",
+    "Senior Engineer",
+    "Engineering Manager",
+    "CTO",
+    "CEO",
+    "Product Manager"
+  ];
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    if (dateString.includes(' ')) {
+        return dateString.split(' ')[0];
+    }
+    return dateString;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    //DD/MM/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return dateString;
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const getValue = (key) =>
     isEditing ? formData?.[key] || "" : designationInfo?.[key] || "";
 
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-4">
+    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-4 pl-2 pb-4 ">
       {/* Title */}
       <h2
-        className="text-[20px] font-semibold text-[#000000] mb-4 px-2"
+        className="text-[20px] font-semibold text-[#000000] mb-4 px-2 w-full xl:w-[75%]"
         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
       >
         Designation Information
       </h2>
 
       {/* Form Content */}
-      <div className="bg-white px-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="bg-white px-2 w-full xl:w-[75%]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           {/* Row 1 */}
           <div>
             <label className="block text-[#1E1E1E] mb-2 text-[16px]">
               Department
             </label>
             {isEditing ? (
-              <input
-                type="text"
+              <FilterDropdown
+                options={DEPARTMENT_OPTIONS}
                 value={formData?.department || ""}
-                onChange={(e) =>
-                  handleInputChange("department", e.target.value)
-                }
-                className="px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                onChange={(val) => handleInputChange("department", val)}
+                placeholder="Select Department"
+                className="w-[200px] px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal outline-none focus:ring-1 focus:ring-purple-500 bg-[#F2F2F7] border border-[#D9D9D9] flex items-center justify-between"
               />
             ) : (
               <div
                 className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "200px" }}
               >
                 {designationInfo.department}
               </div>
@@ -50,17 +101,17 @@ const DesignationOverview = () => {
               Level / Grade
             </label>
             {isEditing ? (
-              <input
-                type="text"
+              <FilterDropdown
+                options={LEVEL_OPTIONS}
                 value={formData?.level || ""}
-                onChange={(e) => handleInputChange("level", e.target.value)}
-                className="px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                onChange={(val) => handleInputChange("level", val)}
+                placeholder="Select Level"
+                className="w-[200px] px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal outline-none focus:ring-1 focus:ring-purple-500 bg-[#F2F2F7] border border-[#D9D9D9] flex items-center justify-between"
               />
             ) : (
               <div
                 className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "200px" }}
               >
                 {designationInfo.level}
               </div>
@@ -71,17 +122,17 @@ const DesignationOverview = () => {
               Reporting Manager Designation
             </label>
             {isEditing ? (
-              <input
-                type="text"
+              <FilterDropdown
+                options={MANAGER_DESIGNATION_OPTIONS}
                 value={formData?.reportsTo || ""}
-                onChange={(e) => handleInputChange("reportsTo", e.target.value)}
-                className="px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                onChange={(val) => handleInputChange("reportsTo", val)}
+                placeholder="Select Reporting Manager"
+                className="w-[260px] px-4 py-2 rounded-lg text-[#1E1E1E] text-[16px] font-normal outline-none focus:ring-1 focus:ring-purple-500 bg-[#F2F2F7] border border-[#D9D9D9] flex items-center justify-between"
               />
             ) : (
               <div
                 className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
-                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+                style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "260px" }}
               >
                 {designationInfo.reportsTo}
               </div>
@@ -93,23 +144,43 @@ const DesignationOverview = () => {
             <label className="block text-[#1E1E1E] mb-2 text-[16px]">
               Created On
             </label>
-            <div
-              className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
-              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
-            >
-              {designationInfo.createdOn}
-            </div>
+            {isEditing ? (
+                <div style={{ width: '230px' }}>
+                    <CustomDatePicker
+                        value={formatDateForInput(formData?.createdOn)}
+                        onChange={(val) => handleInputChange('createdOn', val)}
+                        placeholder="Select Date"
+                    />
+                </div>
+            ) : (
+                <div
+                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
+                  style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "230px" }}
+                >
+                  {formatDate(designationInfo.createdOn)}
+                </div>
+            )}
           </div>
           <div>
             <label className="block text-[#1E1E1E] mb-2 text-[16px]">
               Last Updated On
             </label>
-            <div
-              className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
-              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
-            >
-              {designationInfo.lastUpdated}
-            </div>
+            {isEditing ? (
+                <div style={{ width: '230px' }}>
+                    <CustomDatePicker
+                        value={formatDateForInput(formData?.lastUpdated)}
+                        onChange={(val) => handleInputChange('lastUpdated', val)}
+                        placeholder="Select Date"
+                    />
+                </div>
+            ) : (
+                <div
+                  className="px-4 py-2 rounded-lg text-[#757575] text-[16px] font-normal"
+                  style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", width: "230px" }}
+                >
+                  {formatDate(designationInfo.lastUpdated)}
+                </div>
+            )}
           </div>
         </div>
 
@@ -121,10 +192,13 @@ const DesignationOverview = () => {
           {isEditing ? (
             <textarea
               value={formData?.description || ""}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              rows="3"
-              className="px-4 py-4 rounded-lg text-[#757575] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none"
-              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+              onChange={(e) => {
+                  handleInputChange("description", e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              className="px-4 py-4 rounded-lg text-[#1E1E1E] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none overflow-hidden"
+              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", minHeight: "80px" }}
             />
           ) : (
             <div
@@ -158,9 +232,8 @@ const DesignationOverview = () => {
                   e.target.value.split("\n")
                 )
               }
-              rows="4"
-              className="px-4 py-4 rounded-lg text-[#757575] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none"
-              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9" }}
+              className="px-4 py-4 rounded-lg text-[#1E1E1E] text-[12px] font-normal w-full outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+              style={{ background: "#F2F2F7", border: "1px solid #D9D9D9", height: "128px" }}
             />
           ) : (
             <div
@@ -168,7 +241,7 @@ const DesignationOverview = () => {
               style={{
                 background: "#F2F2F7",
                 border: "1px solid #D9D9D9",
-                minHeight: "100px",
+                minHeight: "128px",
               }}
             >
               <ul className="list-disc pl-5">
@@ -184,9 +257,24 @@ const DesignationOverview = () => {
         </div>
 
         {/* Deactivate Button */}
-        <button className="px-6 py-3 bg-[#FF383C] text-white text-[17px] font-Poppins font-medium rounded-full hover:bg-[#E03125] transition-colors">
+        <button 
+          onClick={handleDeleteClick}
+          className="px-6 py-3 bg-[#FF383C] text-white text-[17px] font-Poppins font-medium rounded-full hover:bg-[#E03125] transition-colors"
+        >
           Deactivate Designation
         </button>
+
+        {/* Delete Modal */}
+        {showDeleteModal && (
+          <DeleteDesignation
+            onCancel={() => setShowDeleteModal(false)}
+            onDelete={() => {
+              setTimeout(() => {
+                setShowDeleteModal(false);
+              }, 2000);
+            }}
+          />
+        )}
       </div>
     </div>
   );
