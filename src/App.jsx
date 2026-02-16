@@ -1,84 +1,69 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Layout from "./components/layout/Layout";
-
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthPage from "./pages/hrms/AuthPage";
 import HRMS from "./pages/hrms";
-import EmployeeList from "./pages/hrms/EmployeeList/EmployeeList";
-import AddEmployee from "./pages/hrms/EmployeeTabs/AddEmployee";
+
+// Only import files that definitely exist
+import EmployeeList from "./pages/hrms/Employee/EmployeeList/EmployeeList";
+import AddEmployee from "./pages/hrms/Employee/EmployeeTabs/AddEmployee";
 import DepartmentList from "./pages/hrms/Department/DepartmentList";
-import OrganizationTree from "./pages/hrms/OrganizationTree/OrganizationTree";
-import NodeDetails from "./pages/hrms/OrganizationTree/NodeDetails";
-import ViewEmployee from "./pages/hrms/EmployeeViewDetails/ViewEmployee";
-import EmpUpdatePersonalInfo from "./pages/hrms/EmployeeUpdateDetails/EmpUpdatePersonalInfo";
+import DesignationList from "./pages/hrms/Designation/DesignationList";
+import Settings from "./pages/hrms/Settings/Settings";
 
 import "./App.css";
 
 function App() {
   return (
     <Router>
+      <Toaster />
       <Routes>
-        {/* Root */}
-        <Route path="/" element={<Navigate to="/hrms" replace />} />
+        {/* ================= AUTH PAGE ================= */}
+        <Route path="/auth" element={<AuthPage />} />
 
-        {/* Layout wrapper */}
-        <Route element={<Layout />}>
+        {/* ================= PROTECTED HRMS ROUTES ================= */}
+        <Route
+          path="/hrms/*"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Dashboard */}
+          <Route index element={<HRMS />} />
 
-          {/* ================= HRMS ================= */}
-          <Route path="/hrms" element={<HRMS />} />
+          {/* Employee */}
+          <Route path="employees" element={<EmployeeList />} />
+          <Route path="employees/add" element={<AddEmployee />} />
 
-          {/* ================= Organization Tree ================= */}
-          <Route
-            path="/hrms/organization-tree"
-            element={<OrganizationTree />}
-          />
-          <Route
-            path="/hrms/organization-tree/node-details"
-            element={<NodeDetails />}
-          />
+          {/* Department */}
+          <Route path="departments" element={<DepartmentList />} />
 
-          {/* ================= Department ================= */}
-          <Route
-            path="/hrms/departments"
-            element={<DepartmentList />}
-          />
+          {/* Designation */}
+          <Route path="designations" element={<DesignationList />} />
 
-          {/* ================= Employee List ================= */}
-          <Route
-            path="/hrms/employees"
-            element={<EmployeeList />}
-          />
+          {/* Settings */}
+          <Route path="settings" element={<Settings />} />
 
-          {/* ================= Add Employee (TABS) ================= */}
-          <Route
-            path="/hrms/employees/add"
-            element={<AddEmployee />}
-          />
-          <Route
-            path="/hrms/employees/add/:tab"
-            element={<AddEmployee />}
-          />
-
-          {/* ================= View Employee (TABS) ================= */}
-          <Route
-            path="/hrms/employees-details"
-            element={
-              <Navigate
-                to="/hrms/employees-details/personal-information"
-                replace
-              />
-            }
-          />
-          <Route
-            path="/hrms/employees-details/:tab"
-            element={<ViewEmployee />}
-          />
-
-          {/* ================= Update Employee ================= */}
-          <Route
-            path="/hrms/employees-details-update"
-            element={<EmpUpdatePersonalInfo />}
-          />
-
+          {/* 
+            ===================================================
+            ADD YOUR OTHER ROUTES HERE AS YOU CREATE THE FILES
+            ===================================================
+            
+            Example:
+            <Route path="attendance" element={<AttendanceList />} />
+            <Route path="notifications" element={<Notifications />} />
+            etc.
+          */}
         </Route>
+
+        {/* ================= DEFAULT ROUTE ================= */}
+        <Route path="/" element={<Navigate to="/auth" replace />} />
+
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Router>
   );
