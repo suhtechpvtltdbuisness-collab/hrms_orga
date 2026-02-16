@@ -32,9 +32,17 @@ const Layout = ({ children }) => {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
+      {/* Backdrop for mobile/tablet */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-40 min-[1260px]:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-67' : 'ml-13'
+        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-12 min-[1260px]:ml-61' : 'ml-12'
           }`}
       >
         <div className="px-4 pt-4 pb-0">
@@ -44,7 +52,7 @@ const Layout = ({ children }) => {
           </div>
 
           {/* Page Content Container */}
-          <main className="flex-1 overflow-x-hidden -mr-3.75">
+          <main className="flex-1 overflow-x-auto -mr-3.75">
             {/* Inner content container - align with Topbar's margin */}
             <div className="w-full mx-auto">
               {children || <Outlet />}

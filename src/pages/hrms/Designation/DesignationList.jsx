@@ -1,96 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronDown, X, ArrowRight, ArrowLeft } from "lucide-react";
+import { Plus, ChevronDown, X, ArrowRight, ArrowLeft, ChevronRight } from "lucide-react";
 import SuccessModal from "./SuccessModal";
 import ErrorModal from "./ErrorModal";
-
-const FilterDropdown = ({
-  label,
-  options,
-  value,
-  onChange,
-  minWidth = "150px",
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-3 bg-[#EEECFF] text-[#7D1EDB] rounded-[12px] text-sm font-normal outline-none hover:bg-purple-100 transition-colors"
-        style={{ minWidth }}
-      >
-        <span>{value || label}</span>
-        <ChevronDown
-          size={16}
-          className={`transition-transform duration-200 ml-2 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-2 bg-white z-20 flex flex-col font-light space-y-1"
-          style={{
-            width: minWidth,
-            borderRadius: "8px",
-            maxHeight: "320px",
-            overflowY: "auto",
-            overflowX: "hidden",
-            boxShadow: "0px 4px 14px 0px #0000001A",
-            fontFamily: "Montserrat, sans-serif",
-          }}
-        >
-          <div
-            onClick={() => {
-              onChange("");
-              setIsOpen(false);
-            }}
-            className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-            style={{ minHeight: "44px", fontSize: "16px", color: "#333333" }}
-          >
-            All
-          </div>
-          {options.map((opt) => (
-            <div
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setIsOpen(false);
-              }}
-              className="px-4 py-2 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-              style={{
-                minHeight: "44px",
-                fontSize: "16px",
-                color: "#333333",
-                lineHeight: "1.2",
-              }}
-            >
-              {opt}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import FilterDropdown from "../../../components/ui/FilterDropdown";
+import DeleteDesignation from "./DesignationViewDetails/DeleteDesignation";
+import EditDesignationModal from "./EditDesignationModal";
 
 const DesignationList = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDesignation, setSelectedDesignation] = useState(null);
 
   useEffect(() => {
@@ -340,9 +261,27 @@ const DesignationList = () => {
 
   return (
     <div
-      className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-12rem)] flex flex-col font-popins"
+      className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
+       {/* Breadcrumb */}
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+                <img 
+                    src="/images/arrow_left_alt.svg" 
+                    alt="Back" 
+                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
+                    onClick={() => navigate('/hrms')}
+                />
+                <span 
+                    className='cursor-pointer text-[#7D1EDB]'
+                    onClick={() => navigate('/hrms')}
+                >
+                    HRMS Dashboard
+                </span> 
+                <ChevronRight size={14}/> 
+                <span className="text-[#6B7280]">Designation</span>
+            </div>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">
         <h1 className="text-[20px] font-semibold text-[#494949]">
@@ -359,7 +298,7 @@ const DesignationList = () => {
             borderRadius: "26px",
           }}
         >
-          <span className="text-[16px] font-medium text-white font-popins">
+          <span className="text-[16px] cursor-pointer font-medium text-white font-popins">
             Add Designation
           </span>
           <Plus size={20} />
@@ -518,7 +457,7 @@ const DesignationList = () => {
                   />
                 </div>
               </th>
-              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white" style={{ width: "15%" }}>
+              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white text-center" style={{ width: "10%" }}>
                 ACTION
               </th>
             </tr>
@@ -532,7 +471,7 @@ const DesignationList = () => {
               >
                 <td className="px-6 py-4">
                   <span
-                    className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
+                    className="text-[#7268FF]"
                     onClick={(e) => {
                       e.stopPropagation();
                       // navigate('/hrms/designation-details/overview', { state: { designation: desig } });
@@ -545,7 +484,7 @@ const DesignationList = () => {
                   {desig.department}
                 </td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{desig.level}</td>
-                <td className="py-2 px-4  text-[#1E1E1E] pl-12">
+                <td className="py-2 px-4  text-[#1E1E1E]">
                   {desig.employees}
                 </td>
                 <td className="py-2 px-4">
@@ -559,39 +498,51 @@ const DesignationList = () => {
                     {desig.status}
                   </span>
                 </td>
-                <td className="py-4 px-4 flex items-center gap-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/hrms/designation-details/overview", {
-                        state: { designation: desig },
-                      });
-                    }}
-                    className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
-                  >
-                    <img
-                      src="/images/eye.svg"
-                      alt="view"
-                      style={{ height: "20px", width: "20px" }}
-                    />
-                  </button>
-                  <button
-                    onClick={() => handleEditClick(desig)}
-                    className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
-                  >
-                    <img
-                      src="/pencil.svg"
-                      alt="edit"
-                      style={{ height: "20px", width: "20px" }}
-                    />
-                  </button>
-                  <button className="text-red-500 hover:text-red-700 transition-colors cursor-pointer">
-                    <img
-                      src="/images/bin.svg"
-                      alt="delete"
-                      style={{ height: "20px", width: "20px" }}
-                    />
-                  </button>
+                <td className="py-4 px-4">
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/hrms/designation-details/overview", {
+                          state: { designation: desig },
+                        });
+                      }}
+                      className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer shrink-0"
+                    >
+                      <img
+                        src="/images/eye.svg"
+                        alt="view"
+                        className="shrink-0"
+                        style={{ height: "20px", width: "20px" }}
+                      />
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(desig)}
+                      className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer shrink-0"
+                    >
+                      <img
+                        src="/pencil.svg"
+                        alt="edit"
+                        className="shrink-0"
+                        style={{ height: "20px", width: "20px" }}
+                      />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDesignation(desig);
+                        setShowDeleteModal(true);
+                      }}
+                      className="text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
+                    >
+                      <img
+                        src="/images/bin.svg"
+                        alt="delete"
+                        className="shrink-0"
+                        style={{ height: "18px", width: "18px" }}
+                      />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -656,7 +607,7 @@ const DesignationList = () => {
       {showModal && (
         <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
           <div
-            className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative"
+            className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             {/* Modal Header */}
@@ -695,22 +646,14 @@ const DesignationList = () => {
                   Department
                 </label>
                 <div className="relative">
-                  <select
-                    name="department"
+                  <FilterDropdown
+                    placeholder="Enter department"
+                    options={DEPARTMENT_OPTIONS}
                     value={formData.department}
-                    onChange={handleInputChange}
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                  >
-                    <option value="">Enter department</option>
-                    {DEPARTMENT_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, department: val }))
+                    }
+                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
@@ -721,22 +664,14 @@ const DesignationList = () => {
                   Level
                 </label>
                 <div className="relative">
-                  <select
-                    name="level"
+                  <FilterDropdown
+                    placeholder="Select level"
+                    options={LEVEL_OPTIONS}
                     value={formData.level}
-                    onChange={handleInputChange}
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                  >
-                    <option value="">Select level</option>
-                    {LEVEL_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, level: val }))
+                    }
+                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
@@ -747,22 +682,14 @@ const DesignationList = () => {
                   Reporting Manager
                 </label>
                 <div className="relative">
-                  <select
-                    name="reportingManager"
+                  <FilterDropdown
+                    placeholder="Enter reporting manager"
+                    options={MANAGER_OPTIONS}
                     value={formData.reportingManager}
-                    onChange={handleInputChange}
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                  >
-                    <option value="">Enter reporting manager</option>
-                    {MANAGER_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, reportingManager: val }))
+                    }
+                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
@@ -774,19 +701,14 @@ const DesignationList = () => {
                 Status
               </label>
               <div className="relative">
-                <select
-                  name="status"
+                <FilterDropdown
+                  placeholder="Select status"
+                  options={["Active", "Inactive"]}
                   value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all appearance-none bg-white text-[#1E1E1E]"
-                >
-                  <option value="">Select status</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none"
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, status: val }))
+                  }
+                  className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                 />
               </div>
             </div>
@@ -854,6 +776,23 @@ const DesignationList = () => {
         isOpen={showErrorModal}
         onClose={() => setShowErrorModal(false)}
       />
+
+      {/* Edit Modal */}
+      <EditDesignationModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        designation={selectedDesignation}
+      />
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <DeleteDesignation
+          onCancel={() => setShowDeleteModal(false)}
+          onDelete={() => {
+            setShowDeleteModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

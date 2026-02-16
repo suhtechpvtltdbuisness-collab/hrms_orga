@@ -1,7 +1,10 @@
 import React from 'react';
 import { Bell, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Topbar = () => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white px-4 py-6 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
             {/* Search Bar */}
@@ -31,7 +34,10 @@ const Topbar = () => {
             {/* Right Section: Notification & Profile */}
             <div className="flex items-center space-x-6">
                 {/* Notification */}
-                <div className="relative cursor-pointer w-15 h-15 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]">
+                <div 
+                    onClick={() => navigate('/hrms/notifications')}
+                    className="relative cursor-pointer w-15 h-15 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]"
+                >
                     <Bell size={32} color="#7D1EDB" fill="#7D1EDB" />
                     <div className="absolute top-2 right-2 w-5 h-5 bg-[#FF3B30] rounded-full border-2 border-white flex items-center justify-center">
                         <span className="text-white text-[10px] font-bold">2</span>
@@ -43,7 +49,7 @@ const Topbar = () => {
                     <div className="relative">
                         <img
                             className="h-13 w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
-                            src="https://avatar.iran.liara.run/public/boy?username=Ankit"
+                            src="/images/ankit.png"
                             alt="Ankit Kumar"
                         />
                     </div>

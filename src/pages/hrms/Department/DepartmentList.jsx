@@ -5,7 +5,8 @@ import {
   ChevronDown,
   X,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  ChevronRight,
 } from 'lucide-react';
 import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
@@ -191,7 +192,25 @@ const DepartmentList = () => {
   };
 
   return (
-    <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-12rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
+
+      {/* Breadcrumb */}
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+                <img 
+                    src="/images/arrow_left_alt.svg" 
+                    alt="Back" 
+                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
+                    onClick={() => navigate('/hrms')}
+                />
+                <span 
+                    className='cursor-pointer text-[#7D1EDB]'
+                    onClick={() => navigate('/hrms')}
+                >
+                    HRMS Dashboard
+                </span> 
+                <ChevronRight size={14}/> 
+                <span className="text-[#6B7280]">Department</span>
+            </div>
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">

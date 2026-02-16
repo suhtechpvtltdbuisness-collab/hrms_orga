@@ -20,7 +20,7 @@ const ErrorModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-[#3B3A3A82] z-60 flex justify-center items-center font-sans"
+      className="fixed inset-0 bg-[#3B3A3A82] z-60 flex justify-center items-start pt-20 font-sans"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
       <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[550px] shadow-2xl relative">
