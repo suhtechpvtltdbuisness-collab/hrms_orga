@@ -12,6 +12,7 @@ import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
 import ErrorModal from './DepartmentUpdate/ErrorModal';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
+import { departmentService } from '../../../service';
 
 const DepartmentList = () => {
   const navigate = useNavigate();
@@ -20,10 +21,32 @@ const DepartmentList = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.body.style.overflow = showModal ? 'hidden' : 'auto';
   }, [showModal]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        const result = await departmentService.getAllDepartments();
+        if (result.success) {
+          console.log("Fetched Departments:", result.data); // Debug Log
+          setDepartments(result.data);
+        } else {
+            console.error(result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -36,20 +59,7 @@ const DepartmentList = () => {
     status: '',
   });
 
-  const [departments, setDepartments] = useState([
-    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Financial Planning, Reporting And Analysis Department', createdOn: '15/01/2023', lastUpdated: '11/10/2024' },
-    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active', description: 'Employee Relations, Recruitment, and HR Strategy', createdOn: '20/02/2023', lastUpdated: '15/11/2024' },
-    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active', description: 'Brand Management, Digital Marketing, and Advertising', createdOn: '10/03/2023', lastUpdated: '01/12/2024' },
-    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active', description: 'Daily Business Operations and Logistics Management', createdOn: '05/04/2023', lastUpdated: '20/11/2024' },
-    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active', description: 'IT Infrastructure, Support, and Development', createdOn: '12/01/2023', lastUpdated: '10/10/2024' },
-    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active', description: 'Revenue Generation and Client Relationship Management', createdOn: '01/05/2023', lastUpdated: '05/12/2024' },
-    { name: 'Legal', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active', description: 'Legal Compliance and Corporate Affairs Management', createdOn: '18/06/2023', lastUpdated: '15/10/2024' },
-    { name: 'R&D', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active', description: 'Research and Development of New Products', createdOn: '22/07/2023', lastUpdated: '20/09/2024' },
-    { name: 'Logistics', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Supply Chain and Transportation Management', createdOn: '30/08/2023', lastUpdated: '11/09/2024' },
-    { name: 'Support', head: 'Sarah Jones', employees: 10, location: 'Bangalore', status: 'Active', description: 'Customer Service and Technical Support', createdOn: '14/09/2023', lastUpdated: '25/11/2024' },
-    { name: 'Product', head: 'Mike Ross', employees: 8, location: 'Delhi', status: 'Inactive', description: 'Product Roadmap and Lifecycle Management', createdOn: '05/10/2023', lastUpdated: '01/11/2024' },
-    { name: 'Design', head: 'Rachel Green', employees: 14, location: 'Pune', status: 'Active', description: 'Creative Design and User Experience', createdOn: '20/11/2023', lastUpdated: '10/12/2024' },
-  ]);
+  const [departments, setDepartments] = useState([]);
 
   /* Sorting & Search Logic */
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -59,8 +69,9 @@ const DepartmentList = () => {
     head: ''
   });
 
+  /* Safe options for demo: Only John Smith is guaranteed to exist. */
   const LOCATION_OPTIONS = ["Delhi", "Mumbai", "Bangalore", "Kolkata"];
-  const HEAD_OPTIONS = ["John Smith", "Alice Carol", "Priya Singh"];
+  const HEAD_OPTIONS = ["John Smith"]; // Temporarily removed others as they cause error
 
   const handleSort = (key) => {
     let direction = 'ascending';
@@ -132,7 +143,7 @@ const DepartmentList = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.departmentName || !formData.departmentHead) {
       setShowErrorModal(true);
       return;
@@ -140,26 +151,45 @@ const DepartmentList = () => {
 
     const newDepartment = {
       name: formData.departmentName,
+      code: formData.departmentCode,
       head: formData.departmentHead,
-      employees: 0,
       location: formData.location || 'Mumbai',
-      status: formData.status || 'Active'
+      description: formData.description,
+      // Default values if needed by backend, or remove if backend handles them
+      status: formData.status || 'Active' 
     };
-    setDepartments([...departments, newDepartment]);
 
-    console.log('Form submitted:', formData);
-    setShowModal(false);
-    setShowSuccessModal(true);
-    setFormData({
-      departmentName: '',
-      departmentCode: '',
-      departmentHead: '',
-      location: '',
-      description: '',
-      parentDepartment: '',
-      status: '',
-    });
+    try {
+        console.log("Sending department data:", newDepartment); // Debug log
+        const result = await departmentService.createDepartment(newDepartment);
+        console.log("Create department result:", result); // Debug log
+
+        if (result.success) {
+            console.log('Department created:', result.data);
+            // ... rest of success logic
+            setDepartments([...departments, result.data]);
+            setShowModal(false);
+            setShowSuccessModal(true);
+            setFormData({
+                departmentName: '',
+                departmentCode: '',
+                departmentHead: '',
+                location: '',
+                description: '',
+                parentDepartment: '',
+                status: '',
+            });
+        } else {
+            console.error("Failed to create department:", result.message);
+            alert(`Error: ${result.message}`); // Show detailed error to user
+        }
+    } catch (error) {
+        console.error("Error creating department:", error);
+        alert("An unexpected error occurred. Check console for details.");
+    }
   };
+
+
 
   const handleEditClick = (dept) => {
     setSelectedDepartment(dept);
@@ -319,18 +349,18 @@ const DepartmentList = () => {
                     className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate('/hrms/department-details/overview', { state: { department: dept } });
+                      navigate(`/hrms/department-details/${dept._id || dept.id}/overview`, { state: { department: dept } });
                     }}
                   >
                     {dept.name}
                   </span>
                 </td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.head}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.location}</td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.head || "-"}</td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees || "0"}</td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{dept.location || "-"}</td>
                 <td className="py-2 px-4">
                   <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-[34px] min-w-[74px] font-normal ${dept.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' : 'bg-[#FF3B301A] text-[#FF3B30]'}`}>
-                    {dept.status}
+                    {dept.status || "Inactive"}
                   </span>
                 </td>
                 <td className="py-4 px-4">

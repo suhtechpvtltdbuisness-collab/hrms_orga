@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Calendar, ArrowUp } from "lucide-react";
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import { departmentService, designationService } from "../../../../service";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -58,7 +60,27 @@ const InputField = ({ label, type = "text", placeholder, defaultValue, ...props 
     );
 };
 
-const Employment = () => {
+const Employment = ({ formData = {}, onChange }) => {
+    const [departments, setDepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const deptRes = await departmentService.getAllDepartments();
+                if (deptRes.success) {
+                    setDepartments(deptRes.data.map(d => ({ label: d.departmentName, value: d._id })));
+                }
+                const desigRes = await designationService.getAllDesignation();
+                if (desigRes.success) {
+                    setDesignations(desigRes.data.map(d => ({ label: d.name, value: d._id })));
+                }
+            } catch (error) {
+                console.error("Failed to fetch dropdown data", error);
+            }
+        };
+        fetchData();
+    }, []);
     const [sections, setSections] = useState({
         jobDetails: true,
         employmentHistory: false,
@@ -95,8 +117,30 @@ const Employment = () => {
                 onToggle={() => toggleSection("jobDetails")}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <InputField label="Job Title" placeholder="Enter job title" />
-                    <InputField label="Department" placeholder="Enter department" />
+                    {/* Job Title / Designation */}
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Designation</label>
+                        <FilterDropdown
+                            placeholder="Select Designation"
+                            options={designations}
+                            value={formData.designation}
+                            onChange={(val) => onChange && onChange({ target: { name: 'designation', value: val } })}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base"
+                        />
+                    </div>
+
+                    {/* Department */}
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Department</label>
+                        <FilterDropdown
+                            placeholder="Select Department"
+                            options={departments}
+                            value={formData.department}
+                            onChange={(val) => onChange && onChange({ target: { name: 'department', value: val } })}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-700 text-base"
+                        />
+                    </div>
+                    
                     <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
                     <InputField label="Reporting Manager" placeholder="Enter name" />
 

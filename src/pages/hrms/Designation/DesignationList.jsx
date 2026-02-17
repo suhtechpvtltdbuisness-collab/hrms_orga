@@ -7,12 +7,16 @@ import FilterDropdown from "../../../components/ui/FilterDropdown";
 import DeleteDesignation from "./DesignationViewDetails/DeleteDesignation";
 import EditDesignationModal from "./EditDesignationModal";
 
+import { designationService, departmentService } from "../../../service";
+
 const DesignationList = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDesignation, setSelectedDesignation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [departments, setDepartments] = useState([]);
 
   useEffect(() => {
     document.body.style.overflow = showModal ? "hidden" : "auto";
@@ -29,92 +33,45 @@ const DesignationList = () => {
     status: "",
   });
 
-  const [designations, setDesignations] = useState([
-    {
-      name: "Software Engineer",
-      department: "Engineering",
-      level: "L-2",
-      employees: 15,
-      status: "Active",
-    },
-    {
-      name: "Senior Product Manager",
-      department: "Product",
-      level: "L-4",
-      employees: 4,
-      status: "Active",
-    },
-    {
-      name: "Marketing Specialist",
-      department: "Product",
-      level: "L-4",
-      employees: 8,
-      status: "Active",
-    },
-    {
-      name: "Office Manager",
-      department: "Administration",
-      level: "L-2",
-      employees: 1,
-      status: "Active",
-    },
-    {
-      name: "Sales Development Rep",
-      department: "Sales",
-      level: "L-1",
-      employees: 1,
-      status: "Active",
-    },
-    {
-      name: "Accounts Executive",
-      department: "Finance",
-      level: "L-2",
-      employees: 4,
-      status: "Active",
-    },
-    {
-      name: "Data Analyst",
-      department: "Data & Analysis",
-      level: "L-2",
-      employees: 8,
-      status: "Active",
-    },
-    {
-      name: "HR Manager",
-      department: "Human Resources",
-      level: "L-3",
-      employees: 2,
-      status: "Active",
-    },
-    {
-      name: "Legal Counsel",
-      department: "Legal",
-      level: "L-3",
-      employees: 3,
-      status: "Active",
-    },
-    {
-      name: "DevOps Engineer",
-      department: "Engineering",
-      level: "L-3",
-      employees: 6,
-      status: "Active",
-    },
-    {
-      name: "UX Designer",
-      department: "Design",
-      level: "L-2",
-      employees: 5,
-      status: "Inactive",
-    },
-    {
-      name: "QA Engineer",
-      department: "Engineering",
-      level: "L-2",
-      employees: 10,
-      status: "Active",
-    },
-  ]);
+  const [designations, setDesignations] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch departments first for mapping
+        const deptResponse = await departmentService.getAllDepartments();
+        let deptMap = {};
+        if (deptResponse.success) {
+          setDepartments(deptResponse.data);
+          deptResponse.data.forEach(d => {
+            deptMap[d._id] = d.departmentName;
+            deptMap[d.departmentName] = d._id; // Bi-directional map or just map?
+          });
+        }
+
+        const desigResponse = await designationService.getAllDesignation();
+        if (desigResponse.success) {
+           // Map API data to component state format
+           const mappedDesignations = desigResponse.data.map(d => ({
+             ...d,
+             name: d.name, // Assuming API returns 'name'
+             department: d.department?.departmentName || deptMap[d.departmentId] || "Unknown", // Handle populated or ID
+             departmentId: d.departmentId, 
+             level: typeof d.level === 'number' ? `L-${d.level}` : d.level, // Normalize level
+             employees: 0, // API doesn't seem to return this yet
+             status: d.status || "Active" 
+           }));
+           setDesignations(mappedDesignations);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   /* Sorting & Search Logic */
   const [sortConfig, setSortConfig] = useState({
@@ -130,17 +87,7 @@ const DesignationList = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const DEPARTMENT_OPTIONS = [
-    "Engineering",
-    "Product",
-    "Sales",
-    "Finance",
-    "Human Resources",
-    "Legal",
-    "Design",
-    "Administration",
-    "Data & Analysis",
-  ];
+  const DEPARTMENT_OPTIONS = departments.map(d => d.departmentName);
   const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
   const MANAGER_OPTIONS = [
     "John Smith",
@@ -225,33 +172,71 @@ const DesignationList = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.designationName || !formData.department || !formData.level) {
       setShowErrorModal(true);
       return;
     }
 
-    const newDesignation = {
-      name: formData.designationName,
-      department: formData.department,
-      level: formData.level,
-      employees: 0,
-      status: formData.status || "Active",
-    };
-    setDesignations([...designations, newDesignation]);
+    const selectedDept = departments.find(d => d.departmentName === formData.department);
+    const deptId = selectedDept ? selectedDept._id : null;
+    
+    // Normalize level to number if needed, currently keeping as string or extracting number
+    // API Example showed level: 1. If user selects "L-1", we might need to send 1.
+    const levelNum = parseInt(formData.level.replace("L-", "")) || 1;
 
-    console.log("Form submitted:", formData);
-    setShowModal(false);
-    setShowSuccessModal(true);
-    setFormData({
-      designationName: "",
-      department: "",
-      level: "",
-      reportingManager: "",
-      responsibilities: "",
-      description: "",
-      status: "",
-    });
+    const newDesignationPayload = {
+      name: formData.designationName,
+      departmentId: deptId, // Send ID
+      level: levelNum,
+      reportingTo: 1, // Hardcoded for now as per instructions/limitations
+      description: formData.description || "No description",
+      responsibility: formData.responsibilities || "No responsibility",
+      // type: "permanent" // Adding this if required by backend, based on screenshot
+    };
+
+    try {
+      const response = await designationService.createDesignation(newDesignationPayload);
+      if (response.success) {
+         // Refresh list
+         const desigResponse = await designationService.getAllDesignation();
+         if (desigResponse.success) {
+            // Re-fetch logic (Ideally duplicated or extracted to function, but inline for now to save time)
+            // Ideally should update state directly but mapping relies on deptMap etc.
+            // Let's just trigger a reload or manually append if we had full object. 
+            // Since we need to map again, simpler to just re-execute the fetch logic or append with known data.
+             
+             // Quick append for UI responsiveness
+             const newDisplayItem = {
+               name: formData.designationName,
+               department: formData.department,
+               level: formData.level,
+               employees: 0,
+               status: "Active"
+             };
+             setDesignations([...designations, newDisplayItem]); 
+             
+             // Better: re-fetch to ensure consistency if we extracted fetch function.
+             // For now, I will just append.
+         }
+         setShowModal(false);
+         setShowSuccessModal(true);
+         setFormData({
+            designationName: "",
+            department: "",
+            level: "",
+            reportingManager: "",
+            responsibilities: "",
+            description: "",
+            status: "",
+         });
+      } else {
+        setShowErrorModal(true); // Or show specific error message
+      }
+    } catch (error) {
+       console.error("Error creating designation", error);
+       setShowErrorModal(true);
+    }
   };
 
   const handleEditClick = (desig) => {

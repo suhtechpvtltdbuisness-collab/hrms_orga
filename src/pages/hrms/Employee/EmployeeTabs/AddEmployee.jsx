@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { userService } from '../../../../service';
 import PersonalInfo from './PersonalInfo';
 import Employment from './Employment';
 import Attendance from './Attendance';
@@ -52,6 +54,39 @@ const AddEmployee = () => {
         }
     }, [activeTabObj]);
 
+    const handleSave = async () => {
+        if (!formData.name || !formData.email || !formData.password) {
+            toast.error("Please fill in all required fields (Name, Email, Password)");
+            return;
+        }
+
+        const payload = {
+            ...formData,
+            isAdmin: false,
+            type: "employee",
+            // Map specific fields if needed, e.g., contact info
+            eContactName: formData.contactName,
+            eContactNumber: formData.contactNumber,
+            eRelation: formData.relation,
+            // Ensure department and designation are sent if selected
+            department: formData.department, // IDs from dropdown
+            designation: formData.designation 
+        };
+
+        try {
+            const response = await userService.createEmployee(payload);
+            if (response.success) {
+                toast.success("Employee created successfully!");
+                navigate('/hrms/employees');
+            } else {
+                toast.error(response.message || "Failed to create employee");
+            }
+        } catch (error) {
+            console.error("Error creating employee:", error);
+            toast.error("An error occurred");
+        }
+    };
+
     return (
         <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
 
@@ -77,6 +112,7 @@ const AddEmployee = () => {
                         Cancel
                     </button>
                     <button
+                        onClick={handleSave}
                         className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-[100px]"
                         style={{ borderRadius: '30px' }}
                     >

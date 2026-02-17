@@ -15,30 +15,62 @@ import FilterDropdown from '../../../../components/ui/FilterDropdown';
 import AssignReportingManager from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignReportingManager';
 import AssignedModal from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignedModal';
 import SuccessModal from '../../OnboardedEmployeeList/ReportingManager/Assign/SuccessModal';
+import { userService, departmentService, designationService } from '../../../../service';
 
 
 
 const EmployeeList = () => {
-    // Mock Data
+    // State
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
-    const [employees] = useState([
-        { srNo: "01", name: "Rohan Sharma", empId: "EMP-001", department: "Engineering", designation: "Frontend Developer", joiningDate: "10 Jan 2023", contact: "rohan.s@tech.com", status: "Active" },
-        { srNo: "02", name: "Priya Singh", empId: "EMP-002", department: "HR", designation: "HR Manager", joiningDate: "15 Mar 2022", contact: "priya.singh@tech.com", status: "Active" },
-        { srNo: "03", name: "Amit Patel", empId: "EMP-003", department: "Sales", designation: "Sales Executive", joiningDate: "22 Jun 2023", contact: "amit.p@tech.com", status: "Active" },
-        { srNo: "04", name: "Sarah Jenkins", empId: "EMP-004", department: "Marketing", designation: "Content Strategist", joiningDate: "05 Sep 2021", contact: "sarah.j@tech.com", status: "Active" },
-        { srNo: "05", name: "Michael Chen", empId: "EMP-005", department: "Engineering", designation: "Backend Developer", joiningDate: "12 Nov 2022", contact: "michael.c@tech.com", status: "Active" },
-        { srNo: "06", name: "Anjali Gupta", empId: "EMP-006", department: "Finance", designation: "Accountant", joiningDate: "30 Jan 2020", contact: "anjali.g@tech.com", status: "Active" },
-        { srNo: "07", name: "David Kim", empId: "EMP-007", department: "Design", designation: "UI/UX Designer", joiningDate: "14 Jul 2023", contact: "david.k@tech.com", status: "Active" },
-        { srNo: "08", name: "Emily Davis", empId: "EMP-008", department: "Engineering", designation: "QA Engineer", joiningDate: "01 Feb 2022", contact: "emily.d@tech.com", status: "Active" },
-        { srNo: "09", name: "James Wilson", empId: "EMP-009", department: "Operations", designation: "Operations Manager", joiningDate: "18 Apr 2019", contact: "james.w@tech.com", status: "Active" },
-        { srNo: "10", name: "Sofia Rodriguez", empId: "EMP-010", department: "Sales", designation: "Sales Lead", joiningDate: "09 Oct 2021", contact: "sofia.r@tech.com", status: "Active" },
-        { srNo: "11", name: "Daniel Lee", empId: "EMP-011", department: "Engineering", designation: "DevOps Engineer", joiningDate: "25 May 2023", contact: "daniel.l@tech.com", status: "Active" },
-        { srNo: "12", name: "Neha Verma", empId: "EMP-012", department: "HR", designation: "Recruiter", joiningDate: "11 Aug 2022", contact: "neha.v@tech.com", status: "Active" },
-        { srNo: "13", name: "Christopher Martin", empId: "EMP-013", department: "Management", designation: "Director", joiningDate: "01 Jan 2018", contact: "chris.m@tech.com", status: "Active" },
-        { srNo: "14", name: "Isabella Garcia", empId: "EMP-014", department: "Marketing", designation: "SEO Specialist", joiningDate: "19 Dec 2022", contact: "isabella.g@tech.com", status: "Active" },
-        { srNo: "15", name: "Arjun Kumar", empId: "EMP-015", department: "Engineering", designation: "Full Stack Developer", joiningDate: "03 Mar 2021", contact: "arjun.k@tech.com", status: "Active" }
-    ]);
+    const [employees, setEmployees] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [departments, setDepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Departments and Designations for mapping/filtering
+                const deptRes = await departmentService.getAllDepartments();
+                const desigRes = await designationService.getAllDesignation();
+                
+                let deptMap = {};
+                let desigMap = {};
+
+                if (deptRes.success) {
+                    setDepartments(deptRes.data);
+                    deptRes.data.forEach(d => deptMap[d._id] = d.departmentName);
+                }
+                if (desigRes.success) {
+                    setDesignations(desigRes.data);
+                    desigRes.data.forEach(d => desigMap[d._id] = d.name);
+                }
+
+                // Fetch Employees
+                const empRes = await userService.getAllEmployees();
+                if (empRes.success) {
+                    const mappedEmployees = empRes.data.map((emp, index) => ({
+                        srNo: String(index + 1).padStart(2, '0'),
+                        name: emp.name,
+                        empId: emp.empId || emp.employeeId || "N/A",
+                        department: deptMap[emp.department] || emp.department || "N/A",
+                        designation: desigMap[emp.designation] || emp.designation || "N/A",
+                        joiningDate: emp.joiningDate ? new Date(emp.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
+                        contact: emp.email || emp.phone || "N/A",
+                        status: emp.status || "Active"
+                    }));
+                    setEmployees(mappedEmployees);
+                }
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Sorting & Search Logic
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -87,9 +119,9 @@ const EmployeeList = () => {
         setIsSuccessModalOpen(true);
     };
 
-    const STATUS_OPTIONS = ["Active", "Inactive", "Probation",];
-    const DEPARTMENT_OPTIONS = ["Technical ", "Product", "Business", "Operations", "Finance", "Security"];
-    const DESIGNATION_OPTIONS = ["Frontend Developer", "Backend Developer", "DevOps", "UI/UX Designer", "Product Management", "Business Analysis", "Sales", "Customer Support", "HR", "Finance", "Legal"];
+    const STATUS_OPTIONS = ["Active", "Inactive", "Probation"];
+    const DEPARTMENT_OPTIONS = departments.map(d => d.departmentName);
+    const DESIGNATION_OPTIONS = designations.map(d => d.name);
 
     const handleSort = (key) => {
         let direction = 'ascending';
