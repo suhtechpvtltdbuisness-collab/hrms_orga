@@ -77,6 +77,8 @@ import Expense from "./pages/hrms/Expenses/Expense/Expense";
 import AddExpense from "./pages/hrms/Expenses/Expense/AddExpense";
 import ExpenseCategory from "./pages/hrms/Expenses/ExpenseCategory/ExpenseCategory";
 import AddExpenseCategory from "./pages/hrms/Expenses/ExpenseCategory/AddExpenseCategory";
+import ReimbursementCycle from "./pages/hrms/Expenses/ReimbursementCycle/ReimbursementCycle";
+import PendingApprovals from "./pages/hrms/Expenses/PendingApprovals/PendingApprovals";
 
 //Invoice
 import SalesInvoice from "./pages/hrms/Invoices/SalesInvoice/SalesInvoice";
@@ -247,6 +249,14 @@ function App() {
           <Route
             path="expenses/category/:id"
             element={<AddExpenseCategory />}
+          />
+          <Route
+            path="expenses/reimbursement"
+            element={<ReimbursementCycle />}
+          />
+          <Route
+            path="expenses/pending-approvals"
+            element={<PendingApprovals />}
           />
 
           {/* Sales Invoices */}
