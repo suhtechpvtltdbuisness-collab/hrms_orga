@@ -99,32 +99,16 @@ const RecurringInvoice = () => {
     });
   };
 
-  const handleDeactivate = (invoice) => {
+  const handleDelete = (invoice) => {
     setActionMenuOpen(null);
-    // Toggle status between Active and Inactive
-    const updatedInvoices = invoices.map((inv) => {
-      if (inv.id === invoice.id) {
-        return {
-          ...inv,
-          status: inv.status === "Active" ? "Inactive" : "Active",
-        };
-      }
-      return inv;
-    });
+    // Delete invoice from state
+    const updatedInvoices = invoices.filter((inv) => inv.id !== invoice.id);
     setInvoices(updatedInvoices);
 
     // Update localStorage
     const storedInvoices =
       JSON.parse(localStorage.getItem("recurringInvoices")) || [];
-    const updatedStored = storedInvoices.map((inv) => {
-      if (inv.id === invoice.id) {
-        return {
-          ...inv,
-          status: inv.status === "Active" ? "Inactive" : "Active",
-        };
-      }
-      return inv;
-    });
+    const updatedStored = storedInvoices.filter((inv) => inv.id !== invoice.id);
     localStorage.setItem("recurringInvoices", JSON.stringify(updatedStored));
   };
 
@@ -327,7 +311,7 @@ const RecurringInvoice = () => {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeactivate(invoice)}
+                            onClick={() => handleDelete(invoice)}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 flex items-center gap-2"
                           >
                             Deactivate
