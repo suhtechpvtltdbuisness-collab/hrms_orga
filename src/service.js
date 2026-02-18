@@ -32,55 +32,52 @@ export const authService = {
     }
   },
   login: async (userData) => {
-  try {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
-    });
+    try {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
 
-    const data = await response.json();
-    console.log("LOGIN RESPONSE:", data);
+      const data = await response.json();
+      console.log("LOGIN RESPONSE:", data);
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Login failed",
+        };
+      }
+
+      const accessToken = data?.data?.tokens?.accessToken;
+
+      if (accessToken) {
+        localStorage.setItem("authToken", accessToken);
+        console.log("Token Saved:", accessToken);
+      } else {
+        console.error("Token not found in response");
+      }
+
+      localStorage.setItem("isLoggedIn", "true");
+
+      return {
+        success: true,
+        message: data.message,
+        data: data.data,
+      };
+    } catch (error) {
       return {
         success: false,
-        message: data.message || "Login failed",
+        message: "Something went wrong",
       };
     }
-
-    // ✅ Correct nested path
-    const accessToken = data?.data?.tokens?.accessToken;
-
-    if (accessToken) {
-      localStorage.setItem("authToken", accessToken);
-      console.log("Token Saved:", accessToken);
-    } else {
-      console.error("Token not found in response");
-    }
-
-    localStorage.setItem("isLoggedIn", "true");
-
-    return {
-      success: true,
-      message: data.message,
-      data: data.data,
-    };
-
-  } catch (error) {
-    return {
-      success: false,
-      message: "Something went wrong",
-    };
-  }
-}
-,
+  },
   logout: () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("authToken");
-  }
+  },
 };
 
 export const departmentService = {
@@ -88,14 +85,17 @@ export const departmentService = {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        return { success: false, message: "No authentication token found. Please login again." };
+        return {
+          success: false,
+          message: "No authentication token found. Please login again.",
+        };
       }
 
       const response = await fetch(`${BASE_URL}/departments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(departmentData),
       });
@@ -103,7 +103,10 @@ export const departmentService = {
       if (response.status === 401) {
         authService.logout();
         window.location.href = "/auth";
-        return { success: false, message: "Session expired. Please login again." };
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
       }
 
       const data = await response.json();
@@ -129,21 +132,27 @@ export const departmentService = {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        return { success: false, message: "No authentication token found. Please login again." };
+        return {
+          success: false,
+          message: "No authentication token found. Please login again.",
+        };
       }
 
       const response = await fetch(`${BASE_URL}/departments`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 401) {
         authService.logout();
         window.location.href = "/auth";
-        return { success: false, message: "Session expired. Please login again." };
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
       }
 
       const data = await response.json();
@@ -171,14 +180,17 @@ export const designationService = {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        return { success: false, message: "No authentication token found. Please login again." };
+        return {
+          success: false,
+          message: "No authentication token found. Please login again.",
+        };
       }
 
       const response = await fetch(`${BASE_URL}/designation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(designationData),
       });
@@ -186,7 +198,10 @@ export const designationService = {
       if (response.status === 401) {
         authService.logout();
         window.location.href = "/auth";
-        return { success: false, message: "Session expired. Please login again." };
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
       }
 
       const data = await response.json();
@@ -212,22 +227,27 @@ export const designationService = {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        return { success: false, message: "No authentication token found. Please login again." };
+        return {
+          success: false,
+          message: "No authentication token found. Please login again.",
+        };
       }
 
-      // Trying singular endpoint as per POST
       const response = await fetch(`${BASE_URL}/designation`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 401) {
         authService.logout();
         window.location.href = "/auth";
-        return { success: false, message: "Session expired. Please login again." };
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
       }
 
       const data = await response.json();

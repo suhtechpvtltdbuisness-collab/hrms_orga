@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronDown, X, ArrowRight, ArrowLeft, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  ChevronDown,
+  X,
+  ArrowRight,
+  ArrowLeft,
+  ChevronRight,
+} from "lucide-react";
 import SuccessModal from "./SuccessModal";
 import ErrorModal from "./ErrorModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
@@ -33,7 +40,6 @@ const DesignationList = () => {
   const [loading, setLoading] = useState(true);
   const [designations, setDesignations] = useState([]);
 
-  // Fetch designations on mount
   useEffect(() => {
     fetchDesignations();
     fetchDepartments();
@@ -44,10 +50,7 @@ const DesignationList = () => {
   const fetchDepartments = async () => {
     const result = await departmentService.getDepartments();
     if (result.success && Array.isArray(result.data)) {
-        // Map departments to a format suitable for FilterDropdown (or just use names and map back)
-        // For FilterDropdown, if it accepts strings, we use names. If it accepts objects, we use objects.
-        // The current FilterDropdown seems to accept strings. We will use names and find ID on submit.
-        setDepartmentOptions(result.data);
+      setDepartmentOptions(result.data);
     }
   };
 
@@ -56,22 +59,19 @@ const DesignationList = () => {
     const result = await designationService.getDesignations();
     if (result.success) {
       if (Array.isArray(result.data)) {
-       const formatted = result.data.map((d) => ({
-  id: d.id,
-  name: d.name || "-",
-  departmentId: d.departmentId,
-  level: d.level || "-",
-  employees: d.employees || 0,
-  responsibility: d.responsibility || "",
-  description: d.description || "",
-  reportingTo: d.reportingTo || null,   // ✅ ADD THIS
-  status: d.status,
-}));
+        const formatted = result.data.map((d) => ({
+          id: d.id,
+          name: d.name || "-",
+          departmentId: d.departmentId,
+          level: d.level || "-",
+          employees: d.employees || 0,
+          responsibility: d.responsibility || "",
+          description: d.description || "",
+          reportingTo: d.reportingTo || null,
+          status: d.status,
+        }));
 
-
-
-setDesignations(formatted);
-
+        setDesignations(formatted);
       } else {
         console.error("Expected array of designations but got:", result.data);
         setDesignations([]);
@@ -96,7 +96,7 @@ setDesignations(formatted);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const DEPARTMENT_NAMES = departmentOptions.map(d => d.name);
+  const DEPARTMENT_NAMES = departmentOptions.map((d) => d.name);
   const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
   const MANAGER_OPTIONS = [
     "John Smith",
@@ -158,7 +158,7 @@ setDesignations(formatted);
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = sortedDesignations.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
   const totalPages = Math.ceil(sortedDesignations.length / itemsPerPage);
 
@@ -188,30 +188,31 @@ setDesignations(formatted);
     }
 
     // Find department ID
-    const selectedDept = departmentOptions.find(d => d.name === formData.department);
+    const selectedDept = departmentOptions.find(
+      (d) => d.name === formData.department,
+    );
     const departmentId = selectedDept ? selectedDept.id : null;
 
     // Map Level "L-1" -> 1
     const levelMap = {
-        "L-1": 1,
-        "L-2": 2,
-        "L-3": 3,
-        "L-4": 4,
-        "L-5": 5
+      "L-1": 1,
+      "L-2": 2,
+      "L-3": 3,
+      "L-4": 4,
+      "L-5": 5,
     };
     const levelInt = levelMap[formData.level] || 1;
 
     const payload = {
-  name: formData.designationName,
-  type: "permanent",
-  departmentId: departmentId,
-  level: levelInt,
-  responsibility: formData.responsibilities,
-  reportingTo: 1,
-  description: formData.description,
-  status: formData.status === "Active",  // ✅ BOOLEAN
-};
-
+      name: formData.designationName,
+      type: "permanent",
+      departmentId: departmentId,
+      level: levelInt,
+      responsibility: formData.responsibilities,
+      reportingTo: 1,
+      description: formData.description,
+      status: formData.status === "Active",
+    };
 
     const result = await designationService.createDesignation(payload);
 
@@ -245,23 +246,23 @@ setDesignations(formatted);
       className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
-       {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
-                <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
-                    onClick={() => navigate('/hrms')}
-                />
-                <span 
-                    className='cursor-pointer text-[#7D1EDB]'
-                    onClick={() => navigate('/hrms')}
-                >
-                    HRMS Dashboard
-                </span> 
-                <ChevronRight size={14}/> 
-                <span className="text-[#6B7280]">Designation</span>
-            </div>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+        <img
+          src="/images/arrow_left_alt.svg"
+          alt="Back"
+          className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
+          onClick={() => navigate("/hrms")}
+        />
+        <span
+          className="cursor-pointer text-[#7D1EDB]"
+          onClick={() => navigate("/hrms")}
+        >
+          HRMS Dashboard
+        </span>
+        <ChevronRight size={14} />
+        <span className="text-[#6B7280]">Designation</span>
+      </div>
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">
@@ -438,7 +439,10 @@ setDesignations(formatted);
                   />
                 </div>
               </th>
-              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white text-center" style={{ width: "10%" }}>
+              <th
+                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white text-center"
+                style={{ width: "10%" }}
+              >
                 ACTION
               </th>
             </tr>
@@ -464,33 +468,34 @@ setDesignations(formatted);
                 <td className="py-2 px-4  text-[#1E1E1E]">
                   {(() => {
                     const deptId = desig.departmentId || desig.department;
-                    if (!deptId) return '-';
+                    if (!deptId) return "-";
                     // If it's an object with name
-                    if (typeof deptId === 'object' && deptId.name) return deptId.name;
+                    if (typeof deptId === "object" && deptId.name)
+                      return deptId.name;
                     // If it's a string that looks like a name (not ID), return it
-                    if (typeof deptId === 'string' && isNaN(Number(deptId))) return deptId;
+                    if (typeof deptId === "string" && isNaN(Number(deptId)))
+                      return deptId;
                     // If ID, find in options
-                    const found = departmentOptions.find(d => d.id === Number(deptId));
+                    const found = departmentOptions.find(
+                      (d) => d.id === Number(deptId),
+                    );
                     return found ? found.name : deptId;
                   })()}
                 </td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{desig.level}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">
-                  {desig.employees}
-                </td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{desig.employees}</td>
                 <td className="py-2 px-4">
                   <span
-  className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-8.5 min-w-18.5 font-normal ${
-    desig.status === true || desig.status === "Active"
-      ? "bg-[#76DB1E33] text-[#34C759]"
-      : "bg-[#FF3B301A] text-[#FF3B30]"
-  }`}
->
-  {desig.status === true || desig.status === "Active"
-    ? "Active"
-    : "Inactive"}
-</span>
-
+                    className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-8.5 min-w-18.5 font-normal ${
+                      desig.status === true || desig.status === "Active"
+                        ? "bg-[#76DB1E33] text-[#34C759]"
+                        : "bg-[#FF3B301A] text-[#FF3B30]"
+                    }`}
+                  >
+                    {desig.status === true || desig.status === "Active"
+                      ? "Active"
+                      : "Inactive"}
+                  </span>
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-center gap-3">
@@ -521,7 +526,7 @@ setDesignations(formatted);
                         style={{ height: "20px", width: "20px" }}
                       />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedDesignation(desig);
@@ -578,7 +583,7 @@ setDesignations(formatted);
                 >
                   {number}
                 </button>
-              )
+              ),
             )}
           </div>
 
@@ -681,7 +686,10 @@ setDesignations(formatted);
                     options={MANAGER_OPTIONS}
                     value={formData.reportingManager}
                     onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, reportingManager: val }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        reportingManager: val,
+                      }))
                     }
                     className="w-full h-10 px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-lg text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
@@ -773,12 +781,11 @@ setDesignations(formatted);
 
       {/* Edit Modal */}
       <EditDesignationModal
-  isOpen={showEditModal}
-  onClose={() => setShowEditModal(false)}
-  designation={selectedDesignation}
-  departmentOptions={departmentOptions}
-/>
-
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        designation={selectedDesignation}
+        departmentOptions={departmentOptions}
+      />
 
       {/* Delete Modal */}
       {showDeleteModal && (
