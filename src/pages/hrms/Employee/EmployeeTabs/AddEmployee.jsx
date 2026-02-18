@@ -11,11 +11,13 @@ import Payroll from './Payroll';
 import TrainingDevelopment from './TrainingDevelopment';
 import OffBoarding from './OffBoarding';
 import ActivityLog from './ActivityLog';
+import { employeeService } from '../../../../service';
 
 const AddEmployee = () => {
     const navigate = useNavigate();
     const { tab } = useParams();
     const [formData, setFormData] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -23,6 +25,42 @@ const AddEmployee = () => {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleSave = async () => {
+        setIsLoading(true);
+        try {
+            // Map form data to API format
+            const employeeData = {
+                name: formData.name || '',
+                gender: formData.gender || '',
+                dob: formData.dob || '',
+                bloodGroup: formData.bloodGroup || '',
+                password: formData.password || '',
+                isAdmin: formData.isAdmin || false,
+                maritalStatus: formData.maritalStatus === 'married',
+                type: formData.type || 'employee',
+                eContactName: formData.contactName || '',
+                eContactNumber: formData.contactNumber || '',
+                eRelation: formData.relation || '',
+                email: formData.email || '',
+                phone: formData.phone || '',
+                address: formData.address || '',
+            };
+
+            const response = await employeeService.addEmployee(employeeData);
+            
+            if (response.success) {
+                alert(response.message || 'Employee added successfully');
+                navigate('/hrms/employees');
+            } else {
+                alert(response.message || 'Failed to add employee');
+            }
+        } catch (error) {
+            alert('Something went wrong while adding employee');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const tabConfig = [
@@ -77,10 +115,12 @@ const AddEmployee = () => {
                         Cancel
                     </button>
                     <button
-                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-[100px]"
+                        onClick={handleSave}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ borderRadius: '30px' }}
                     >
-                        Save
+                        {isLoading ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </div>
