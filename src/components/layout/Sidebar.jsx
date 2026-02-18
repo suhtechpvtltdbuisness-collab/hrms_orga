@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -14,9 +14,9 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  ChevronLeft,
-} from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+  ChevronLeft
+} from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
@@ -24,28 +24,35 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const handleLogout = () => {
     // Clear user data from localStorage
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     // Navigate to login page
-    navigate("/login");
+    navigate('/login');
   };
 
   const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/hrms" },
-    { name: "Employees", icon: Users, path: "/hrms/employees" },
-    { name: "Departments", icon: Briefcase, path: "/hrms/departments" },
-    { name: "Designations", icon: Mail, path: "/hrms/designations" },
-    { name: "Attendance", icon: CalendarDays, path: "/hrms/attendance" },
-    { name: "Leave Period", icon: CheckSquare, path: "/hrms/leave-period" },
-    { name: "Shift Management", icon: BarChart3, path: "/hrms/shift-type" },
-    { name: "Payroll", icon: Receipt, path: "/hrms/salary-structure" },
-    { name: "Expenses", icon: MessageSquare, path: "/hrms/expenses/expense" },
-    { name: "Organization", icon: UserCircle, path: "/hrms/organization-tree" },
-    { name: "Notifications", icon: Megaphone, path: "/hrms/notifications" },
-    { name: "Settings", icon: Settings, path: "/hrms/settings" },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '' },
+    { name: 'HRMS', icon: Users, path: '/hrms' },
+    { name: 'Project Management', icon: Briefcase, path: '' },
+    { name: 'Employees', icon: Mail, path: '' },
+    { name: 'Attendance', icon: CalendarDays, path: '' },
+    { name: 'Tasks', icon: CheckSquare, path: '' },
+    { name: 'Reports', icon: BarChart3, path: '' },
+    { name: 'Announcements', icon: Megaphone, path: '' },
+    { name: 'Messages', icon: MessageSquare, path: '' },
+    { name: 'My Profile', icon: UserCircle, path: '' },
+    { name: 'Settings', icon: Settings, path: '/hrms/settings' },
+    { name: 'Support', icon: HelpCircle, path: '' }
   ];
 
-  const isActive = (path) => location.pathname.startsWith(path);
+  const isActive = (path) => {
+    if (!path) return false;
+    // Special case: prevent HRMS from being active when in Settings
+    if (path === '/hrms' && location.pathname.startsWith('/hrms/settings')) {
+      return false;
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <aside
@@ -53,17 +60,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         fixed top-0 left-0 h-screen z-50
         bg-white border-r border-gray-100 shadow-sm
         transition-all duration-300 flex flex-col rounded-xl
-        ${isOpen ? "w-65 px-5 py-5" : "w-16 py-4"}
+        ${isOpen ? 'w-65 px-5 py-5' : 'w-16 py-4'}
       `}
     >
       {/* Logo */}
-      <div
-        className={`relative flex items-center mb-6 h-10 ${isOpen ? "justify-start" : "justify-center"}`}
-      >
+      <div className={`relative flex items-center mb-6 h-10 ${isOpen ? 'justify-start' : 'justify-center'}`}>
         <img
-          src={isOpen ? "/images/Orga Logo.svg" : "/images/orga A.svg"}
+          src={isOpen ? '/images/Orga Logo.svg' : '/images/orga A.svg'}
           alt="ORGA"
-          className={`transition-all ${isOpen ? "h-7" : "h-6"}`}
+          className={`transition-all ${isOpen ? 'h-7' : 'h-6'}`}
         />
 
         {/* Toggle Button (ALWAYS VISIBLE) */}
@@ -79,9 +84,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         >
           <ChevronLeft
             size={16}
-            className={`transition-transform duration-300  cursor-pointer ${
-              !isOpen ? "rotate-180" : ""
-            }`}
+            className={`transition-transform duration-300  cursor-pointer ${!isOpen ? 'rotate-180' : ''
+              }`}
           />
         </button>
       </div>
@@ -90,6 +94,25 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       <nav className="flex-1 mt-8 space-y-1">
         {menuItems.map((item) => {
           const active = isActive(item.path);
+          const isClickable = !!item.path;
+
+          if (!isClickable) {
+            return (
+              <div
+                key={item.name}
+                className={`
+                  flex items-center rounded-full transition-all duration-200 cursor-default
+                  ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
+                  text-gray-700
+                `}
+              >
+                <item.icon className="w-5 h-5 text-gray-800" />
+                {isOpen && (
+                  <span className="text-sm font-medium">{item.name}</span>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link
@@ -102,18 +125,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               }}
               className={`
                 flex items-center rounded-full transition-all duration-200
-                ${isOpen ? "px-4 py-3 gap-3" : "justify-center py-3"}
-                ${
-                  active
-                    ? "bg-[#EEF2FF] text-[#7D1EDB]"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
+                ${active
+                  ? 'bg-[#EEF2FF] text-[#7D1EDB]'
+                  : 'text-gray-800 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
             >
               <item.icon
-                className={`w-5 h-5 ${
-                  active ? "text-purple-600" : "text-gray-400"
-                }`}
+                className={`w-5 h-5 ${active ? 'text-purple-600' : 'text-gray-800'
+                  }`}
               />
               {isOpen && (
                 <span className="text-sm font-medium">{item.name}</span>
@@ -129,7 +150,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           onClick={handleLogout}
           className={`
             flex items-center rounded-2xl cursor-pointer transition-all duration-200
-            ${isOpen ? "gap-3 px-4 py-3" : "justify-center py-3"}
+            ${isOpen ? 'gap-3 px-4 py-3' : 'justify-center py-3'}
             text-gray-700 hover:text-gray-900 hover:bg-gray-50
           `}
         >

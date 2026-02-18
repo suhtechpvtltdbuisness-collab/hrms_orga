@@ -76,7 +76,7 @@ const ActivityHeatmap = () => {
       </div>
 
       {/* Heatmap Grid Container */}
-      <div className="min-w-[760px] lg:min-w-full overflow-x-auto">
+      <div className="min-w-190 lg:min-w-full overflow-x-auto">
         {/* Header Row - Days */}
         <div className="grid grid-cols-[120px_repeat(12,1fr)] sm:grid-cols-[160px_repeat(12,1fr)] gap-2 mb-3">
           <div className="text-xs sm:text-sm font-semibold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
