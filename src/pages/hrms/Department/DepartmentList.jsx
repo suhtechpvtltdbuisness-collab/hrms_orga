@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ChevronRight,
 } from 'lucide-react';
+import { departmentService } from '../../../service';
 import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
 import ErrorModal from './DepartmentUpdate/ErrorModal';
@@ -36,20 +37,44 @@ const DepartmentList = () => {
     status: '',
   });
 
-  const [departments, setDepartments] = useState([
-    { name: 'Finance', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Financial Planning, Reporting And Analysis Department', createdOn: '15/01/2023', lastUpdated: '11/10/2024' },
-    { name: 'Human Resources', head: 'Alice Carol', employees: 5, location: 'Delhi', status: 'Active', description: 'Employee Relations, Recruitment, and HR Strategy', createdOn: '20/02/2023', lastUpdated: '15/11/2024' },
-    { name: 'Marketing', head: 'Amit B', employees: 12, location: 'Pune', status: 'Active', description: 'Brand Management, Digital Marketing, and Advertising', createdOn: '10/03/2023', lastUpdated: '01/12/2024' },
-    { name: 'Operations', head: 'Priya Singh', employees: 22, location: 'Kolkata', status: 'Active', description: 'Daily Business Operations and Logistics Management', createdOn: '05/04/2023', lastUpdated: '20/11/2024' },
-    { name: 'IT Services', head: 'Raj Kapoor', employees: 30, location: 'Mumbai', status: 'Active', description: 'IT Infrastructure, Support, and Development', createdOn: '12/01/2023', lastUpdated: '10/10/2024' },
-    { name: 'Sales', head: 'Neha Gupta', employees: 25, location: 'Mumbai', status: 'Active', description: 'Revenue Generation and Client Relationship Management', createdOn: '01/05/2023', lastUpdated: '05/12/2024' },
-    { name: 'Legal', head: 'Pooja Chopra', employees: 28, location: 'Mumbai', status: 'Active', description: 'Legal Compliance and Corporate Affairs Management', createdOn: '18/06/2023', lastUpdated: '15/10/2024' },
-    { name: 'R&D', head: 'John Smith', employees: 15, location: 'Mumbai', status: 'Active', description: 'Research and Development of New Products', createdOn: '22/07/2023', lastUpdated: '20/09/2024' },
-    { name: 'Logistics', head: 'John Smith', employees: 18, location: 'Mumbai', status: 'Active', description: 'Supply Chain and Transportation Management', createdOn: '30/08/2023', lastUpdated: '11/09/2024' },
-    { name: 'Support', head: 'Sarah Jones', employees: 10, location: 'Bangalore', status: 'Active', description: 'Customer Service and Technical Support', createdOn: '14/09/2023', lastUpdated: '25/11/2024' },
-    { name: 'Product', head: 'Mike Ross', employees: 8, location: 'Delhi', status: 'Inactive', description: 'Product Roadmap and Lifecycle Management', createdOn: '05/10/2023', lastUpdated: '01/11/2024' },
-    { name: 'Design', head: 'Rachel Green', employees: 14, location: 'Pune', status: 'Active', description: 'Creative Design and User Experience', createdOn: '20/11/2023', lastUpdated: '10/12/2024' },
-  ]);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch departments on mount
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const fetchDepartments = async () => {
+    setLoading(true);
+    const result = await departmentService.getDepartments();
+    if (result.success) {
+      // Ensure result.data is an array
+      if (Array.isArray(result.data)) {
+
+  const formattedData = result.data.map((dept) => ({
+  id: dept.id,
+  name: dept.name || "-",
+  code: dept.code || "",               // ✅ ADD THIS
+  head: dept.head || "-",
+  employees: dept.employees || 0,
+  location: dept.location || "-",
+  description: dept.description || "", // ✅ ADD THIS
+  status: dept.status ? "Active" : "Inactive",
+}));
+
+
+  setDepartments(formattedData);
+}
+ else {
+        console.error("Expected array of departments but got:", result.data);
+        setDepartments([]);
+      }
+    } else {
+      console.error(result.message);
+    }
+    setLoading(false);
+  };
 
   /* Sorting & Search Logic */
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -132,24 +157,30 @@ const DepartmentList = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    if (!formData.departmentName || !formData.departmentHead) {
-      setShowErrorModal(true);
-      return;
-    }
+  const handleSubmit = async () => {
+  if (!formData.departmentName) {
+    setShowErrorModal(true);
+    return;
+  }
 
-    const newDepartment = {
-      name: formData.departmentName,
-      head: formData.departmentHead,
-      employees: 0,
-      location: formData.location || 'Mumbai',
-      status: formData.status || 'Active'
-    };
-    setDepartments([...departments, newDepartment]);
+  const payload = {
+  name: formData.departmentName,
+  code: formData.departmentCode,
+  head: formData.departmentHead,
+  location: formData.location,
+  description: formData.description,
+  status: formData.status === "Active",  // ✅ BOOLEAN CONVERSION
+};
 
-    console.log('Form submitted:', formData);
+
+  const result = await departmentService.createDepartment(payload);
+
+  if (result.success) {
+    console.log("Department created:", result.data);
+
     setShowModal(false);
     setShowSuccessModal(true);
+
     setFormData({
       departmentName: '',
       departmentCode: '',
@@ -159,7 +190,15 @@ const DepartmentList = () => {
       parentDepartment: '',
       status: '',
     });
-  };
+
+    // Refresh list from backend
+    fetchDepartments();
+  } else {
+    console.error(result.message);
+    setShowErrorModal(true);
+  }
+};
+
 
   const handleEditClick = (dept) => {
     setSelectedDepartment(dept);
@@ -234,7 +273,7 @@ const DepartmentList = () => {
       {/* Filters */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 shrink-0 transition-all">
         {/* Search Bar */}
-        <div className="relative w-full md:w-[280px] lg:w-[350px]">
+        <div className="relative w-full md:w-70 lg:w-87.5">
           <div
             className="flex items-center bg-[#F9FAFB] border border-[#F9FAFB] text-[#B3B3B3]"
             style={{
@@ -313,7 +352,7 @@ const DepartmentList = () => {
 
           <tbody>
             {currentItems.map((dept, index) => (
-              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-[54px]">
+              <tr key={index} className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-13.5">
                 <td className="px-6 py-4">
                   <span
                     className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
@@ -329,8 +368,8 @@ const DepartmentList = () => {
                 <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees}</td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{dept.location}</td>
                 <td className="py-2 px-4">
-                  <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-[34px] min-w-[74px] font-normal ${dept.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' : 'bg-[#FF3B301A] text-[#FF3B30]'}`}>
-                    {dept.status}
+                  <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-8.5 min-w-18.5 font-normal ${dept.status === true || dept.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' : 'bg-[#FF3B301A] text-[#FF3B30]'}`}>
+                    {dept.status === true || dept.status === 'Active' ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="py-4 px-4">
@@ -388,7 +427,7 @@ const DepartmentList = () => {
       {
         showModal && (
           <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
-            <div className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="bg-white rounded-xl p-6 w-[95%] md:w-175 shadow-xl relative" style={{ fontFamily: 'Inter, sans-serif' }}>
 
               {/* Modal Header */}
               <div className="flex justify-between items-center mb-6">
@@ -402,7 +441,7 @@ const DepartmentList = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
                 {/* Department Name */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Department Name</label>
                   <input
                     type="text"
@@ -410,12 +449,12 @@ const DepartmentList = () => {
                     value={formData.departmentName}
                     onChange={handleInputChange}
                     placeholder="Enter department name"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
                   />
                 </div>
 
                 {/* Department Code */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Department Code</label>
                   <input
                     type="text"
@@ -423,62 +462,62 @@ const DepartmentList = () => {
                     value={formData.departmentCode}
                     onChange={handleInputChange}
                     placeholder="Enter department code"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
                   />
                 </div>
 
                 {/* Department Head */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Department Head</label>
                   <FilterDropdown
                     options={["John Smith", "Alice Carol"]}
                     value={formData.departmentHead}
                     onChange={(val) => handleInputChange({ target: { name: 'departmentHead', value: val } })}
                     placeholder="Select a department head"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
                   />
                 </div>
 
                 {/* Location */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Location</label>
                   <FilterDropdown
                     options={["Mumbai", "Delhi"]}
                     value={formData.location}
                     onChange={(val) => handleInputChange({ target: { name: 'location', value: val } })}
                     placeholder="Select a location"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
                   />
                 </div>
 
                 {/* Parent Department */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Parent department</label>
                   <FilterDropdown
                     options={["Finance", "Marketing"]}
                     value={formData.parentDepartment}
                     onChange={(val) => handleInputChange({ target: { name: 'parentDepartment', value: val } })}
                     placeholder="Select parent department"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
                   />
                 </div>
 
                 {/* Status */}
-                <div className="flex flex-col gap-[8px]">
+                <div className="flex flex-col gap-2">
                   <label className="text-[16px] font-base text-[#1E1E1E]">Status</label>
                   <FilterDropdown
                     options={["Active", "Inactive"]}
                     value={formData.status}
                     onChange={(val) => handleInputChange({ target: { name: 'status', value: val } })}
                     placeholder="Select status"
-                    className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
+                    className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
                   />
                 </div>
 
               </div>
 
               {/* Description */}
-              <div className="flex flex-col gap-[8px] mb-8">
+              <div className="flex flex-col gap-2 mb-8">
                 <label className="text[16px]m font-base text-[#1E1E1E]">Description</label>
                 <textarea
                   name="description"
@@ -486,7 +525,7 @@ const DepartmentList = () => {
                   onChange={handleInputChange}
                   placeholder="Enter department description"
                   rows="3"
-                  className="w-full h-[80px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
+                  className="w-full h-20 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
                 />
               </div>
 
@@ -521,15 +560,20 @@ const DepartmentList = () => {
             isOpen={showEditModal}
             onClose={() => setShowEditModal(false)}
             onSave={handleEditSave}
-            initialData={selectedDepartment ? {
-              departmentName: selectedDepartment.name,
-              departmentCode: "DEP-00X",
-              departmentHead: selectedDepartment.head,
-              location: selectedDepartment.location,
-              description: "Financial Panning, Reporting And Analysis Department Responsible For Company Finances",
-              parentDepartment: "Finance",
-              status: selectedDepartment.status
-            } : null}
+            initialData={
+  selectedDepartment
+    ? {
+        departmentName: selectedDepartment.name || "",
+        departmentCode: selectedDepartment.code || "",
+        departmentHead: selectedDepartment.head || "",
+        location: selectedDepartment.location || "",
+        description: selectedDepartment.description || "",   // ✅ REAL DATA
+        parentDepartment: selectedDepartment.parentDepartment || "",
+        status: selectedDepartment.status || "",
+      }
+    : null
+}
+
           />
         )
       }
