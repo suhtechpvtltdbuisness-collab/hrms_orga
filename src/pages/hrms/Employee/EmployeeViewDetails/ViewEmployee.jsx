@@ -15,38 +15,46 @@ import EmpActivityLog from "./EmpActivityLog";
 import EmpPersonalInfo from "./EmpPersonalInfo";
 import EmpEmployment from "./EmpEmployment";
 import EmpAttendance from "./EmpAttendance";
-import { getEmployeeData } from "../../../../utils/employeeData";
+import { employeeService } from "../../../../service";
 
 const ViewEmployee = () => {
   const navigate = useNavigate();
-  const { tab } = useParams();
+  const { id, tab } = useParams();
   const tabsRef = useRef(null);
   const [employeeData, setEmployeeData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch initial data
-    setEmployeeData(getEmployeeData());
-
-    // Listen for updates
-    const handleStorageUpdate = () => {
-      setEmployeeData(getEmployeeData());
+    const fetchEmployeeData = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await employeeService.getUserById(id);
+        if (response.success && response.data) {
+          setEmployeeData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching employee:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    window.addEventListener('employeeDataUpdated', handleStorageUpdate);
-    return () => window.removeEventListener('employeeDataUpdated', handleStorageUpdate);
-  }, []);
+    fetchEmployeeData();
+  }, [id]);
 
   const tabConfig = [
-    { name: "Personal Information", path: "personal-information", component: <EmpPersonalInfo /> },
-    { name: "Employment", path: "employment", component: <EmpEmployment /> },
-    { name: "Attendance", path: "attendance", component: <EmpAttendance /> },
-    { name: "Leave", path: "leave", component: <EmpLeave /> },
+    { name: "Personal Information", path: "personal-information", component: <EmpPersonalInfo data={employeeData} /> },
+    { name: "Employment", path: "employment", component: <EmpEmployment data={employeeData} /> },
+    { name: "Attendance", path: "attendance", component: <EmpAttendance data={employeeData} /> },
+    { name: "Leave", path: "leave", component: <EmpLeave data={employeeData} /> },
     { name: "Performance", path: "performance", component: <EmpPerformance data={employeeData} /> },
-    { name: "Documents", path: "documents", component: <EmpDocuments /> },
-    { name: "Payroll", path: "payroll", component: <EmpPayroll /> },
-    { name: "Training & Development", path: "training-development", component: <EmpTrainingDevelopment /> },
-    { name: "Off Boarding", path: "off-board", component: <EmpOffBoarding /> },
-    { name: "Activity Log", path: "activity-log", component: <EmpActivityLog /> },
+    { name: "Documents", path: "documents", component: <EmpDocuments data={employeeData} /> },
+    { name: "Payroll", path: "payroll", component: <EmpPayroll data={employeeData} /> },
+    { name: "Training & Development", path: "training-development", component: <EmpTrainingDevelopment data={employeeData} /> },
+    { name: "Off Boarding", path: "off-board", component: <EmpOffBoarding data={employeeData} /> },
+    { name: "Activity Log", path: "activity-log", component: <EmpActivityLog data={employeeData} /> },
   ];
 
   const activeTab = tabConfig.find(t => t.path === tab) || tabConfig[0];
@@ -57,17 +65,35 @@ const ViewEmployee = () => {
   }, [tab]);
 
   const cardData = employeeData ? {
-    name: employeeData.name || "Rohan Patil",
-    designation: employeeData.designation || "Frontend Developer",
-    empId: employeeData.empId || "EMP-1001",
-    mobile: employeeData.mobile || "+91 98453647588",
-    email: employeeData.email || "rohanp@company.com",
-    location: employeeData.location || "Mumbai",
-    joiningDate: employeeData.joiningDate || "15 Jan 2022",
-    department: employeeData.department || "HR",
-    manager: employeeData.manager || "Priya Sharma",
-    status: employeeData.status || "Active"
+    name: employeeData.name || "-",
+    designation: employeeData.designation || "-",
+    empId: `EMP-${String(employeeData.id).padStart(3, '0')}`,
+    mobile: employeeData.phone || "-",
+    email: employeeData.email || "-",
+    location: employeeData.address || "-",
+    joiningDate: employeeData.createdAt ? new Date(employeeData.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-",
+    department: employeeData.department || "-",
+    manager: employeeData.manager || "-",
+    status: employeeData.active ? "Active" : "Inactive",
+    gender: employeeData.gender || "-",
+    dob: employeeData.dob || "-",
+    bloodGroup: employeeData.bloodGroup || "-",
+    maritalStatus: employeeData.maritalStatus ? "Married" : "Single",
+    eContactName: employeeData.eContactName || "-",
+    eContactNumber: employeeData.eContactNumber || "-",
+    eRelation: employeeData.eRelation || "-",
   } : null;
+
+  if (isLoading) {
+    return (
+      <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] flex items-center justify-center border border-[#D9D9D9]">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1EDB] mb-4"></div>
+          <p className="text-gray-500">Loading employee details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -83,7 +109,7 @@ const ViewEmployee = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">
         <h1 className="text-xl font-bold">Employee Information</h1>
-        <button onClick={() => navigate("/hrms/employees-details-update", { state: { activeTab: activeTab.name } })} className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors" > <span>Edit</span> <img src="/pencil.svg" alt="Edit" className="w-4 h-4" /> </button>
+        <button onClick={() => navigate(`/hrms/employees-details-update/${id}`, { state: { activeTab: activeTab.name } })} className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-600 text-purple-600 font-medium hover:bg-purple-50 transition-colors" > <span>Edit</span> <img src="/pencil.svg" alt="Edit" className="w-4 h-4" /> </button>
       </div>
 
       {/* Content Area - Split Layout */}
@@ -110,7 +136,7 @@ const ViewEmployee = () => {
                   <button
                     key={t.path}
                     data-active={activeTab.path === t.path}
-                    onClick={() => navigate(`/hrms/employees-details/${t.path}`)}
+                    onClick={() => navigate(`/hrms/employees-details/${id}/${t.path}`)}
                     className={`px-4 h-full flex items-center justify-center text-sm font-medium whitespace-nowrap transition-all
                                 ${index === 0 ? 'rounded-lg' : ''} 
                                 ${index === tabConfig.length - 1 ? 'rounded-lg' : ''}

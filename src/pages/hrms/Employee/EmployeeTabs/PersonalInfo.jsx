@@ -57,6 +57,58 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6 ">
 
+                    {/* Name */}
+                    <div>
+                        <label className={labelClasses}>Name</label>
+                        <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={onChange}
+                            placeholder="Enter full name"
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                        <label className={labelClasses}>Email</label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={onChange}
+                            placeholder="Enter email address"
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                        <label className={labelClasses}>Phone</label>
+                        <input
+                            type="text"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={onChange}
+                            placeholder="Enter phone number"
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                        <label className={labelClasses}>Password</label>
+                        <input
+                            type="password"
+                            name="password"
+                            value={formData.password || ''}
+                            onChange={onChange}
+                            placeholder="Enter password"
+                            className={inputClasses}
+                        />
+                    </div>
+
                     {/* Employee ID */}
                     <div>
                         <label className={labelClasses}>Employee ID</label>

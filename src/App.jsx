@@ -119,12 +119,12 @@ function App() {
           <Route path="employees/add" element={<AddEmployee />} />
           <Route path="employees/add/:tab" element={<AddEmployee />} />
           <Route
-            path="employees-details"
+            path="employees-details/:id"
             element={
-              <Navigate to="/hrms/employees-details/personal-information" />
+              <Navigate to="personal-information" />
             }
           />
-          <Route path="employees-details/:tab" element={<ViewEmployee />} />
+          <Route path="employees-details/:id/:tab" element={<ViewEmployee />} />
           <Route
             path="employees-details-update"
             element={<EmpUpdatePersonalInfo />}

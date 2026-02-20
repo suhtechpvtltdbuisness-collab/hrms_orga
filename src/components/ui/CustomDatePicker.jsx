@@ -105,6 +105,8 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
     const days = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
 
     // Empty slots for previous month
     for (let i = 0; i < firstDay; i++) {
@@ -114,23 +116,28 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
     // Days
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
+        date.setHours(0, 0, 0, 0);
+        
         const isSelected = selectedDate && 
             date.getDate() === selectedDate.getDate() &&
             date.getMonth() === selectedDate.getMonth() &&
             date.getFullYear() === selectedDate.getFullYear();
         
-        const isToday = new Date().toDateString() === date.toDateString();
+        const isToday = today.toDateString() === date.toDateString();
+        const isFuture = date > today; // Check if date is in future
 
         days.push(
             <div
                 key={day}
-                onClick={() => handleDayClick(day)}
-                className={`w-7 h-7 flex items-center justify-center rounded-full text-sm cursor-pointer transition-colors
-                    ${isSelected 
-                        ? 'bg-[#6750A4] text-white font-medium' 
-                        : isToday 
-                            ? 'bg-transparent text-[#6750A4] border border-[#6750A4]' 
-                            : 'hover:bg-purple-50 text-[#1E1E1E]'
+                onClick={() => !isFuture && handleDayClick(day)}
+                className={`w-7 h-7 flex items-center justify-center rounded-full text-sm transition-colors
+                    ${isFuture 
+                        ? 'text-gray-300 cursor-not-allowed' // Disabled style for future dates
+                        : isSelected 
+                            ? 'bg-[#6750A4] text-white font-medium cursor-pointer' 
+                            : isToday 
+                                ? 'bg-transparent text-[#6750A4] border border-[#6750A4] cursor-pointer' 
+                                : 'hover:bg-purple-50 text-[#1E1E1E] cursor-pointer'
                     }`}
             >
                 {day}
