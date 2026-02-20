@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronDown, X, ArrowRight, ArrowLeft, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  ChevronDown,
+  X,
+  ArrowRight,
+  ArrowLeft,
+  ChevronRight,
+} from "lucide-react";
 import SuccessModal from "./SuccessModal";
 import ErrorModal from "./ErrorModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
+import { designationService, departmentService } from "../../../service";
 import DeleteDesignation from "./DesignationViewDetails/DeleteDesignation";
 import EditDesignationModal from "./EditDesignationModal";
 
@@ -29,92 +37,50 @@ const DesignationList = () => {
     status: "",
   });
 
-  const [designations, setDesignations] = useState([
-    {
-      name: "Software Engineer",
-      department: "Engineering",
-      level: "L-2",
-      employees: 15,
-      status: "Active",
-    },
-    {
-      name: "Senior Product Manager",
-      department: "Product",
-      level: "L-4",
-      employees: 4,
-      status: "Active",
-    },
-    {
-      name: "Marketing Specialist",
-      department: "Product",
-      level: "L-4",
-      employees: 8,
-      status: "Active",
-    },
-    {
-      name: "Office Manager",
-      department: "Administration",
-      level: "L-2",
-      employees: 1,
-      status: "Active",
-    },
-    {
-      name: "Sales Development Rep",
-      department: "Sales",
-      level: "L-1",
-      employees: 1,
-      status: "Active",
-    },
-    {
-      name: "Accounts Executive",
-      department: "Finance",
-      level: "L-2",
-      employees: 4,
-      status: "Active",
-    },
-    {
-      name: "Data Analyst",
-      department: "Data & Analysis",
-      level: "L-2",
-      employees: 8,
-      status: "Active",
-    },
-    {
-      name: "HR Manager",
-      department: "Human Resources",
-      level: "L-3",
-      employees: 2,
-      status: "Active",
-    },
-    {
-      name: "Legal Counsel",
-      department: "Legal",
-      level: "L-3",
-      employees: 3,
-      status: "Active",
-    },
-    {
-      name: "DevOps Engineer",
-      department: "Engineering",
-      level: "L-3",
-      employees: 6,
-      status: "Active",
-    },
-    {
-      name: "UX Designer",
-      department: "Design",
-      level: "L-2",
-      employees: 5,
-      status: "Inactive",
-    },
-    {
-      name: "QA Engineer",
-      department: "Engineering",
-      level: "L-2",
-      employees: 10,
-      status: "Active",
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [designations, setDesignations] = useState([]);
+
+  useEffect(() => {
+    fetchDesignations();
+    fetchDepartments();
+  }, []);
+
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+
+  const fetchDepartments = async () => {
+    const result = await departmentService.getDepartments();
+    if (result.success && Array.isArray(result.data)) {
+      setDepartmentOptions(result.data);
+    }
+  };
+
+  const fetchDesignations = async () => {
+    setLoading(true);
+    const result = await designationService.getDesignations();
+    if (result.success) {
+      if (Array.isArray(result.data)) {
+        const formatted = result.data.map((d) => ({
+          id: d.id,
+          name: d.name || "-",
+          departmentId: d.departmentId,
+          level: d.level || "-",
+          employees: d.employees || 0,
+          responsibility: d.responsibility || "",
+          description: d.description || "",
+          reportingTo: d.reportingTo || null,
+          status: d.status,
+        }));
+
+        setDesignations(formatted);
+      } else {
+        console.error("Expected array of designations but got:", result.data);
+        setDesignations([]);
+      }
+    } else {
+      console.error(result.message);
+    }
+    setLoading(false);
+  };
 
   /* Sorting & Search Logic */
   const [sortConfig, setSortConfig] = useState({
@@ -130,17 +96,7 @@ const DesignationList = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const DEPARTMENT_OPTIONS = [
-    "Engineering",
-    "Product",
-    "Sales",
-    "Finance",
-    "Human Resources",
-    "Legal",
-    "Design",
-    "Administration",
-    "Data & Analysis",
-  ];
+  const DEPARTMENT_NAMES = departmentOptions.map((d) => d.name);
   const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
   const MANAGER_OPTIONS = [
     "John Smith",
@@ -202,7 +158,7 @@ const DesignationList = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = sortedDesignations.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
   const totalPages = Math.ceil(sortedDesignations.length / itemsPerPage);
 
@@ -225,33 +181,59 @@ const DesignationList = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.designationName || !formData.department || !formData.level) {
       setShowErrorModal(true);
       return;
     }
 
-    const newDesignation = {
-      name: formData.designationName,
-      department: formData.department,
-      level: formData.level,
-      employees: 0,
-      status: formData.status || "Active",
-    };
-    setDesignations([...designations, newDesignation]);
+    // Find department ID
+    const selectedDept = departmentOptions.find(
+      (d) => d.name === formData.department,
+    );
+    const departmentId = selectedDept ? selectedDept.id : null;
 
-    console.log("Form submitted:", formData);
-    setShowModal(false);
-    setShowSuccessModal(true);
-    setFormData({
-      designationName: "",
-      department: "",
-      level: "",
-      reportingManager: "",
-      responsibilities: "",
-      description: "",
-      status: "",
-    });
+    // Map Level "L-1" -> 1
+    const levelMap = {
+      "L-1": 1,
+      "L-2": 2,
+      "L-3": 3,
+      "L-4": 4,
+      "L-5": 5,
+    };
+    const levelInt = levelMap[formData.level] || 1;
+
+    const payload = {
+      name: formData.designationName,
+      type: "permanent",
+      departmentId: departmentId,
+      level: levelInt,
+      responsibility: formData.responsibilities,
+      reportingTo: 1,
+      description: formData.description,
+      status: formData.status === "Active",
+    };
+
+    const result = await designationService.createDesignation(payload);
+
+    if (result.success) {
+      console.log("Designation created:", result.data);
+      setShowModal(false);
+      setShowSuccessModal(true);
+      setFormData({
+        designationName: "",
+        department: "",
+        level: "",
+        reportingManager: "",
+        responsibilities: "",
+        description: "",
+        status: "",
+      });
+      fetchDesignations();
+    } else {
+      console.error(result.message);
+      setShowErrorModal(true);
+    }
   };
 
   const handleEditClick = (desig) => {
@@ -264,23 +246,23 @@ const DesignationList = () => {
       className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
-       {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
-                <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
-                    onClick={() => navigate('/hrms')}
-                />
-                <span 
-                    className='cursor-pointer text-[#7D1EDB]'
-                    onClick={() => navigate('/hrms')}
-                >
-                    HRMS Dashboard
-                </span> 
-                <ChevronRight size={14}/> 
-                <span className="text-[#6B7280]">Designation</span>
-            </div>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
+        <img
+          src="/images/arrow_left_alt.svg"
+          alt="Back"
+          className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
+          onClick={() => navigate("/hrms")}
+        />
+        <span
+          className="cursor-pointer text-[#7D1EDB]"
+          onClick={() => navigate("/hrms")}
+        >
+          HRMS Dashboard
+        </span>
+        <ChevronRight size={14} />
+        <span className="text-[#6B7280]">Designation</span>
+      </div>
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">
@@ -308,7 +290,7 @@ const DesignationList = () => {
       {/* Filters */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 shrink-0 transition-all">
         {/* Search Bar */}
-        <div className="relative w-full md:w-[280px] lg:w-[350px]">
+        <div className="relative w-full md:w-70 lg:w-87.5">
           <div
             className="flex items-center bg-[#F9FAFB] border border-[#F9FAFB] text-[#B3B3B3]"
             style={{
@@ -333,7 +315,7 @@ const DesignationList = () => {
           {/* Department Filter */}
           <FilterDropdown
             label="Department"
-            options={DEPARTMENT_OPTIONS}
+            options={DEPARTMENT_NAMES}
             value={filters.department}
             onChange={(val) =>
               setFilters((prev) => ({ ...prev, department: val }))
@@ -457,7 +439,10 @@ const DesignationList = () => {
                   />
                 </div>
               </th>
-              <th className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white text-center" style={{ width: "10%" }}>
+              <th
+                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white text-center"
+                style={{ width: "10%" }}
+              >
                 ACTION
               </th>
             </tr>
@@ -467,7 +452,7 @@ const DesignationList = () => {
             {currentItems.map((desig, index) => (
               <tr
                 key={index}
-                className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-[54px]"
+                className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-13.5"
               >
                 <td className="px-6 py-4">
                   <span
@@ -481,21 +466,35 @@ const DesignationList = () => {
                   </span>
                 </td>
                 <td className="py-2 px-4  text-[#1E1E1E]">
-                  {desig.department}
+                  {(() => {
+                    const deptId = desig.departmentId || desig.department;
+                    if (!deptId) return "-";
+                    // If it's an object with name
+                    if (typeof deptId === "object" && deptId.name)
+                      return deptId.name;
+                    // If it's a string that looks like a name (not ID), return it
+                    if (typeof deptId === "string" && isNaN(Number(deptId)))
+                      return deptId;
+                    // If ID, find in options
+                    const found = departmentOptions.find(
+                      (d) => d.id === Number(deptId),
+                    );
+                    return found ? found.name : deptId;
+                  })()}
                 </td>
                 <td className="py-2 px-4  text-[#1E1E1E]">{desig.level}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">
-                  {desig.employees}
-                </td>
+                <td className="py-2 px-4  text-[#1E1E1E]">{desig.employees}</td>
                 <td className="py-2 px-4">
                   <span
-                    className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-[34px] min-w-[74px] font-normal ${
-                      desig.status === "Active"
+                    className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-8.5 min-w-18.5 font-normal ${
+                      desig.status === true || desig.status === "Active"
                         ? "bg-[#76DB1E33] text-[#34C759]"
                         : "bg-[#FF3B301A] text-[#FF3B30]"
                     }`}
                   >
-                    {desig.status}
+                    {desig.status === true || desig.status === "Active"
+                      ? "Active"
+                      : "Inactive"}
                   </span>
                 </td>
                 <td className="py-4 px-4">
@@ -527,7 +526,7 @@ const DesignationList = () => {
                         style={{ height: "20px", width: "20px" }}
                       />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedDesignation(desig);
@@ -536,7 +535,7 @@ const DesignationList = () => {
                       className="text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
                     >
                       <img
-                        src="/images/bin.svg"
+                        src="/images/bIn.svg"
                         alt="delete"
                         className="shrink-0"
                         style={{ height: "18px", width: "18px" }}
@@ -584,7 +583,7 @@ const DesignationList = () => {
                 >
                   {number}
                 </button>
-              )
+              ),
             )}
           </div>
 
@@ -607,7 +606,7 @@ const DesignationList = () => {
       {showModal && (
         <div className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-center">
           <div
-            className="bg-white rounded-xl p-6 w-[95%] md:w-[700px] shadow-xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
+            className="bg-white rounded-xl p-6 w-[95%] md:w-175 shadow-xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             {/* Modal Header */}
@@ -626,7 +625,7 @@ const DesignationList = () => {
             {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Designation Name */}
-              <div className="flex flex-col gap-[8px]">
+              <div className="flex flex-col gap-2">
                 <label className="text-[16px] font-base text-[#1E1E1E]">
                   Designation Name
                 </label>
@@ -636,30 +635,30 @@ const DesignationList = () => {
                   value={formData.designationName}
                   onChange={handleInputChange}
                   placeholder="Enter department name"
-                  className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
+                  className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
                 />
               </div>
 
               {/* Department Dropdown */}
-              <div className="flex flex-col gap-[8px]">
+              <div className="flex flex-col gap-2">
                 <label className="text-[16px] font-base text-[#1E1E1E]">
                   Department
                 </label>
                 <div className="relative">
                   <FilterDropdown
                     placeholder="Enter department"
-                    options={DEPARTMENT_OPTIONS}
+                    options={DEPARTMENT_NAMES}
                     value={formData.department}
                     onChange={(val) =>
                       setFormData((prev) => ({ ...prev, department: val }))
                     }
-                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
+                    className="w-full h-10 px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-lg text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
 
               {/* Level Dropdown */}
-              <div className="flex flex-col gap-[8px]">
+              <div className="flex flex-col gap-2">
                 <label className="text-[16px] font-base text-[#1E1E1E]">
                   Level
                 </label>
@@ -671,13 +670,13 @@ const DesignationList = () => {
                     onChange={(val) =>
                       setFormData((prev) => ({ ...prev, level: val }))
                     }
-                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
+                    className="w-full h-10 px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-lg text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
 
               {/* Reporting Manager Dropdown */}
-              <div className="flex flex-col gap-[8px]">
+              <div className="flex flex-col gap-2">
                 <label className="text-[16px] font-base text-[#1E1E1E]">
                   Reporting Manager
                 </label>
@@ -687,16 +686,19 @@ const DesignationList = () => {
                     options={MANAGER_OPTIONS}
                     value={formData.reportingManager}
                     onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, reportingManager: val }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        reportingManager: val,
+                      }))
                     }
-                    className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
+                    className="w-full h-10 px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-lg text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                   />
                 </div>
               </div>
             </div>
 
             {/* Status */}
-            <div className="flex flex-col gap-[8px] mb-6">
+            <div className="flex flex-col gap-2 mb-6">
               <label className="text-[16px] font-base text-[#1E1E1E]">
                 Status
               </label>
@@ -708,13 +710,13 @@ const DesignationList = () => {
                   onChange={(val) =>
                     setFormData((prev) => ({ ...prev, status: val }))
                   }
-                  className="w-full h-[40px] px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-[8px] text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
+                  className="w-full h-10 px-4 flex items-center justify-between bg-white border border-[#D9D9D9] rounded-lg text-[16px] text-[#1E1E1E] font-base outline-none focus:border-purple-600 transition-all"
                 />
               </div>
             </div>
 
             {/* Responsibilities */}
-            <div className="flex flex-col gap-[8px] mb-6">
+            <div className="flex flex-col gap-2 mb-6">
               <label className="text-[16px] font-base text-[#1E1E1E]">
                 Responsibilities
               </label>
@@ -724,12 +726,12 @@ const DesignationList = () => {
                 onChange={handleInputChange}
                 placeholder="Enter responsibilities"
                 rows="3"
-                className="w-full h-[80px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
+                className="w-full h-20 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
               />
             </div>
 
             {/* Description */}
-            <div className="flex flex-col gap-[8px] mb-8">
+            <div className="flex flex-col gap-2 mb-8">
               <label className="text[16px]m font-base text-[#1E1E1E]">
                 Description
               </label>
@@ -739,7 +741,7 @@ const DesignationList = () => {
                 onChange={handleInputChange}
                 placeholder="Enter description"
                 rows="3"
-                className="w-full h-[80px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
+                className="w-full h-20 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8] resize-none"
               />
             </div>
 
@@ -782,6 +784,7 @@ const DesignationList = () => {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         designation={selectedDesignation}
+        departmentOptions={departmentOptions}
       />
 
       {/* Delete Modal */}

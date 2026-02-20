@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { Toast } from '../../../../components/common/Toast';
 import PersonalInfo from './PersonalInfo';
 import Employment from './Employment';
 import Attendance from './Attendance';
@@ -18,6 +19,7 @@ const AddEmployee = () => {
     const { tab } = useParams();
     const [formData, setFormData] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    const [toast, setToast] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -51,13 +53,27 @@ const AddEmployee = () => {
             const response = await employeeService.addEmployee(employeeData);
             
             if (response.success) {
-                alert(response.message || 'Employee added successfully');
-                navigate('/hrms/employees');
+                setToast({
+                    type: 'success',
+                    title: 'Success',
+                    message: response.message || 'Employee added successfully'
+                });
+                setTimeout(() => {
+                    navigate('/hrms/employees');
+                }, 1500);
             } else {
-                alert(response.message || 'Failed to add employee');
+                setToast({
+                    type: 'error',
+                    title: 'Failed',
+                    message: response.message || 'Failed to add employee'
+                });
             }
         } catch (error) {
-            alert('Something went wrong while adding employee');
+            setToast({
+                type: 'error',
+                title: 'Error',
+                message: 'Something went wrong while adding employee'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -91,10 +107,12 @@ const AddEmployee = () => {
     }, [activeTabObj]);
 
     return (
-        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <>
+            <Toast toast={toast} onClose={() => setToast(null)} />
+            <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
 
-            {/* Breadcrumb */}
-            <div className="flex items-center text-sm text-[#7D1EDB] mb-3 shrink-0">
+                {/* Breadcrumb */}
+                <div className="flex items-center text-sm text-[#7D1EDB] mb-3 shrink-0">
                 <div className="flex items-center gap-3" onClick={() => navigate('/hrms/employees')}>
                     <ArrowLeft size={14} className="text-gray-900 cursor-pointer" />
                     <span className="cursor-pointer hover:text-purple-500" >Employee List</span>
@@ -169,6 +187,7 @@ const AddEmployee = () => {
             </div>
 
         </div>
+        </>
     );
 };
 

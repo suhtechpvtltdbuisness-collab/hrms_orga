@@ -33,28 +33,51 @@ const EmployeeList = () => {
             try {
                 // Get admin ID from stored user data
                 const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-                const adminId = userData.id;
+                console.log("Stored userData:", userData); // Debug log
+                
+                // Try to get admin ID from userData.id or use a fallback
+                let adminId = userData.id;
+                
+                // If not found in userData, try to get from logged in user
+                if (!adminId) {
+                    console.log("Admin ID not found in userData, checking if current user is admin");
+                    // For now, let's fetch all employees without admin filter
+                    // You'll need to update this based on your backend API
+                    adminId = 3; // Temporary fallback - replace with actual logged in user ID
+                }
+                
+                console.log("Using admin ID:", adminId);
                 
                 if (adminId) {
-                    const response = await employeeService.getAllEmployees(adminId);
+                    const response = await employeeService.getAllEmployeesByAdminId(adminId);
+                    console.log("API Response:", response); // Debug log
                     if (response.success && response.data) {
+                        console.log("Fetched Employees:", response.data); // Debug log
                         // Map API data to table format
-                        const mappedEmployees = response.data.map((item, index) => ({
-                            srNo: String(index + 1).padStart(2, '0'),
-                            name: item.user?.name || '-',
-                            empId: `EMP-${String(item.user?.id).padStart(3, '0')}`,
-                            department: item.user?.department || '-',
-                            designation: item.user?.designation || '-',
-                            joiningDate: item.user?.createdAt ? new Date(item.user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-                            contact: item.user?.email || '-',
-                            phone: item.user?.phone || '-',
-                            status: item.user?.active ? 'Active' : 'Inactive',
-                            gender: item.user?.gender || '-',
-                            id: item.user?.id,
-                            employeeId: item.employee?.id,
-                        }));
+                        const mappedEmployees = response.data.map((item, index) => {
+                            console.log("Mapping item:", item); // Debug each item
+                            return {
+                                srNo: String(index + 1).padStart(2, '0'),
+                                name: item.user?.name || '-',
+                                empId: `EMP-${String(item.user?.id).padStart(3, '0')}`,
+                                department: item.user?.department || '-',
+                                designation: item.user?.designation || '-',
+                                joiningDate: item.user?.createdAt ? new Date(item.user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+                                contact: item.user?.email || '-',
+                                phone: item.user?.phone || '-',
+                                status: item.user?.active ? 'Active' : 'Inactive',
+                                gender: item.user?.gender || '-',
+                                id: item.user?.id,
+                                employeeId: item.employee?.id,
+                            };
+                        });
+                        console.log("Mapped Employees:", mappedEmployees); // Debug mapped data
                         setEmployees(mappedEmployees);
+                    } else {
+                        console.log("No employees found or API failed");
                     }
+                } else {
+                    console.log("No admin ID found");
                 }
             } catch (error) {
                 console.error("Error fetching employees:", error);
