@@ -33,6 +33,9 @@ import Notifications from "./pages/hrms/Notifications/Notifications";
 import NewJobOpening from "./pages/hrms/NewJobOpening/NewJobOpening";
 import TeamList from "./pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList";
 import OnboardedEmployeeList from "./pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList";
+import NewHiring from "./pages/hrms/NewHiring/NewHiring";
+import ATSScreening from "./pages/hrms/ATSScreening/ATSScreening";
+import ScheduleInterview from "./pages/hrms/ScheduleInterview/ScheduleInterview";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
 import AddAttendance from "./pages/hrms/Attendance/AddAttendance";
 import EmployeeAttendanceTool from "./pages/hrms/Attendance/EmployeeAttendanceTool";
@@ -159,6 +162,11 @@ function App() {
 
           {/* Job Opening */}
           <Route path="job-opening/new" element={<NewJobOpening />} />
+
+          {/* New Hiring */}
+          <Route path="new-hiring" element={<NewHiring />} />
+          <Route path="ats-screening" element={<ATSScreening />} />
+          <Route path="schedule-interview" element={<ScheduleInterview />} />
 
           {/* Onboarding Employee */}
           <Route

@@ -11,7 +11,7 @@ const HRMS = () => {
       title: "Hiring and Recruitment",
       icon: "/images/report.svg",
       items: [
-        { name: "New Hiring", path: "" },
+        { name: "New Hiring", path: "/hrms/new-hiring" },
         { name: "New Job Opening", path: "/hrms/job-opening/new" },
         { name: "Schedule Interview", path: "" },
         { name: "New Onboarding", path: "" },
@@ -172,6 +172,8 @@ const HRMS = () => {
       navigate("/hrms/departments"); // Navigate to Department List
     } else if (name === "Settings") {
       navigate("/hrms/settings"); // Navigate to Settings
+    } else if (name === "New Hiring") {
+      navigate("/hrms/new-hiring");
     }
   };
 
