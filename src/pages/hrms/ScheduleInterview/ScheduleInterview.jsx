@@ -8,178 +8,232 @@ const ScheduleInterview = () => {
     const [interviewType, setInterviewType] = useState('HR Round');
     const [interviewMode, setInterviewMode] = useState('Online');
 
+    /* ── shared card style ── */
+    const card = {
+        border: '1px solid #E4E4E4',
+        borderRadius: '4px',
+        backgroundColor: '#FFFFFF',
+    };
+
+    /* ── shared label style ── */
+    const label = {
+        display: 'block',
+        fontSize: '13px',
+        color: '#374151',
+        marginBottom: '6px',
+        fontFamily: '"Nunito Sans", sans-serif',
+    };
+
+    /* ── shared input style ── */
+    const input = {
+        width: '100%',
+        height: '40px',
+        padding: '0 14px',
+        border: '1px solid #E5E7EB',
+        borderRadius: '6px',
+        fontSize: '13px',
+        color: '#111827',
+        outline: 'none',
+        boxSizing: 'border-box',
+        fontFamily: '"Nunito Sans", sans-serif',
+        backgroundColor: '#FFFFFF',
+    };
+
+    /* ── radio option ── */
+    const RadioOption = ({ name, value, current, onChange, label: lbl }) => (
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+                type="radio"
+                name={name}
+                checked={current === value}
+                onChange={() => onChange(value)}
+                style={{ width: '16px', height: '16px', accentColor: '#7D1EDB' }}
+            />
+            <span style={{ fontSize: '14px', color: '#374151', fontFamily: '"Nunito Sans", sans-serif' }}>{lbl}</span>
+        </label>
+    );
+
     return (
-        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            
-            {/* Breadcrumb matching Image 3 hierarchy */}
-            <div className="flex items-center text-sm text-[#7D1EDB] mb-4">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/hrms/ats-screening')}>
-                    <ArrowLeft size={14} className="text-gray-900" />
-                    <span className="hover:text-purple-500 font-medium">ATS Screening</span>
+        <div
+            style={{
+                fontFamily: 'Poppins, sans-serif',
+                backgroundColor: '#F2F2F7',
+                minHeight: 'calc(100vh - 5rem)',
+                overflowY: 'auto',
+            }}
+        >
+            {/* Outer padding: horizontal 20px for consistent alignment with title */}
+            <div style={{ padding: '10px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+                {/* Breadcrumb + Title — same horizontal alignment as cards */}
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                        <div
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                            onClick={() => navigate('/hrms/ats-screening')}
+                        >
+                            <ArrowLeft size={14} style={{ color: '#111827' }} />
+                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#7D1EDB' }}>ATS Screening</span>
+                        </div>
+                        <ChevronRight size={15} style={{ color: '#9CA3AF' }} />
+                        <span style={{ fontSize: '13px', color: '#667085' }}>Schedule Interview</span>
+                    </div>
+
+                    <h1 style={{
+                        fontSize: '20px',
+                        fontWeight: 600,
+                        color: '#494949',
+                        margin: '0 0 4px 0',
+                        fontFamily: '"Nunito Sans", sans-serif',
+                        lineHeight: '140%',
+                    }}>
+                        Schedule Interview
+                    </h1>
                 </div>
-                <ChevronRight size={16} className="mx-1 mt-0.5 text-gray-400" />
-                <span className="text-[#667085] text-sm font-base">Schedule Interview</span>
-            </div>
 
-            {/* Header matching NewHiring style */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
-                <h1 className="text-xl font-semibold text-gray-900">Schedule Interview</h1>
-            </div>
+                {/* ── Card 1: Candidate Information ── */}
+                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                        Candidate Information
+                    </h3>
 
-            {/* Content Boxes */}
-            <div className="space-y-4">
-                {/* Candidate Information */}
-                <div className="border border-[#e5e7eb] rounded-[16px] p-6">
-                    <h3 className="text-[15px] font-semibold text-gray-900 mb-6">Candidate Information</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                         <div>
-                            <label className="block text-[13px] text-gray-700 mb-2">Name</label>
-                            <input type="text" placeholder="Enter name" className="w-full h-[44px] px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" />
+                            <span style={label}>Name</span>
+                            <input type="text" placeholder="Enter name" style={input} />
                         </div>
                         <div>
-                            <label className="block text-[13px] text-gray-700 mb-2">Email</label>
-                            <input type="email" placeholder="Enter mail ID" className="w-full h-[44px] px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" />
+                            <span style={label}>Email</span>
+                            <input type="email" placeholder="Enter mail ID" style={input} />
                         </div>
                         <div>
-                            <label className="block text-[13px] text-gray-700 mb-2">Phone number</label>
-                            <input type="text" placeholder="Enter phone number" className="w-full h-[44px] px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" />
+                            <span style={label}>Phone number</span>
+                            <input type="text" placeholder="Enter phone number" style={input} />
                         </div>
                         <div>
-                            <label className="block text-[13px] text-gray-700 mb-2">Experience</label>
-                            <input type="text" placeholder="Enter experience" className="w-full h-[44px] px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" />
+                            <span style={label}>Experience</span>
+                            <input type="text" placeholder="Enter experience" style={input} />
                         </div>
                     </div>
 
-                    <button className="min-w-[140px] h-[40px] bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors px-6 text-[14px]">
+                    <button
+                        style={{
+                            height: '38px',
+                            padding: '0 22px',
+                            backgroundColor: '#7D1EDB',
+                            color: '#FFFFFF',
+                            fontWeight: 500,
+                            borderRadius: '999px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: 'Poppins, sans-serif',
+                            width: 'fit-content',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6B18C1'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = '#7D1EDB'}
+                    >
                         View Resume
                     </button>
                 </div>
 
-                {/* Interview Type */}
-                <div className="border border-[#e5e7eb] rounded-[16px] p-6 w-full md:w-1/2">
-                    <h3 className="text-[14px] font-semibold text-gray-900 mb-4">Interview Type</h3>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewType" 
-                                checked={interviewType === 'Round 1(Technical)'} 
-                                onChange={() => setInterviewType('Round 1(Technical)')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">Round 1(Technical)</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewType" 
-                                checked={interviewType === 'Round 2(Managerial)'} 
-                                onChange={() => setInterviewType('Round 2(Managerial)')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">Round 2(Managerial)</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewType" 
-                                checked={interviewType === 'HR Round'} 
-                                onChange={() => setInterviewType('HR Round')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">HR Round</span>
-                        </label>
+                {/* ── Card 2: Interview Type ── */}
+                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '520px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                        Interview Type
+                    </h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                        <RadioOption name="interviewType" value="Round 1(Technical)" current={interviewType} onChange={setInterviewType} label="Round 1(Technical)" />
+                        <RadioOption name="interviewType" value="Round 2(Managerial)" current={interviewType} onChange={setInterviewType} label="Round 2(Managerial)" />
+                        <RadioOption name="interviewType" value="HR Round" current={interviewType} onChange={setInterviewType} label="HR Round" />
                     </div>
                 </div>
 
-                {/* Interview Mode */}
-                <div className="border border-[#e5e7eb] rounded-[16px] p-6 w-full md:w-1/2">
-                    <h3 className="text-[14px] font-semibold text-gray-900 mb-4">Interview Mode</h3>
-                    <div className="flex flex-wrap items-center gap-8">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewMode" 
-                                checked={interviewMode === 'Online'} 
-                                onChange={() => setInterviewMode('Online')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">Online</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewMode" 
-                                checked={interviewMode === 'Offline'} 
-                                onChange={() => setInterviewMode('Offline')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">Offline</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="interviewMode" 
-                                checked={interviewMode === 'Hybrid'} 
-                                onChange={() => setInterviewMode('Hybrid')}
-                                className="w-4 h-4 text-[#7D1EDB] accent-[#7D1EDB]" 
-                            />
-                            <span className="text-[14px] text-gray-700">Hybrid</span>
-                        </label>
+                {/* ── Card 3: Interview Mode ── */}
+                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '520px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                        Interview Mode
+                    </h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+                        <RadioOption name="interviewMode" value="Online" current={interviewMode} onChange={setInterviewMode} label="Online" />
+                        <RadioOption name="interviewMode" value="Offline" current={interviewMode} onChange={setInterviewMode} label="Offline" />
+                        <RadioOption name="interviewMode" value="Hybrid" current={interviewMode} onChange={setInterviewMode} label="Hybrid" />
                     </div>
                 </div>
 
-                {/* Interview Timing and Panel */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border border-[#e5e7eb] rounded-[16px] p-6">
-                        <h3 className="text-[14px] font-semibold text-gray-900 mb-4">Interview Timing</h3>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <input 
-                                    type="text" 
-                                    placeholder="mm/dd/yyyy" 
-                                    className="w-full h-[40px] pl-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" 
+                {/* ── Card 4: Interview Timing + Panel (two side-by-side cards) ── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
+                    {/* Timing */}
+                    <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                            Interview Timing
+                        </h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            <div style={{ position: 'relative', flex: '1 1 120px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="mm/dd/yyyy"
+                                    style={{ ...input, paddingRight: '36px' }}
                                 />
-                                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <Calendar style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} size={15} />
                             </div>
-                            <div className="relative flex-1">
-                                <input 
-                                    type="text" 
-                                    placeholder="Select Time" 
-                                    className="w-full h-[40px] pl-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500" 
+                            <div style={{ position: 'relative', flex: '1 1 120px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Select Time"
+                                    style={{ ...input, paddingRight: '36px' }}
                                 />
-                                <Clock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <Clock style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} size={15} />
                             </div>
                         </div>
                     </div>
 
-                    <div className="border border-[#e5e7eb] rounded-[16px] p-6">
-                        <h3 className="text-[14px] font-semibold text-gray-900 mb-4">Interview Pannel</h3>
-                        <div className="relative w-full max-w-[280px]">
-                            <select className="w-full h-[40px] pl-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 appearance-none bg-transparent">
+                    {/* Panel */}
+                    <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                            Interview Pannel
+                        </h3>
+                        <div style={{ position: 'relative', maxWidth: '280px' }}>
+                            <select
+                                style={{
+                                    ...input,
+                                    paddingRight: '36px',
+                                    appearance: 'none',
+                                    cursor: 'pointer',
+                                }}
+                            >
                                 <option value="">Select interview pannel</option>
                                 <option value="hr">HR Pannel</option>
                                 <option value="tech">Tech Pannel</option>
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                            <ChevronDown style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} size={15} />
                         </div>
                     </div>
                 </div>
 
-                {/* Email Preview */}
-                <div className="border border-[#e5e7eb] rounded-[16px] p-6 bg-[#FAFAFA]">
-                    <h3 className="text-[14px] font-semibold text-gray-900 mb-4">Email Preview To Candidate</h3>
-                    
-                    <div className="space-y-3 text-[13px] text-gray-700" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Date:</span> <strong>10/01/2026</strong></p>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Time:</span> <strong>10:00 AM</strong></p>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Interview Pannel:</span> <strong>HR</strong></p>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Mode:</span> <strong>Online</strong></p>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Zoom meet link:</span> <a href="#" className="text-[#7D1EDB] hover:underline">https://hiuhe.h..</a></p>
-                        <p><span className="text-gray-500 w-[120px] inline-block">Instructions:</span> <strong>Please be on time</strong></p>
+                {/* ── Card 5: Email Preview ── */}
+                {/* Figma: padding 16px 20px, gap 8px, border-radius 4px, border 1px solid #E4E4E4, bg #FFFFFF */}
+                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                        Email Preview To Candidate
+                    </h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', color: '#374151' }}>
+                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Date:</span> <strong>10/01/2026</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Time:</span> <strong>10:00 AM</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Interview Pannel:</span> <strong>HR</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Mode:</span> <strong>Online</strong></p>
+                        <p style={{ margin: 0 }}>
+                            <span style={{ color: '#6B7280' }}>Zoom meet link: </span>
+                            <a href="#" style={{ color: '#7D1EDB', textDecoration: 'none' }}
+                                onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                            >https://hiuhe.h..</a>
+                        </p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Instructions:</span> <strong>Please be on time</strong></p>
                     </div>
                 </div>
+
             </div>
         </div>
     );
