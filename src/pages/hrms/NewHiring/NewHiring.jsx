@@ -47,8 +47,16 @@ const NewHiring = () => {
                     {/* Active Job Openings Banner */}
                     <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between bg-gray-50/50">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gray-100 rounded-full text-gray-500">
-                                <Briefcase size={20} />
+                            <div className="p-3 bg-gray-100 rounded-full flex items-center justify-center">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    {/* Briefcase */}
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2 12h20" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                    {/* Circle-slash overlay (ban) */}
+                                    <circle cx="18" cy="18" r="5.5" fill="white" stroke="#6B7280" strokeWidth="1.5"/>
+                                    <line x1="14.5" y1="21.5" x2="21.5" y2="14.5" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
                             </div>
                             <div>
                                 <h3 className="text-gray-900 font-medium">No Active Job Openings</h3>
@@ -76,30 +84,38 @@ const NewHiring = () => {
                                     className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-300"
                                 />
                             </div>
-                            <div className="relative">
-                                <select className="appearance-none bg-purple-50 text-purple-600 border border-purple-100 px-4 py-2 pr-8 rounded-full text-sm focus:outline-none">
-                                    <option>Status</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none" />
-                            </div>
-                            <div className="relative">
-                                <select className="appearance-none bg-purple-50 text-purple-600 border border-purple-100 px-4 py-2 pr-8 rounded-full text-sm focus:outline-none">
-                                    <option>Experience</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none" />
-                            </div>
-                            <div className="relative">
-                                <select className="appearance-none bg-purple-50 text-purple-600 border border-purple-100 px-4 py-2 pr-8 rounded-full text-sm focus:outline-none">
-                                    <option>Skills</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none" />
-                            </div>
-                            <div className="relative">
-                                <select className="appearance-none bg-purple-50 text-purple-600 border border-purple-100 px-4 py-2 pr-8 rounded-full text-sm focus:outline-none">
-                                    <option>Source</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none" />
-                            </div>
+                            {['Status', 'Experience', 'Skills', 'Source'].map((label) => (
+                                <div key={label} className="relative">
+                                    <select
+                                        style={{
+                                            width: '120px',
+                                            height: '48px',
+                                            borderRadius: '12px',
+                                            padding: '10px',
+                                            paddingRight: '32px',
+                                            gap: '6px',
+                                            background: '#EEECFF',
+                                            border: 'none',
+                                            color: '#7D1EDB',
+                                            fontFamily: 'Poppins, sans-serif',
+                                            fontWeight: 400,
+                                            fontSize: '14px',
+                                            lineHeight: '140%',
+                                            appearance: 'none',
+                                            WebkitAppearance: 'none',
+                                            outline: 'none',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <option>{label}</option>
+                                    </select>
+                                    <ChevronDown
+                                        size={14}
+                                        style={{ color: '#7D1EDB' }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                    />
+                                </div>
+                            ))}
                         </div>
 
                         {/* Table */}
@@ -107,7 +123,7 @@ const NewHiring = () => {
                             <table className="w-full text-left text-sm whitespace-nowrap">
                                 <thead>
                                     <tr className="text-gray-500 border-b border-gray-200">
-                                        <th className="px-4 py-4 font-medium w-12"><Square size={16} className="text-purple-600" /></th>
+                                        <th className="px-4 py-4 font-medium w-12"><Square size={15} style={{ color: '#7D1EDB' }} /></th>
                                         <th className="px-4 py-4 font-medium">SR NO</th>
                                         <th className="px-4 py-4 font-medium">CANDIDATE NAME</th>
                                         <th className="px-4 py-4 font-medium">EXPERIENCE</th>
@@ -120,9 +136,9 @@ const NewHiring = () => {
                                 <tbody>
                                     {candidates.map((candidate) => (
                                         <tr key={candidate.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                                            <td className="px-4 py-4"><Square size={16} className="text-gray-400" /></td>
+                                            <td className="px-4 py-4"><Square size={15} style={{ color: '#7D1EDB' }} /></td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.srNo}</td>
-                                            <td className="px-4 py-4 text-[#2176FF] font-medium">{candidate.name}</td>
+                                            <td className="px-4 py-4" style={{ color: '#7268FF', fontWeight: 500, fontSize: '16px', lineHeight: '140%', fontFamily: 'Poppins, sans-serif' }}>{candidate.name}</td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.experience}</td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.skills}</td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.source}</td>

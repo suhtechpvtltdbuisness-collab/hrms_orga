@@ -63,7 +63,7 @@ const ScheduleInterview = () => {
             }}
         >
             {/* Outer padding: horizontal 20px for consistent alignment with title */}
-            <div style={{ padding: '10px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ padding: '10px 20px 40px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
                 {/* Breadcrumb + Title — same horizontal alignment as cards */}
                 <div>
@@ -162,14 +162,25 @@ const ScheduleInterview = () => {
                 </div>
 
                 {/* ── Card 4: Interview Timing + Panel (two side-by-side cards) ── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
-                    {/* Timing */}
-                    <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {/* Timing — Figma: 433px wide, 106px tall */}
+                    <div style={{
+                        width: '433px',
+                        minHeight: '106px',
+                        border: '1px solid #E4E4E4',
+                        borderRadius: '4px',
+                        backgroundColor: '#FFFFFF',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        boxSizing: 'border-box',
+                    }}>
                         <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
                             Interview Timing
                         </h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                            <div style={{ position: 'relative', flex: '1 1 120px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{ position: 'relative', flex: 1 }}>
                                 <input
                                     type="text"
                                     placeholder="mm/dd/yyyy"
@@ -177,7 +188,7 @@ const ScheduleInterview = () => {
                                 />
                                 <Calendar style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} size={15} />
                             </div>
-                            <div style={{ position: 'relative', flex: '1 1 120px' }}>
+                            <div style={{ position: 'relative', flex: 1 }}>
                                 <input
                                     type="text"
                                     placeholder="Select Time"
@@ -188,12 +199,23 @@ const ScheduleInterview = () => {
                         </div>
                     </div>
 
-                    {/* Panel */}
-                    <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Panel — same Figma specs as Timing card */}
+                    <div style={{
+                        width: '433px',
+                        minHeight: '106px',
+                        border: '1px solid #E4E4E4',
+                        borderRadius: '4px',
+                        backgroundColor: '#FFFFFF',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        boxSizing: 'border-box',
+                    }}>
                         <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
                             Interview Pannel
                         </h3>
-                        <div style={{ position: 'relative', maxWidth: '280px' }}>
+                        <div style={{ position: 'relative' }}>
                             <select
                                 style={{
                                     ...input,
@@ -212,8 +234,19 @@ const ScheduleInterview = () => {
                 </div>
 
                 {/* ── Card 5: Email Preview ── */}
-                {/* Figma: padding 16px 20px, gap 8px, border-radius 4px, border 1px solid #E4E4E4, bg #FFFFFF */}
-                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* Figma: Fill width, height 224.45px, radius 4px, border 1px #E4E4E4, padding 16px 20px, gap 8px */}
+                <div style={{
+                    width: '100%',
+                    minHeight: '224.45px',
+                    border: '1px solid #E4E4E4',
+                    borderRadius: '4px',
+                    backgroundColor: '#FFFFFF',
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    boxSizing: 'border-box',
+                }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
                         Email Preview To Candidate
                     </h3>
@@ -234,9 +267,89 @@ const ScheduleInterview = () => {
                     </div>
                 </div>
 
+                {/* ── Action Buttons Row — Figma: width 708px, height 48px, gap 30px ── */}
+                <div style={{
+                    width: '708px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '30px',
+                    marginTop: '20px',
+                }}>
+                    {/* Send Interview Invitation */}
+                    <button
+                        style={{
+                            height: '48px',
+                            padding: '0 24px',
+                            backgroundColor: '#7D1EDB',
+                            color: '#FFFFFF',
+                            fontWeight: 500,
+                            borderRadius: '999px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: 'Poppins, sans-serif',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6B18C1'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = '#7D1EDB'}
+                    >
+                        Send Interview Invitation
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </button>
+
+                    {/* Cancel */}
+                    <button
+                        style={{
+                            height: '48px',
+                            padding: '0 32px',
+                            backgroundColor: 'transparent',
+                            color: '#FF3B30',
+                            fontWeight: 500,
+                            borderRadius: '999px',
+                            border: '1.5px solid #FF3B30',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: 'Poppins, sans-serif',
+                            whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFF0EF'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                        Cancel
+                    </button>
+
+                    {/* Save Draft */}
+                    <button
+                        style={{
+                            height: '48px',
+                            padding: '0 32px',
+                            backgroundColor: 'transparent',
+                            color: '#7D1EDB',
+                            fontWeight: 500,
+                            borderRadius: '999px',
+                            border: '1.5px solid #7D1EDB',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: 'Poppins, sans-serif',
+                            whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F5EEFB'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                        Save Draft
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
+
 
 export default ScheduleInterview;
