@@ -34,10 +34,10 @@ const EmployeeList = () => {
                 // Get admin ID from stored user data
                 const userData = JSON.parse(localStorage.getItem("userData") || "{}");
                 console.log("Stored userData:", userData); // Debug log
-                
+
                 // Try to get admin ID from userData.id or use a fallback
                 let adminId = userData.id;
-                
+
                 // If not found in userData, try to get from logged in user
                 if (!adminId) {
                     console.log("Admin ID not found in userData, checking if current user is admin");
@@ -45,9 +45,9 @@ const EmployeeList = () => {
                     // You'll need to update this based on your backend API
                     adminId = 3; // Temporary fallback - replace with actual logged in user ID
                 }
-                
+
                 console.log("Using admin ID:", adminId);
-                
+
                 if (adminId) {
                     const response = await employeeService.getAllEmployeesByAdminId(adminId);
                     console.log("API Response:", response); // Debug log
@@ -271,22 +271,22 @@ const EmployeeList = () => {
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            
+
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
-                <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
+                <img
+                    src="/images/arrow_left_alt.svg"
+                    alt="Back"
+                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
                     onClick={() => navigate('/hrms')}
                 />
-                <span 
+                <span
                     className='cursor-pointer text-[#7D1EDB]'
                     onClick={() => navigate('/hrms')}
                 >
                     HRMS Dashboard
-                </span> 
-                <ChevronRight size={14}/> 
+                </span>
+                <ChevronRight size={14} />
                 <span className="text-[#6B7280]">Employee List</span>
             </div>
 
@@ -478,26 +478,26 @@ const EmployeeList = () => {
                                         </span>
                                     </td>
                                     <td className="py-3 px-2">
-                                            <div className="flex items-center justify-center gap-3">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/hrms/employees-details/${employee.id}/personal-information`);
-                                                    }}
-                                                    className="focus:outline-none transition-transform hover:scale-110"
-                                                >
-                                                    <img src="/images/view.svg" alt="View" className="w-5 h-5 cursor-pointer" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/hrms/employees-details-update/${employee.id}`);
-                                                    }}
-                                                    className="focus:outline-none transition-transform hover:scale-110"
-                                                >
-                                                    <img src="/images/pencil_Icon.svg" alt="Edit" className="w-4 h-4 cursor-pointer" />
-                                                </button>
-                                            </div>
+                                        <div className="flex items-center justify-center gap-3">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/hrms/employees-details/${employee.id}/personal-information`);
+                                                }}
+                                                className="focus:outline-none transition-transform hover:scale-110"
+                                            >
+                                                <img src="/images/view.svg" alt="View" className="w-5 h-5 cursor-pointer" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/hrms/employees-details/${employee.id}/personal-information?mode=edit`);
+                                                }}
+                                                className="focus:outline-none transition-transform hover:scale-110"
+                                            >
+                                                <img src="/images/pencil_Icon.svg" alt="Edit" className="w-4 h-4 cursor-pointer" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -571,8 +571,8 @@ const EmployeeList = () => {
                 <div className="hidden lg:block"></div>
             </div>
 
-             {/* Modals */}
-             <AssignReportingManager 
+            {/* Modals */}
+            <AssignReportingManager
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
                 onAssign={handleAssignSubmit}
@@ -585,7 +585,7 @@ const EmployeeList = () => {
                 onViewTeam={() => {
                     setIsAssignedModalOpen(false);
                     navigate('/hrms/onboarded-employee-list/team-list');
-                }} 
+                }}
             />
             <SuccessModal
                 isOpen={isSuccessModalOpen}

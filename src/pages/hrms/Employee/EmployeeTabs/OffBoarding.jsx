@@ -80,12 +80,26 @@ const CheckboxField = ({ label, description }) => (
 
 import DeleteEmployee from '../DeleteEmployee/DeleteEmployee';
 
-const OffBoarding = () => {
+const OffBoarding = ({ employeeId, employeeName }) => {
     const [dates, setDates] = useState({});
     const handleDateChange = (field, val) => setDates(prev => ({ ...prev, [field]: val }));
 
     return (
         <div className="h-full font-sans flex flex-col p-2 bg-white rounded-xl relative">
+            {/* Employee Info Banner */}
+            {employeeId && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            {employeeName?.charAt(0)?.toUpperCase() || 'E'}
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-900">{employeeName}</p>
+                            <p className="text-xs text-gray-600">Employee ID: {employeeId}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Personal & Employment Details */}
             <h2 className="text-[16px] font-semibold text-[#1E1E1E] mb-3 leading-none" style={{ fontFamily: '"Inter", sans-serif' }}>

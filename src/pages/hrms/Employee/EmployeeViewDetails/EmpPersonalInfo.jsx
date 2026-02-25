@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -26,7 +28,7 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     );
 };
 
-const EmpPersonalInfo = ({ data }) => {
+const EmpPersonalInfo = ({ data, isEditMode = false, formData = {}, onChange }) => {
     const [sections, setSections] = useState({
         basicDetails: true,
         emergencyContact: false,
@@ -40,14 +42,80 @@ const EmpPersonalInfo = ({ data }) => {
         }));
     };
 
-    const inputClasses = "w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base focus:outline-none transition-all placeholder-gray-400 cursor-not-allowed";
-    const labelClasses = "block text-base font-normal text-[#757575] mb-1.5 leading-[140%]";
+    // View-mode (disabled) styles
+    const readonlyClasses = "w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-[#757575] text-base focus:outline-none transition-all placeholder-gray-400 cursor-not-allowed";
+    // Edit-mode (active) styles
+    const editClasses = "w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all placeholder-gray-400";
+
+    const labelClasses = `block text-base font-normal mb-1.5 leading-[140%] ${isEditMode ? 'text-[#1E1E1E]' : 'text-[#757575]'}`;
 
     const getEmployeeId = () => {
-        if (data?.id) {
-            return `EMP-${String(data.id).padStart(3, '0')}`;
-        }
+        if (data?.id) return `EMP-${String(data.id).padStart(3, '0')}`;
         return "-";
+    };
+
+    const renderField = (label, name, type = "text", displayValue) => {
+        if (isEditMode && onChange) {
+            return (
+                <div>
+                    <label className={labelClasses}>{label}</label>
+                    <input
+                        type={type}
+                        name={name}
+                        value={formData[name] || ''}
+                        onChange={onChange}
+                        placeholder={`Enter ${label.toLowerCase()}`}
+                        className={editClasses}
+                    />
+                </div>
+            );
+        }
+        return (
+            <div>
+                <label className={labelClasses}>{label}</label>
+                <input
+                    type="text"
+                    value={displayValue !== undefined ? displayValue : (data?.[name] || "-")}
+                    className={readonlyClasses}
+                    disabled
+                />
+            </div>
+        );
+    };
+
+    // Phone field: digits only, max 10
+    const renderPhoneField = (label, name, displayValue) => {
+        if (isEditMode && onChange) {
+            return (
+                <div>
+                    <label className={labelClasses}>{label}</label>
+                    <input
+                        type="text"
+                        name={name}
+                        value={formData[name] || ''}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            onChange({ target: { name, value: val } });
+                        }}
+                        placeholder="Enter 10-digit number"
+                        maxLength={10}
+                        inputMode="numeric"
+                        className={editClasses}
+                    />
+                </div>
+            );
+        }
+        return (
+            <div>
+                <label className={labelClasses}>{label}</label>
+                <input
+                    type="text"
+                    value={displayValue !== undefined ? displayValue : (data?.[name] || "-")}
+                    className={readonlyClasses}
+                    disabled
+                />
+            </div>
+        );
     };
 
     return (
@@ -57,61 +125,133 @@ const EmpPersonalInfo = ({ data }) => {
                 title="Basic Details"
                 isOpen={sections.basicDetails}
                 onToggle={() => toggleSection('basicDetails')}
-                className="bg-[#F5F5F5]"
             >
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6 ">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
+
                     {/* Name */}
-                    <div>
-                        <label className={labelClasses}>Name</label>
-                        <input type="text" value={data?.name || "-"} className={inputClasses} disabled />
-                    </div>
+                    {renderField("Name", "name")}
 
                     {/* Email */}
-                    <div>
-                        <label className={labelClasses}>Email</label>
-                        <input type="text" value={data?.email || "-"} className={inputClasses} disabled />
-                    </div>
+                    {renderField("Email", "email", "email")}
 
                     {/* Phone */}
-                    <div>
-                        <label className={labelClasses}>Phone</label>
-                        <input type="text" value={data?.phone || "-"} className={inputClasses} disabled />
-                    </div>
+                    {renderPhoneField("Phone", "phone")}
 
-                    {/* Employee ID */}
+                    {/* Employee ID — always read-only */}
                     <div>
                         <label className={labelClasses}>Employee ID</label>
-                        <input type="text" value={getEmployeeId()} className={inputClasses} disabled />
+                        <input type="text" value={getEmployeeId()} className={readonlyClasses} disabled />
                     </div>
 
                     {/* Gender */}
-                    <div>
-                        <label className={labelClasses}>Gender</label>
-                        <input type="text" value={data?.gender || "-"} className={`${inputClasses} capitalize`} disabled />
-                    </div>
+                    {isEditMode ? (
+                        <div>
+                            <label className={labelClasses}>Gender</label>
+                            <FilterDropdown
+                                placeholder="Select Gender"
+                                options={[
+                                    { label: 'Male', value: 'male' },
+                                    { label: 'Female', value: 'female' },
+                                    { label: 'Other', value: 'other' }
+                                ]}
+                                value={formData.gender}
+                                onChange={(val) => onChange({ target: { name: 'gender', value: val } })}
+                                className={`${editClasses} flex items-center justify-between cursor-pointer`}
+                                buttonTextClassName="text-[#000000]"
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className={labelClasses}>Gender</label>
+                            <input type="text" value={data?.gender || "-"} className={`${readonlyClasses} capitalize`} disabled />
+                        </div>
+                    )}
 
                     {/* Date of Birth */}
-                    <div>
-                        <label className={labelClasses}>Date of Birth</label>
-                        <input type="text" value={data?.dob || "-"} className={inputClasses} disabled />
-                    </div>
+                    {isEditMode ? (
+                        <div>
+                            <label className={labelClasses}>Date of Birth</label>
+                            <CustomDatePicker
+                                value={formData.dob}
+                                onChange={(val) => onChange({ target: { name: 'dob', value: val } })}
+                                placeholder="Select Date"
+                                className="bg-white border-gray-200"
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className={labelClasses}>Date of Birth</label>
+                            <input type="text" value={data?.dob || "-"} className={readonlyClasses} disabled />
+                        </div>
+                    )}
 
                     {/* Blood Group */}
-                    <div>
-                        <label className={labelClasses}>Blood Group</label>
-                        <input type="text" value={data?.bloodGroup || "-"} className={`${inputClasses} uppercase`} disabled />
-                    </div>
+                    {isEditMode ? (
+                        <div>
+                            <label className={labelClasses}>Blood Group</label>
+                            <FilterDropdown
+                                placeholder="Select Blood Group"
+                                options={[
+                                    { label: 'A+', value: 'a+' },
+                                    { label: 'B+', value: 'b+' },
+                                    { label: 'O+', value: 'o+' },
+                                    { label: 'AB+', value: 'ab+' },
+                                    { label: 'A-', value: 'a-' },
+                                    { label: 'B-', value: 'b-' },
+                                    { label: 'O-', value: 'o-' },
+                                    { label: 'AB-', value: 'ab-' },
+                                ]}
+                                value={formData.bloodGroup}
+                                onChange={(val) => onChange({ target: { name: 'bloodGroup', value: val } })}
+                                className={`${editClasses} flex items-center justify-between cursor-pointer`}
+                                buttonTextClassName="text-[#000000]"
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className={labelClasses}>Blood Group</label>
+                            <input type="text" value={data?.bloodGroup || "-"} className={`${readonlyClasses} uppercase`} disabled />
+                        </div>
+                    )}
 
                     {/* Marital Status */}
-                    <div>
-                        <label className={labelClasses}>Marital Status</label>
-                        <input type="text" value={data?.maritalStatus ? "Married" : "Single"} className={inputClasses} disabled />
-                    </div>
+                    {isEditMode ? (
+                        <div>
+                            <label className={labelClasses}>Marital Status</label>
+                            <FilterDropdown
+                                placeholder="Select Marital Status"
+                                options={[
+                                    { label: 'Single', value: 'single' },
+                                    { label: 'Married', value: 'married' }
+                                ]}
+                                value={formData.maritalStatus}
+                                onChange={(val) => onChange({ target: { name: 'maritalStatus', value: val } })}
+                                className={`${editClasses} flex items-center justify-between cursor-pointer`}
+                                buttonTextClassName="text-[#000000]"
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className={labelClasses}>Marital Status</label>
+                            <input type="text" value={data?.maritalStatus ? "Married" : "Single"} className={readonlyClasses} disabled />
+                        </div>
+                    )}
 
                     {/* Address */}
                     <div className="col-span-1 sm:col-span-2">
                         <label className={labelClasses}>Address</label>
-                        <input type="text" value={data?.address || "-"} className={inputClasses} disabled />
+                        {isEditMode ? (
+                            <textarea
+                                name="address"
+                                value={formData.address || ''}
+                                onChange={onChange}
+                                placeholder="Enter address"
+                                rows="2"
+                                className={`${editClasses} resize-none`}
+                            />
+                        ) : (
+                            <input type="text" value={data?.address || "-"} className={readonlyClasses} disabled />
+                        )}
                     </div>
                 </div>
             </AccordionItem>
@@ -123,18 +263,9 @@ const EmpPersonalInfo = ({ data }) => {
                 onToggle={() => toggleSection('emergencyContact')}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
-                    <div>
-                        <label className={labelClasses}>Contact Name</label>
-                        <input type="text" value={data?.eContactName || "-"} className={inputClasses} disabled />
-                    </div>
-                    <div>
-                        <label className={labelClasses}>Relation</label>
-                        <input type="text" value={data?.eRelation || "-"} className={`${inputClasses} capitalize`} disabled />
-                    </div>
-                    <div>
-                        <label className={labelClasses}>Contact Number</label>
-                        <input type="text" value={data?.eContactNumber || "-"} className={inputClasses} disabled />
-                    </div>
+                    {renderField("Contact Name", "contactName", "text", data?.eContactName)}
+                    {renderField("Relation", "relation", "text", data?.eRelation)}
+                    {renderPhoneField("Contact Number", "contactNumber", data?.eContactNumber)}
                 </div>
             </AccordionItem>
 
@@ -145,14 +276,8 @@ const EmpPersonalInfo = ({ data }) => {
                 onToggle={() => toggleSection('identification')}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
-                    <div>
-                        <label className={labelClasses}>Aadhar Number</label>
-                        <input type="text" value={data?.aadharNo || "-"} className={inputClasses} disabled />
-                    </div>
-                    <div>
-                        <label className={labelClasses}>PAN Number</label>
-                        <input type="text" value={data?.pancardNo || "-"} className={inputClasses} disabled />
-                    </div>
+                    {renderField("Aadhar Number", "aadharNumber", "text", data?.aadharNo)}
+                    {renderField("PAN Number", "panNumber", "text", data?.pancardNo)}
                 </div>
             </AccordionItem>
         </div>

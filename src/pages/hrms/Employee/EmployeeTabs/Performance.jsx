@@ -96,7 +96,7 @@ const StarRating = ({ label, rating = 0 }) => {
     );
 };
 
-const Performance = () => {
+const Performance = ({ employeeId, employeeName }) => {
     const [isSummaryOpen, setIsSummaryOpen] = useState(true);
     const [lastReviewDate, setLastReviewDate] = useState('');
     const goalsData = [];
@@ -104,6 +104,20 @@ const Performance = () => {
 
     return (
         <div className="h-full font-sans flex flex-col gap-4">
+            {/* Employee Info Banner */}
+            {employeeId && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            {employeeName?.charAt(0)?.toUpperCase() || 'E'}
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-900">{employeeName}</p>
+                            <p className="text-xs text-gray-600">Employee ID: {employeeId}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Performance Summary Accordion */}
             <AccordionItem
                 title="Performance Summary"

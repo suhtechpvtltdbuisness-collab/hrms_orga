@@ -19,26 +19,26 @@ export const authService = {
           message: data.message || "Registration failed",
         };
       }
-      
+
       // Token is at data.tokens.accessToken
       const token = data.data?.tokens?.accessToken;
-      
+
       if (token) {
         localStorage.setItem("authToken", token);
       }
-      
+
       // Store refresh token if available
       if (data.data?.tokens?.refreshToken) {
         localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
       }
-      
+
       // Store user data
       if (data.data?.user) {
         localStorage.setItem("userData", JSON.stringify(data.data.user));
       }
-      
+
       localStorage.setItem("isLoggedIn", "true");
-      
+
       return {
         success: true,
         message: data.message,
@@ -64,7 +64,7 @@ export const authService = {
       const data = await response.json();
       console.log("LOGIN RESPONSE:", data);
 
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -81,24 +81,24 @@ export const authService = {
         console.error("Token not found in response");
       }
 
-      
+
       // Token is at data.tokens.accessToken
       const token = data.data?.tokens?.accessToken;
-      
+
       if (token) {
         localStorage.setItem("authToken", token);
       }
-      
+
       // Store refresh token if available
       if (data.data?.tokens?.refreshToken) {
         localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
       }
-      
+
       // Store user data
       if (data.data?.user) {
         localStorage.setItem("userData", JSON.stringify(data.data.user));
       }
-      
+
       localStorage.setItem("isLoggedIn", "true");
 
       return {
@@ -309,8 +309,8 @@ export const designationService = {
   },
 };
 
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userData");
+localStorage.removeItem("refreshToken");
+localStorage.removeItem("userData");
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -331,16 +331,16 @@ export const employeeService = {
       console.log("Fetching employees for admin ID:", adminId);
       console.log("API URL:", `${BASE_URL}/users/employees/admin/${adminId}`);
       console.log("Auth Token:", localStorage.getItem("authToken"));
-      
+
       const response = await fetch(`${BASE_URL}/users/employees/admin/${adminId}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
-      
+
       console.log("Response status:", response.status);
       const data = await response.json();
       console.log("Response data:", data);
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -369,7 +369,7 @@ export const employeeService = {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -397,7 +397,7 @@ export const employeeService = {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -426,7 +426,7 @@ export const employeeService = {
         body: JSON.stringify(employeeData),
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -445,6 +445,100 @@ export const employeeService = {
       };
     }
   },
+
+  // Update employee by ID
+  // Tries PATCH /users/:id first (standard partial update),
+  // then falls back to PUT /users/update/:id if backend returns 404
+  updateEmployee: async (id, employeeData) => {
+    const attemptRequest = async (method, url) => {
+      const response = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(employeeData),
+      });
+      return response;
+    };
+
+    try {
+      // Try PATCH /users/:id first
+      console.log(`[updateEmployee] Trying PATCH ${BASE_URL}/users/${id}`);
+      let response = await attemptRequest("PATCH", `${BASE_URL}/users/${id}`);
+      console.log(`[updateEmployee] PATCH status: ${response.status}`);
+
+      // If 404, try PUT /users/update/:id
+      if (response.status === 404) {
+        console.log(`[updateEmployee] Trying PUT ${BASE_URL}/users/update/${id}`);
+        response = await attemptRequest("PUT", `${BASE_URL}/users/update/${id}`);
+        console.log(`[updateEmployee] PUT /update status: ${response.status}`);
+      }
+
+      // If still 404, try PUT /users/:id (original)
+      if (response.status === 404) {
+        console.log(`[updateEmployee] Trying PUT ${BASE_URL}/users/${id}`);
+        response = await attemptRequest("PUT", `${BASE_URL}/users/${id}`);
+        console.log(`[updateEmployee] PUT status: ${response.status}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || `Update failed (HTTP ${response.status}). Please check the backend API route.`,
+        };
+      }
+      return {
+        success: true,
+        message: data.message || "Employee updated successfully",
+        data: data.data || data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Network error while updating employee. Please try again.",
+      };
+    }
+  },
+
+  // POST /employment — create employment details for an employee
+  addEmploymentDetails: async (employmentData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/employment`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(employmentData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to save employment details" };
+      }
+      return { success: true, message: data.message || "Employment details saved", data: data.data || data };
+    } catch (error) {
+      return { success: false, message: "Network error while saving employment details." };
+    }
+  },
+
+  // GET /employment/:employeeId — fetch employment details for a specific employee
+  getEmploymentByEmployee: async (employeeId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/employment/${employeeId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch employment details" };
+      }
+      return { success: true, data: data.data || data };
+    } catch (error) {
+      return { success: false, message: "Network error while fetching employment details." };
+    }
+  },
 };
 
 export const leaveService = {
@@ -457,7 +551,7 @@ export const leaveService = {
         body: JSON.stringify(leaveData),
       });
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,

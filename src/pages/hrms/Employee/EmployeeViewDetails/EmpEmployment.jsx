@@ -47,14 +47,14 @@ const InputField = ({ label, type = "text", placeholder, defaultValue, icon: Ico
                     "
                 />
                 {Icon && (
-                    <div 
+                    <div
                         className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-[#757575]"
                         onMouseEnter={() => setShowTooltip(true)}
                         onMouseLeave={() => setShowTooltip(false)}
                     >
                         <Icon size={20} />
                         {showTooltip && tooltipContent && (
-                           <div className="absolute top-full right-0 mt-5 w-max max-w-[320px] z-50">
+                            <div className="absolute top-full right-0 mt-5 w-max max-w-[320px] z-50">
                                 <div className="bg-[#8DC9C7] text-white text-[13px] rounded-lg p-4 shadow-xl relative animate-fadeIn font-sans tracking-wide">
                                     {tooltipContent}
                                     {/* Arrow */}
@@ -75,22 +75,22 @@ const EmpEmployment = () => {
 
     const managerTooltip = (
         <div className="text-left space-y-1.5 min-w-[240px]">
-             <div className="grid grid-cols-[90px_1fr] gap-2">
+            <div className="grid grid-cols-[90px_1fr] gap-2">
                 <span className="font-light opacity-90">Name :</span>
                 <span className="font-normal">{reportingManager || 'Samiksha Umbarje'}</span>
-             </div>
-             <div className="grid grid-cols-[90px_1fr] gap-2">
+            </div>
+            <div className="grid grid-cols-[90px_1fr] gap-2">
                 <span className="font-light opacity-90">Designation :</span>
                 <span className="font-normal">UI/UX Developer</span>
-             </div>
-             <div className="grid grid-cols-[90px_1fr] gap-2">
+            </div>
+            <div className="grid grid-cols-[90px_1fr] gap-2">
                 <span className="font-light opacity-90">Email :</span>
                 <span className="font-normal">samiksha@123gmail.com</span>
-             </div>
-             <div className="grid grid-cols-[90px_1fr] gap-2">
+            </div>
+            <div className="grid grid-cols-[90px_1fr] gap-2">
                 <span className="font-light opacity-90">Assigned Date :</span>
                 <span className="font-normal">12 January 2025</span>
-             </div>
+            </div>
         </div>
     );
 
@@ -127,10 +127,10 @@ const EmpEmployment = () => {
                     <InputField label="Job Title" placeholder="Enter job title" />
                     <InputField label="Department" placeholder="Enter department" />
                     <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
-                    <InputField 
-                        label="Reporting Manager" 
-                        placeholder="Enter name" 
-                        defaultValue={reportingManager || 'Samiksha Umbarje'} 
+                    <InputField
+                        label="Reporting Manager"
+                        placeholder="Enter name"
+                        defaultValue={reportingManager || 'Samiksha Umbarje'}
                         icon={Info}
                         tooltipContent={managerTooltip}
                     />
