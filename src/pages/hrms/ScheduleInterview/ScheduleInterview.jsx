@@ -120,18 +120,22 @@ const ScheduleInterview = () => {
                         style={{
                             height: '38px',
                             padding: '0 22px',
-                            backgroundColor: '#7D1EDB',
-                            color: '#FFFFFF',
+                            backgroundColor: 'transparent',
+                            color: '#7D1EDB',
                             fontWeight: 500,
                             borderRadius: '999px',
-                            border: 'none',
+                            border: '1.5px solid #7D1EDB',
                             cursor: 'pointer',
                             fontSize: '14px',
                             fontFamily: 'Poppins, sans-serif',
                             width: 'fit-content',
                         }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6B18C1'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = '#7D1EDB'}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = '#F5EEFB';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
                     >
                         View Resume
                     </button>

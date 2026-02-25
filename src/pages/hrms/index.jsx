@@ -13,10 +13,12 @@ const HRMS = () => {
       items: [
         { name: "New Hiring", path: "/hrms/new-hiring" },
         { name: "New Job Opening", path: "/hrms/job-opening/new" },
-        { name: "Schedule Interview", path: "" },
-        { name: "New Onboarding", path: "" },
+        { name: "Schedule Interview", path: "/hrms/schedule-interview" },
+        { name: "Schedule Interview List", path: "/hrms/schedule-interview-list" },
+        { name: "Offer Letter Accepted List", path: "/hrms/offer-letter-accepted-list" },
+        { name: "New Onboarding", path: "/hrms/new-onboarding" },
         {
-          name: "Onboarded Employee List",
+          name: "New Onboarded List",
           path: "/hrms/onboarded-employee-list",
         },
       ],

@@ -36,6 +36,10 @@ import OnboardedEmployeeList from "./pages/hrms/OnboardedEmployeeList/OnboardedE
 import NewHiring from "./pages/hrms/NewHiring/NewHiring";
 import ATSScreening from "./pages/hrms/ATSScreening/ATSScreening";
 import ScheduleInterview from "./pages/hrms/ScheduleInterview/ScheduleInterview";
+import ScheduleInterviewList from "./pages/hrms/ScheduleInterview/ScheduleInterviewList";
+import ScheduledInterviewDetails from "./pages/hrms/ScheduleInterview/ScheduledInterviewDetails";
+import OfferLetterAcceptedList from "./pages/hrms/NewHiring/OfferLetterAcceptedList";
+import NewOnboarding from "./pages/hrms/NewHiring/NewOnboarding";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
 import AddAttendance from "./pages/hrms/Attendance/AddAttendance";
 import EmployeeAttendanceTool from "./pages/hrms/Attendance/EmployeeAttendanceTool";
@@ -167,6 +171,10 @@ function App() {
           <Route path="new-hiring" element={<NewHiring />} />
           <Route path="ats-screening" element={<ATSScreening />} />
           <Route path="schedule-interview" element={<ScheduleInterview />} />
+          <Route path="schedule-interview-list" element={<ScheduleInterviewList />} />
+          <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
+          <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
+          <Route path="new-onboarding" element={<NewOnboarding />} />
 
           {/* Onboarding Employee */}
           <Route
