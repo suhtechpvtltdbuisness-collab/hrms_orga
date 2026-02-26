@@ -38,6 +38,7 @@ import ATSScreening from "./pages/hrms/ATSScreening/ATSScreening";
 import ScheduleInterview from "./pages/hrms/ScheduleInterview/ScheduleInterview";
 import ScheduleInterviewList from "./pages/hrms/ScheduleInterview/ScheduleInterviewList";
 import ScheduledInterviewDetails from "./pages/hrms/ScheduleInterview/ScheduledInterviewDetails";
+import InterviewResult from "./pages/hrms/ScheduleInterview/InterviewResult";
 import OfferLetterAcceptedList from "./pages/hrms/NewHiring/OfferLetterAcceptedList";
 import NewOnboarding from "./pages/hrms/NewHiring/NewOnboarding";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
@@ -173,6 +174,7 @@ function App() {
           <Route path="schedule-interview" element={<ScheduleInterview />} />
           <Route path="schedule-interview-list" element={<ScheduleInterviewList />} />
           <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
+          <Route path="interview-result/:id" element={<InterviewResult />} />
           <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
           <Route path="new-onboarding" element={<NewOnboarding />} />
 

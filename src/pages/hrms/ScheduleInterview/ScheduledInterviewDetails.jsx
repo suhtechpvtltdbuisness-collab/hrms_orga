@@ -176,6 +176,7 @@ const ScheduledInterviewDetails = () => {
                     <button 
                         className="h-12 px-8 bg-[#7D1EDB] text-white font-semibold rounded-full hover:bg-purple-700 transition-colors"
                         style={{ fontSize: '15px', fontFamily: 'Poppins, sans-serif' }}
+                        onClick={() => navigate(`/hrms/interview-result/${id}`)}
                     >
                         Share Feedback
                     </button>

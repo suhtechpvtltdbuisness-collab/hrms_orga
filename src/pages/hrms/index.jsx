@@ -16,11 +16,6 @@ const HRMS = () => {
         { name: "Schedule Interview", path: "/hrms/schedule-interview" },
         { name: "Schedule Interview List", path: "/hrms/schedule-interview-list" },
         { name: "Offer Letter Accepted List", path: "/hrms/offer-letter-accepted-list" },
-        { name: "New Onboarding", path: "/hrms/new-onboarding" },
-        {
-          name: "New Onboarded List",
-          path: "/hrms/onboarded-employee-list",
-        },
       ],
     },
     {
@@ -157,7 +152,6 @@ const HRMS = () => {
   // Defined shortcuts matching the image
   const shortcuts = [
     { name: "New Hiring" },
-    { name: "New Onboarding" },
     { name: "Organization Tree" },
     { name: "Designation" },
     { name: "Settings" },

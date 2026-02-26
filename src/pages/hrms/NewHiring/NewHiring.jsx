@@ -1,17 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Briefcase, Mail, Phone, FileText, ChevronDown, Square, ThumbsDown, ThumbsUp, ArrowRight, Copy } from 'lucide-react';
 
 const NewHiring = () => {
     const navigate = useNavigate();
 
-    const candidates = [
+    const [searchTerm, setSearchTerm] = useState('');
+    const [candidateList, setCandidateList] = useState([
         { id: 1, srNo: '01', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
         { id: 2, srNo: '02', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
         { id: 3, srNo: '03', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
         { id: 4, srNo: '04', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
         { id: 5, srNo: '05', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
-    ];
+    ]);
+
+    const filteredCandidates = candidateList.filter(candidate =>
+        candidate.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const newCandidate = {
+                id: candidateList.length + 1,
+                srNo: (candidateList.length + 1).toString().padStart(2, '0'),
+                name: file.name.split('.')[0], // Use filename as candidate name
+                experience: '0 Years',
+                skills: 'Uploaded',
+                source: 'Manual',
+                status: 'New'
+            };
+            setCandidateList([...candidateList, newCandidate]);
+            toast.success(`Resume "${file.name}" added to list!`);
+        }
+    };
 
     return (
         <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -30,11 +53,24 @@ const NewHiring = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
                 <h1 className="text-xl font-semibold text-gray-900">New Hiring</h1>
                 <div className="flex gap-4 w-full sm:w-auto">
-                    <button className="px-6 py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto">
+                    <button 
+                        className="px-6 py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto"
+                        onClick={() => toast.success('Importing from email...')}
+                    >
                         Import Form Email
                     </button>
-                    <button className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto">
+                    <button 
+                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto flex items-center justify-center gap-2"
+                        onClick={() => document.getElementById('resume-upload').click()}
+                    >
                         Add Resume
+                        <input 
+                            id="resume-upload" 
+                            type="file" 
+                            className="hidden" 
+                            onChange={handleFileUpload}
+                            accept=".pdf,.doc,.docx"
+                        />
                     </button>
                 </div>
             </div>
@@ -65,7 +101,7 @@ const NewHiring = () => {
                         </div>
                         <button 
                             onClick={() => navigate('/hrms/job-opening/new')}
-                            className="mt-4 sm:mt-0 text-[#2176FF] font-medium hover:underline flex items-center gap-1"
+                            className="mt-4 sm:mt-0 text-[#2176FF] font-medium flex items-center gap-1"
                         >
                             + Create job opening
                         </button>
@@ -82,11 +118,14 @@ const NewHiring = () => {
                                     type="text" 
                                     placeholder="Search by name..." 
                                     className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-300"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                             {['Status', 'Experience', 'Skills', 'Source'].map((label) => (
                                 <div key={label} className="relative">
                                     <select
+                                        className="focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-0 border-0 outline-none"
                                         style={{
                                             width: '120px',
                                             height: '48px',
@@ -96,6 +135,7 @@ const NewHiring = () => {
                                             gap: '6px',
                                             background: '#EEECFF',
                                             border: 'none',
+                                            borderWidth: '0',
                                             color: '#7D1EDB',
                                             fontFamily: 'Poppins, sans-serif',
                                             fontWeight: 400,
@@ -103,8 +143,11 @@ const NewHiring = () => {
                                             lineHeight: '140%',
                                             appearance: 'none',
                                             WebkitAppearance: 'none',
+                                            MozAppearance: 'none',
                                             outline: 'none',
+                                            outlineWidth: '0',
                                             cursor: 'pointer',
+                                            boxShadow: 'none',
                                         }}
                                     >
                                         <option>{label}</option>
@@ -134,7 +177,7 @@ const NewHiring = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {candidates.map((candidate) => (
+                                    {filteredCandidates.map((candidate) => (
                                         <tr key={candidate.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                                             <td className="px-4 py-4"><Square size={15} style={{ color: '#7D1EDB' }} /></td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.srNo}</td>
@@ -184,20 +227,44 @@ const NewHiring = () => {
                     <h2 className="text-xl font-semibold text-gray-900 mb-1">Sarah Johnson</h2>
                     <p className="text-sm text-gray-600 mb-6">Senior Frontend Engineer</p>
 
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-gray-500 mb-1">
+                    <div className="flex gap-[20px] mb-6">
+                        <div 
+                            style={{ 
+                                width: '154.85px', 
+                                height: '88.56px', 
+                                background: '#F0F0F0', 
+                                borderRadius: '5px',
+                                padding: '14px 9px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                opacity: 1
+                            }}
+                        >
+                            <div className="flex items-center gap-2 text-gray-500">
                                 <Briefcase size={14} />
-                                <span className="text-xs font-medium uppercase">Experience</span>
+                                <span style={{ fontFamily: 'Nunito Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#000000' }}>Experience</span>
                             </div>
-                            <p className="font-medium text-gray-900 text-sm">5+ Years</p>
+                            <p className="font-semibold text-gray-900 text-sm">5+ Years</p>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-gray-500 mb-1">
+                        <div 
+                            style={{ 
+                                width: '154.85px', 
+                                height: '88.56px', 
+                                background: '#F0F0F0', 
+                                borderRadius: '5px',
+                                padding: '14px 9px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                opacity: 1
+                            }}
+                        >
+                            <div className="flex items-center gap-2 text-gray-500">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                <span className="text-xs font-medium uppercase">Location</span>
+                                <span style={{ fontFamily: 'Nunito Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#000000' }}>Location</span>
                             </div>
-                            <p className="font-medium text-gray-900 text-sm">San Fransisco, CA</p>
+                            <p className="font-semibold text-gray-900 text-sm truncate">San Fransisco, CA</p>
                         </div>
                     </div>
 
@@ -215,18 +282,27 @@ const NewHiring = () => {
                         </div>
                     </div>
 
-                    <button className="w-full py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full mb-6 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2">
+                    <button 
+                        className="w-full py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full mb-6 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                        onClick={() => toast.loading('Generating resume preview...', { duration: 2000 })}
+                    >
                         <FileText size={16} />
                         Preview Resume
                         <ChevronDown size={16} />
                     </button>
 
                     <div className="flex gap-3 mb-4">
-                        <button className="flex-1 py-2.5 bg-[#FF3B30] text-white font-medium rounded-full hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
+                        <button 
+                            className="flex-1 py-2.5 bg-[#FF3B30] text-white font-medium rounded-full hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                            onClick={() => toast.error('Candidate Sarah Johnson has been rejected.')}
+                        >
                             Reject
                             <ThumbsDown size={16} />
                         </button>
-                        <button className="flex-1 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <button 
+                            className="flex-1 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                            onClick={() => toast.success('Candidate Sarah Johnson has been shortlisted.')}
+                        >
                             Shortlisted
                             <ThumbsUp size={16} />
                         </button>
