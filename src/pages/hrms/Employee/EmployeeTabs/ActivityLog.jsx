@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 
-const ActivityLog = () => {
+const ActivityLog = ({ employeeId, employeeName }) => {
     const [selectedRange, setSelectedRange] = useState("Select Date range");
     
     const formatDate = (date) => {

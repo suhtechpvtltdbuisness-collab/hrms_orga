@@ -134,12 +134,26 @@ const NewHiring = () => {
                         <h3 className="text-gray-900 font-medium mb-4">Resume List</h3>
                         
                         {/* Filters */}
-                        <div className="flex flex-wrap gap-2 mb-6">
-                            <div className="relative w-full sm:flex-1">
+                        <div className="flex flex-wrap gap-2 mb-6 items-center">
+                            <div className="relative">
                                 <input 
                                     type="text" 
                                     placeholder="Search by name..." 
-                                    className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-300"
+                                    style={{
+                                        width: '167px',
+                                        height: '48px',
+                                        borderRadius: '32px',
+                                        border: '1px solid #EEECFF',
+                                        backgroundColor: '#F9FAFB',
+                                        padding: '2px 16px 2px 24px',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                        fontFamily: 'Poppins, sans-serif',
+                                        fontSize: '13px',
+                                        color: '#334155',
+                                        textOverflow: 'ellipsis'
+                                    }}
+                                    className="placeholder-[#9CA3AF] transition-colors focus:border-[#7D1EDB]"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -150,10 +164,10 @@ const NewHiring = () => {
                                         <select
                                             className="w-full focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-0 border-0 outline-none"
                                             style={{
-                                                height: '42px',
+                                                width: '120px',
+                                                height: '48px',
                                                 borderRadius: '12px',
-                                                padding: '8px',
-                                                paddingRight: '28px',
+                                                padding: '10px 28px 10px 10px',
                                                 background: '#EEECFF',
                                                 color: '#7D1EDB',
                                                 fontFamily: 'Poppins, sans-serif',
@@ -238,15 +252,15 @@ const NewHiring = () => {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="relative inline-block" style={{ width: '20px', height: '18px' }}>
+                                                <div className="relative inline-block" style={{ width: '18px', height: '20px' }}>
                                                     <Copy 
-                                                        className="absolute cursor-pointer hover:text-[#6B18C1] transition-colors"
+                                                        className="absolute cursor-pointer hover:text-[#7D1EDB] transition-colors"
                                                         style={{ 
-                                                            width: '20px', 
-                                                            height: '18px', 
-                                                            top: '3px', 
-                                                            left: '2px',
-                                                            color: '#7D1EDB'
+                                                            width: '15.83px', 
+                                                            height: '18.33px', 
+                                                            top: '0.84px', 
+                                                            left: '1.66px',
+                                                            color: '#1F1F1F'
                                                         }} 
                                                         strokeWidth={1.5}
                                                     />

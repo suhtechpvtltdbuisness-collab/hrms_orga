@@ -142,8 +142,13 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                             type="text"
                             name="phone"
                             value={formData.phone || ''}
-                            onChange={onChange}
-                            placeholder="Enter phone number"
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                onChange({ target: { name: 'phone', value: val } });
+                            }}
+                            placeholder="Enter 10-digit phone number"
+                            maxLength={10}
+                            inputMode="numeric"
                             className={inputClasses}
                         />
                     </div>
@@ -289,8 +294,13 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                                 type="text"
                                 name="contactNumber"
                                 value={formData.contactNumber || ''}
-                                onChange={onChange}
-                                placeholder="Enter contact number"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    onChange({ target: { name: 'contactNumber', value: val } });
+                                }}
+                                placeholder="Enter 10-digit contact number"
+                                maxLength={10}
+                                inputMode="numeric"
                                 className={inputClasses}
                             />
                         </div>
