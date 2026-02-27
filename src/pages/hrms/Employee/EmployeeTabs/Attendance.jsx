@@ -2,12 +2,26 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import noRecordsImage from '../../../../assets/no-records.svg';
 
-const Attendance = () => {
+const Attendance = ({ employeeId, employeeName }) => {
     // Mock data 
     const attendanceRecords = [];
 
     return (
         <div className="bg-white py-[16px] px-0 rounded-xl font-sans h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {/* Employee Info Banner */}
+            {employeeId && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            {employeeName?.charAt(0)?.toUpperCase() || 'E'}
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-900">{employeeName}</p>
+                            <p className="text-xs text-gray-600">Employee ID: {employeeId}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Header Section */}
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-[16px] font-medium text-[#1E1E1E]">Recent attendance records</h2>
