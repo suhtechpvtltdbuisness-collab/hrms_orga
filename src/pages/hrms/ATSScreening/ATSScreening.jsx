@@ -23,6 +23,13 @@ const Pill = ({ text, isActive }) => (
 
 const ATSScreening = () => {
     const navigate = useNavigate();
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 375);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 375);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const renderProgressBar = (label, percentage) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -45,7 +52,7 @@ const ATSScreening = () => {
                 overflowY: 'auto',
             }}
         >
-            <div style={{ padding: '20px 24px 24px 24px' }}>
+            <div style={{ padding: isMobile ? '16px' : '20px 24px 24px 24px' }}>
 
                 {/* Breadcrumb */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
@@ -64,24 +71,25 @@ const ATSScreening = () => {
                 <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#494949', margin: '0 0 16px 0', fontFamily: '"Nunito Sans", sans-serif', lineHeight: '140%' }}>ATS Screening</h1>
 
                 {/* Main Two-Column Layout */}
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
                     {/* ─── LEFT COLUMN: Resume Score ─── */}
                     {/* Figma: width≈418.51, height≈430, padding: 24px, border: 1px solid #CECECE, border-radius: 8px, gap: 16px */}
                     <div style={{
                         flex: '0 0 auto',
-                        width: 'clamp(280px, 35%, 420px)',
+                        width: isMobile ? '100%' : 'clamp(280px, 35%, 420px)',
                         border: '1px solid #CECECE',
                         borderRadius: '8px',
-                        padding: '24px',
+                        padding: isMobile ? '16px' : '24px',
                         backgroundColor: '#FFFFFF',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '16px',
+                        boxSizing: 'border-box',
                     }}>
                         {/* Header */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <BarChart2 size={20} style={{ color: '#7D1EDB' }} />
+                            <BarChart2 size={20} style={{ width: '20px', height: '18px', color: '#7D1EDB' }} />
                             <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>Resume Score</span>
                         </div>
 
@@ -123,30 +131,32 @@ const ATSScreening = () => {
                         {/* Resume Preview */}
                         {/* Figma: width≈624.18, height≈391, padding: 20px, border: 1px solid #DDDDDD, border-radius: 8px, gap: 11px */}
                         <div style={{
+                            width: '100%',
                             border: '1px solid #DDDDDD',
                             borderRadius: '8px',
-                            padding: '20px',
+                            padding: isMobile ? '16px' : '20px',
                             backgroundColor: '#FFFFFF',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '11px',
+                            boxSizing: 'border-box',
                         }}>
                             {/* Header */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <FileText size={18} style={{ color: '#6B7280' }} />
-                                <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>Resume Preview</span>
+                                <span style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '16px', fontWeight: 600, lineHeight: '100%', color: '#000000' }}>Resume preview</span>
                             </div>
 
                             {/* Name + Email */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', margin: 0 }}>Sarah Johnson</h3>
-                                <p style={{ fontSize: '12px', color: '#667085', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>Sarahj450@Gmail.Com</p>
+                                <h3 style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '16px', fontWeight: 600, color: '#000000', margin: 0, lineHeight: '100%' }}>Sarah Johnson</h3>
+                                <p style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '12px', fontWeight: 500, color: '#000000', margin: 0, lineHeight: '100%' }}>sarahj450@gmail.com</p>
                             </div>
 
                             {/* Professional Summary */}
                             <div>
-                                <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#111827', margin: '0 0 5px 0' }}>Professional Summary:</h4>
-                                <p style={{ fontSize: '12px', color: '#4B5563', margin: 0, lineHeight: '1.6', fontFamily: '"Nunito Sans", sans-serif' }}>
+                                <h4 style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', fontWeight: 600, color: '#000000', margin: '0 0 5px 0', lineHeight: '100%' }}>Professional summary:</h4>
+                                <p style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '11px', fontWeight: 400, color: '#000000', margin: 0, lineHeight: '100%' }}>
                                     Experienced Professional With Strong Background In The Industry. Proven Track Record Of Delivering
                                     Results And Leading Successful Projects
                                 </p>
@@ -154,7 +164,7 @@ const ATSScreening = () => {
 
                             {/* Key Skills */}
                             <div>
-                                <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Key Skills:</h4>
+                                <h4 style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', fontWeight: 600, color: '#000000', margin: '0 0 8px 0', lineHeight: '100%' }}>Key skills:</h4>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                                     <Pill text="Project Management" isActive={true} />
                                     <Pill text="Leadership" isActive={false} />
@@ -166,8 +176,8 @@ const ATSScreening = () => {
 
                             {/* Experience */}
                             <div>
-                                <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#111827', margin: '0 0 5px 0' }}>Experience:</h4>
-                                <div style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '12px', color: '#4B5563', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                <h4 style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', fontWeight: 600, color: '#000000', margin: '0 0 5px 0', lineHeight: '100%' }}>Experience:</h4>
+                                <div style={{ fontFamily: '"Nunito Sans", sans-serif', fontSize: '11px', fontWeight: 400, color: '#000000', display: 'flex', flexDirection: 'column', gap: '3px', lineHeight: '100%' }}>
                                     <p style={{ margin: 0 }}>Senior Manager</p>
                                     <p style={{ margin: 0 }}>SUH Tech - 2020</p>
                                 </div>
@@ -177,13 +187,15 @@ const ATSScreening = () => {
                         {/* HR Notes + Action Buttons */}
                         {/* Figma: width≈678.33, height≈238.87, gap: 24px — buttons inside card */}
                         <div style={{
+                            width: '100%',
                             border: '1px solid #DDDDDD',
                             borderRadius: '8px',
-                            padding: '20px',
+                            padding: isMobile ? '16px' : '20px',
                             backgroundColor: '#FFFFFF',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '24px',
+                            boxSizing: 'border-box',
                         }}>
                             {/* HR Notes Header + Textarea */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -215,7 +227,7 @@ const ATSScreening = () => {
                             </div>
 
                             {/* Action Buttons */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                                 <button
                                     onClick={() => navigate('/hrms/schedule-interview')}
                                     style={{
@@ -232,7 +244,7 @@ const ATSScreening = () => {
                                         gap: '8px',
                                         fontSize: '14px',
                                         fontFamily: 'Poppins, sans-serif',
-                                        minWidth: '180px',
+                                        minWidth: isMobile ? '100%' : '180px',
                                         justifyContent: 'center',
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6B18C1'}
@@ -257,7 +269,7 @@ const ATSScreening = () => {
                                         gap: '8px',
                                         fontSize: '14px',
                                         fontFamily: 'Poppins, sans-serif',
-                                        minWidth: '120px',
+                                        minWidth: isMobile ? '100%' : '120px',
                                         justifyContent: 'center',
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#E0332A'}
@@ -282,7 +294,7 @@ const ATSScreening = () => {
                                         gap: '8px',
                                         fontSize: '14px',
                                         fontFamily: 'Poppins, sans-serif',
-                                        minWidth: '180px',
+                                        minWidth: isMobile ? '100%' : '180px',
                                         justifyContent: 'center',
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F5EEFB'}

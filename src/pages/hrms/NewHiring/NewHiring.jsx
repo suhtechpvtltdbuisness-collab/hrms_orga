@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { ChevronRight, ArrowLeft, Briefcase, Mail, Phone, FileText, ChevronDown, Square, ThumbsDown, ThumbsUp, ArrowRight, Copy } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Briefcase, Mail, Phone, FileText, ChevronDown, Square, ThumbsDown, ThumbsUp, ArrowRight, Copy, Check } from 'lucide-react';
 
 const NewHiring = () => {
     const navigate = useNavigate();
@@ -14,6 +14,14 @@ const NewHiring = () => {
         { id: 4, srNo: '04', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
         { id: 5, srNo: '05', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
     ]);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 375);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 375);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const filteredCandidates = candidateList.filter(candidate =>
         candidate.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -36,8 +44,22 @@ const NewHiring = () => {
         }
     };
 
+    const handleSelectAll = () => {
+        if (selectedIds.length === filteredCandidates.length && filteredCandidates.length > 0) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filteredCandidates.map(c => c.id));
+        }
+    };
+
+    const toggleSelection = (id) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+        );
+    };
+
     return (
-        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-3 sm:px-6 md:px-8 py-4 sm:py-6 mx-1 sm:mx-4 mt-2 sm:mt-4 mb-4 rounded-xl h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
             
             {/* Breadcrumb */}
             <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
@@ -50,9 +72,9 @@ const NewHiring = () => {
             </div>
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <h1 className="text-xl font-semibold text-gray-900">New Hiring</h1>
-                <div className="flex gap-4 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <button 
                         className="px-6 py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto"
                         onClick={() => toast.success('Importing from email...')}
@@ -112,53 +134,45 @@ const NewHiring = () => {
                         <h3 className="text-gray-900 font-medium mb-4">Resume List</h3>
                         
                         {/* Filters */}
-                        <div className="flex flex-wrap gap-3 mb-6">
-                            <div className="relative flex-1 min-w-[200px]">
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            <div className="relative w-full sm:flex-1">
                                 <input 
                                     type="text" 
                                     placeholder="Search by name..." 
-                                    className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-300"
+                                    className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-300"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            {['Status', 'Experience', 'Skills', 'Source'].map((label) => (
-                                <div key={label} className="relative">
-                                    <select
-                                        className="focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-0 border-0 outline-none"
-                                        style={{
-                                            width: '120px',
-                                            height: '48px',
-                                            borderRadius: '12px',
-                                            padding: '10px',
-                                            paddingRight: '32px',
-                                            gap: '6px',
-                                            background: '#EEECFF',
-                                            border: 'none',
-                                            borderWidth: '0',
-                                            color: '#7D1EDB',
-                                            fontFamily: 'Poppins, sans-serif',
-                                            fontWeight: 400,
-                                            fontSize: '14px',
-                                            lineHeight: '140%',
-                                            appearance: 'none',
-                                            WebkitAppearance: 'none',
-                                            MozAppearance: 'none',
-                                            outline: 'none',
-                                            outlineWidth: '0',
-                                            cursor: 'pointer',
-                                            boxShadow: 'none',
-                                        }}
-                                    >
-                                        <option>{label}</option>
-                                    </select>
-                                    <ChevronDown
-                                        size={14}
-                                        style={{ color: '#7D1EDB' }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                                    />
-                                </div>
-                            ))}
+                            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                                {['Status', 'Experience', 'Skills', 'Source'].map((label) => (
+                                    <div key={label} className="relative flex-1 min-w-[45%] sm:min-w-0">
+                                        <select
+                                            className="w-full focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-0 border-0 outline-none"
+                                            style={{
+                                                height: '42px',
+                                                borderRadius: '12px',
+                                                padding: '8px',
+                                                paddingRight: '28px',
+                                                background: '#EEECFF',
+                                                color: '#7D1EDB',
+                                                fontFamily: 'Poppins, sans-serif',
+                                                fontWeight: 400,
+                                                fontSize: '13px',
+                                                appearance: 'none',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            <option>{label}</option>
+                                        </select>
+                                        <ChevronDown
+                                            size={12}
+                                            style={{ color: '#7D1EDB' }}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Table */}
@@ -166,7 +180,19 @@ const NewHiring = () => {
                             <table className="w-full text-left text-sm whitespace-nowrap">
                                 <thead>
                                     <tr className="text-gray-500 border-b border-gray-200">
-                                        <th className="px-4 py-4 font-medium w-12"><Square size={15} style={{ color: '#7D1EDB' }} /></th>
+                                        <th className="px-4 py-4 font-medium w-12">
+                                            <div 
+                                                className="cursor-pointer flex items-center justify-center border-2 border-[#7D1EDB] rounded-[4px] transition-colors"
+                                                style={{ 
+                                                    width: '18px', 
+                                                    height: '18px', 
+                                                    backgroundColor: selectedIds.length === filteredCandidates.length && filteredCandidates.length > 0 ? '#7D1EDB' : 'transparent' 
+                                                }}
+                                                onClick={handleSelectAll}
+                                            >
+                                                {(selectedIds.length === filteredCandidates.length && filteredCandidates.length > 0) && <Check size={12} color="white" />}
+                                            </div>
+                                        </th>
                                         <th className="px-4 py-4 font-medium">SR NO</th>
                                         <th className="px-4 py-4 font-medium">CANDIDATE NAME</th>
                                         <th className="px-4 py-4 font-medium">EXPERIENCE</th>
@@ -179,7 +205,19 @@ const NewHiring = () => {
                                 <tbody>
                                     {filteredCandidates.map((candidate) => (
                                         <tr key={candidate.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                                            <td className="px-4 py-4"><Square size={15} style={{ color: '#7D1EDB' }} /></td>
+                                            <td className="px-4 py-4">
+                                                <div 
+                                                    className="cursor-pointer flex items-center justify-center border-2 border-[#7D1EDB] rounded-[4px] transition-colors"
+                                                    style={{ 
+                                                        width: '18px', 
+                                                        height: '18px', 
+                                                        backgroundColor: selectedIds.includes(candidate.id) ? '#7D1EDB' : 'transparent' 
+                                                    }}
+                                                    onClick={() => toggleSelection(candidate.id)}
+                                                >
+                                                    {selectedIds.includes(candidate.id) && <Check size={12} color="white" />}
+                                                </div>
+                                            </td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.srNo}</td>
                                             <td className="px-4 py-4" style={{ color: '#7268FF', fontWeight: 500, fontSize: '16px', lineHeight: '140%', fontFamily: 'Poppins, sans-serif' }}>{candidate.name}</td>
                                             <td className="px-4 py-4 text-gray-700">{candidate.experience}</td>
@@ -200,15 +238,15 @@ const NewHiring = () => {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="relative inline-block" style={{ width: '20px', height: '20px' }}>
+                                                <div className="relative inline-block" style={{ width: '20px', height: '18px' }}>
                                                     <Copy 
-                                                        className="absolute cursor-pointer hover:text-gray-900 transition-colors"
+                                                        className="absolute cursor-pointer hover:text-[#6B18C1] transition-colors"
                                                         style={{ 
-                                                            width: '15.83px', 
-                                                            height: '18.33px', 
-                                                            top: '0.84px', 
-                                                            left: '1.66px',
-                                                            color: '#1F1F1F'
+                                                            width: '20px', 
+                                                            height: '18px', 
+                                                            top: '3px', 
+                                                            left: '2px',
+                                                            color: '#7D1EDB'
                                                         }} 
                                                         strokeWidth={1.5}
                                                     />
@@ -227,10 +265,10 @@ const NewHiring = () => {
                     <h2 className="text-xl font-semibold text-gray-900 mb-1">Sarah Johnson</h2>
                     <p className="text-sm text-gray-600 mb-6">Senior Frontend Engineer</p>
 
-                    <div className="flex gap-[20px] mb-6">
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <div 
                             style={{ 
-                                width: '154.85px', 
+                                width: isMobile ? '100%' : '154.85px', 
                                 height: '88.56px', 
                                 background: '#F0F0F0', 
                                 borderRadius: '5px',
@@ -249,7 +287,7 @@ const NewHiring = () => {
                         </div>
                         <div 
                             style={{ 
-                                width: '154.85px', 
+                                width: isMobile ? '100%' : '154.85px', 
                                 height: '88.56px', 
                                 background: '#F0F0F0', 
                                 borderRadius: '5px',

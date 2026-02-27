@@ -127,7 +127,7 @@ const ScheduleInterview = () => {
                             fontFamily: '"Nunito Sans", sans-serif',
                             lineHeight: '140%',
                         }}>
-                            Schedule Interview {isReadMode && <span style={{ fontSize: '14px', fontWeight: 400, color: '#6B7280', marginLeft: '8px' }}>(Read Mode)</span>}
+                            Schedule Interview
                         </h1>
                         <button
                             style={{
@@ -151,6 +151,16 @@ const ScheduleInterview = () => {
                 </div>
 
                 {/* ── Card 1: Candidate Information ── */}
+                <style>{`
+                    .autofill-grey:-webkit-autofill,
+                    .autofill-grey:-webkit-autofill:hover, 
+                    .autofill-grey:-webkit-autofill:focus, 
+                    .autofill-grey:-webkit-autofill:active {
+                        -webkit-box-shadow: 0 0 0 30px #F5F5F5 inset !important;
+                        -webkit-text-fill-color: #111827 !important;
+                        transition: background-color 5000s ease-in-out 0s;
+                    }
+                `}</style>
                 <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
                         Candidate Information
@@ -159,19 +169,19 @@ const ScheduleInterview = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                         <div>
                             <span style={label}>Name</span>
-                            <input type="text" name="name" placeholder="Enter name" style={{ ...input, backgroundColor: isReadMode ? '#F3F4F6' : '#FFFFFF' }} value={formData.name} onChange={handleInputChange} disabled={isReadMode} />
+                            <input className="autofill-grey" type="text" name="name" placeholder="Enter name" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.name} onChange={handleInputChange} disabled={isReadMode} />
                         </div>
                         <div>
                             <span style={label}>Email</span>
-                            <input type="email" name="email" placeholder="Enter mail ID" style={{ ...input, backgroundColor: isReadMode ? '#F3F4F6' : '#FFFFFF' }} value={formData.email} onChange={handleInputChange} disabled={isReadMode} />
+                            <input className="autofill-grey" type="email" name="email" placeholder="Enter mail ID" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.email} onChange={handleInputChange} disabled={isReadMode} />
                         </div>
                         <div>
                             <span style={label}>Phone number</span>
-                            <input type="text" name="phone" placeholder="Enter phone number" style={{ ...input, backgroundColor: isReadMode ? '#F3F4F6' : '#FFFFFF' }} value={formData.phone} onChange={handleInputChange} disabled={isReadMode} />
+                            <input className="autofill-grey" type="text" name="phone" placeholder="Enter phone number" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.phone} onChange={handleInputChange} disabled={isReadMode} />
                         </div>
                         <div>
                             <span style={label}>Experience</span>
-                            <input type="text" name="experience" placeholder="Enter experience" style={{ ...input, backgroundColor: isReadMode ? '#F3F4F6' : '#FFFFFF' }} value={formData.experience} onChange={handleInputChange} disabled={isReadMode} />
+                            <input className="autofill-grey" type="text" name="experience" placeholder="Enter experience" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.experience} onChange={handleInputChange} disabled={isReadMode} />
                         </div>
                     </div>
 
@@ -207,9 +217,15 @@ const ScheduleInterview = () => {
                         Interview Type
                     </h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                        <RadioOption name="interviewType" value="Round 1(Technical)" current={interviewType} onChange={setInterviewType} label="Round 1(Technical)" />
-                        <RadioOption name="interviewType" value="Round 2(Managerial)" current={interviewType} onChange={setInterviewType} label="Round 2(Managerial)" />
-                        <RadioOption name="interviewType" value="HR Round" current={interviewType} onChange={setInterviewType} label="HR Round" />
+                        {isReadMode ? (
+                            <RadioOption name="interviewType" value={interviewType} current={interviewType} onChange={setInterviewType} label={interviewType} />
+                        ) : (
+                            <>
+                                <RadioOption name="interviewType" value="Round 1(Technical)" current={interviewType} onChange={setInterviewType} label="Round 1(Technical)" />
+                                <RadioOption name="interviewType" value="Round 2(Managerial)" current={interviewType} onChange={setInterviewType} label="Round 2(Managerial)" />
+                                <RadioOption name="interviewType" value="HR Round" current={interviewType} onChange={setInterviewType} label="HR Round" />
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -219,9 +235,15 @@ const ScheduleInterview = () => {
                         Interview Mode
                     </h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
-                        <RadioOption name="interviewMode" value="Online" current={interviewMode} onChange={setInterviewMode} label="Online" />
-                        <RadioOption name="interviewMode" value="Offline" current={interviewMode} onChange={setInterviewMode} label="Offline" />
-                        <RadioOption name="interviewMode" value="Hybrid" current={interviewMode} onChange={setInterviewMode} label="Hybrid" />
+                        {isReadMode ? (
+                            <RadioOption name="interviewMode" value={interviewMode} current={interviewMode} onChange={setInterviewMode} label={interviewMode} />
+                        ) : (
+                            <>
+                                <RadioOption name="interviewMode" value="Online" current={interviewMode} onChange={setInterviewMode} label="Online" />
+                                <RadioOption name="interviewMode" value="Offline" current={interviewMode} onChange={setInterviewMode} label="Offline" />
+                                <RadioOption name="interviewMode" value="Hybrid" current={interviewMode} onChange={setInterviewMode} label="Hybrid" />
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -255,7 +277,7 @@ const ScheduleInterview = () => {
                                         width: '185px',
                                         height: '40px',
                                         paddingRight: '36px', 
-                                        backgroundColor: isReadMode ? '#F3F4F6' : '#F5F5F5',
+                                        backgroundColor: '#F5F5F5',
                                         border: '1px solid #D9D9D9',
                                         borderRadius: '8px',
                                         cursor: isReadMode ? 'default' : 'pointer',
@@ -282,7 +304,7 @@ const ScheduleInterview = () => {
                                         width: '185px',
                                         height: '40px',
                                         paddingRight: '36px', 
-                                        backgroundColor: isReadMode ? '#F3F4F6' : '#F5F5F5',
+                                        backgroundColor: '#F5F5F5',
                                         border: '1px solid #D9D9D9',
                                         borderRadius: '8px',
                                         cursor: isReadMode ? 'default' : 'pointer',
@@ -292,11 +314,18 @@ const ScheduleInterview = () => {
                                     disabled={isReadMode}
                                     onClick={() => !isReadMode && timeInputRef.current?.showPicker?.()}
                                 />
-                                <Clock 
-                                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', cursor: isReadMode ? 'default' : 'pointer' }} 
-                                    size={15} 
-                                    onClick={() => !isReadMode && timeInputRef.current?.showPicker?.()}
-                                />
+                                {isReadMode ? (
+                                    <ChevronDown 
+                                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} 
+                                        size={18} 
+                                    />
+                                ) : (
+                                    <Clock 
+                                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', cursor: 'pointer' }} 
+                                        size={15} 
+                                        onClick={() => timeInputRef.current?.showPicker?.()}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -318,31 +347,47 @@ const ScheduleInterview = () => {
                             Interview Pannel
                         </h3>
                         <div style={{ position: 'relative', width: '303px' }}>
-                            <select
-                                name="panel"
-                                style={{
-                                    ...input,
-                                    width: '303px',
-                                    height: '40px',
-                                    minWidth: '120px',
-                                    backgroundColor: isReadMode ? '#F3F4F6' : '#F5F5F5',
-                                    border: '1px solid #D9D9D9',
-                                    borderRadius: '8px',
-                                    padding: '8px 36px 8px 16px',
-                                    appearance: 'none',
-                                    cursor: isReadMode ? 'default' : 'pointer',
-                                    opacity: 1,
-                                    gap: '24px'
-                                }}
-                                value={formData.panel}
-                                onChange={handleInputChange}
-                                disabled={isReadMode}
-                            >
-                                <option value="">Select interview pannel</option>
-                                <option value="hr">HR Pannel</option>
-                                <option value="tech">Tech Pannel</option>
-                            </select>
-                            <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} size={16} />
+                            {isReadMode ? (
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={formData.panel || "HR"}
+                                    style={{
+                                        ...input,
+                                        width: '303px',
+                                        height: '40px',
+                                        backgroundColor: '#F5F5F5',
+                                        border: '1px solid #D9D9D9',
+                                        borderRadius: '8px',
+                                        padding: '0 16px',
+                                        cursor: 'default',
+                                    }}
+                                />
+                            ) : (
+                                <select
+                                    name="panel"
+                                    style={{
+                                        ...input,
+                                        width: '303px',
+                                        height: '40px',
+                                        minWidth: '120px',
+                                        backgroundColor: '#F5F5F5',
+                                        border: '1px solid #D9D9D9',
+                                        borderRadius: '8px',
+                                        padding: '8px 36px 8px 16px',
+                                        appearance: 'none',
+                                        cursor: 'pointer',
+                                        opacity: 1,
+                                    }}
+                                    value={formData.panel}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="">Select interview panel</option>
+                                    <option value="HR">HR Panel</option>
+                                    <option value="Tech">Tech Panel</option>
+                                </select>
+                            )}
+                            {!isReadMode && <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} size={16} />}
                         </div>
                     </div>
                 </div>
@@ -366,18 +411,18 @@ const ScheduleInterview = () => {
                     </h3>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', color: '#374151' }}>
-                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Date:</span> <strong>10/01/2026</strong></p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Time:</span> <strong>10:00 AM</strong></p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Interview Pannel:</span> <strong>HR</strong></p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Mode:</span> <strong>Online</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Date:</span> <strong>{formData.date || "10/01/2026"}</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Time:</span> <strong>{formData.time || "10:00 AM"}</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Panel:</span> <strong>{formData.panel || "HR"}</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Mode:</span> <strong>{interviewMode}</strong></p>
                         <p style={{ margin: 0 }}>
-                            <span style={{ color: '#6B7280' }}>Zoom meet link: </span>
+                            <span style={{ color: '#000000', opacity: 0.7 }}>Zoom meet link: </span>
                             <a href="#" style={{ color: '#7D1EDB', textDecoration: 'none' }}
                                 onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                                 onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                             >https://hiuhe.h..</a>
                         </p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#6B7280' }}>Instructions:</span> <strong>Please be on time</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Instructions:</span> <strong>Please be on time</strong></p>
                     </div>
                 </div>
 
