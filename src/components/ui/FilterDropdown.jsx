@@ -75,10 +75,10 @@ const FilterDropdown = ({ label, options, value, onChange, minWidth = '150px', c
                          const optionValue = typeof opt === 'object' ? opt.value : opt;
                          return (
                             <div
-                                key={idx}
+                                key={optionValue || idx}
                                 onClick={() => handleSelect(optionValue)}
                                 className="px-4 flex items-center cursor-pointer hover:bg-purple-50 transition-colors"
-                                style={{ minHeight: '40px', fontSize: '14px', color: '#333333', lineHeight: '1' }}
+                                style={{ minHeight: '40px', fontSize: '14px', color: '#333333', lineHeight: '1.5' }}
                             >
                                 {optionLabel}
                             </div>

@@ -140,7 +140,7 @@ function App() {
 
           {/* Department */}
           <Route path="departments" element={<DepartmentList />} />
-          <Route path="department-details" element={<DepartmentDetails />}>
+          <Route path="department-details/:id" element={<DepartmentDetails />}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<DepartmentOverview />} />
             <Route path="employees" element={<DepartmentEmployees />} />
