@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Calendar, ArrowUp } from "lucide-react";
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import { departmentService, designationService } from "../../../../service";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (

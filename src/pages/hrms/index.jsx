@@ -11,14 +11,11 @@ const HRMS = () => {
       title: "Hiring and Recruitment",
       icon: "/images/report.svg",
       items: [
-        { name: "New Hiring", path: "" },
+        { name: "New Hiring", path: "/hrms/new-hiring" },
         { name: "New Job Opening", path: "/hrms/job-opening/new" },
-        { name: "Schedule Interview", path: "" },
-        { name: "New Onboarding", path: "" },
-        {
-          name: "Onboarded Employee List",
-          path: "/hrms/onboarded-employee-list",
-        },
+        { name: "Schedule Interview", path: "/hrms/schedule-interview" },
+        { name: "Schedule Interview List", path: "/hrms/schedule-interview-list" },
+        { name: "Offer Letter Accepted List", path: "/hrms/offer-letter-accepted-list" },
       ],
     },
     {
@@ -155,7 +152,6 @@ const HRMS = () => {
   // Defined shortcuts matching the image
   const shortcuts = [
     { name: "New Hiring" },
-    { name: "New Onboarding" },
     { name: "Organization Tree" },
     { name: "Designation" },
     { name: "Settings" },
@@ -172,6 +168,8 @@ const HRMS = () => {
       navigate("/hrms/departments"); // Navigate to Department List
     } else if (name === "Settings") {
       navigate("/hrms/settings"); // Navigate to Settings
+    } else if (name === "New Hiring") {
+      navigate("/hrms/new-hiring");
     }
   };
 

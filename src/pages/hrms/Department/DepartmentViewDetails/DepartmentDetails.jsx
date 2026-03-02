@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Trash2 } from 'lucide-react';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, useParams } from 'react-router-dom';
 import DeleteDepartment from './DeleteDepartment';
+import { departmentService } from '../../../../service';
 
 const DepartmentDetails = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { id } = useParams();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const defaultDepartment = {
         name: "Finance",
@@ -26,10 +29,27 @@ const DepartmentDetails = () => {
         headStatus: "Active"
     };
 
-    const [departmentInfo, setDepartmentInfo] = useState({
-        ...defaultDepartment,
-        ...(location.state?.department || {})
-    });
+    const [departmentInfo, setDepartmentInfo] = useState(location.state?.department || null);
+
+    useEffect(() => {
+        const fetchDepartment = async () => {
+            if (!departmentInfo && id) {
+                setLoading(true);
+                const result = await departmentService.getDepartmentById(id);
+                if (result.success) {
+                    setDepartmentInfo(result.data);
+                } else {
+                    console.error("Failed to fetch department:", result.message);
+                }
+                setLoading(false);
+            } else if (!departmentInfo && !id) {
+                 // Fallback to default if no ID and no state (shouldn't happen with correct routing, but covering base)
+                 setDepartmentInfo(defaultDepartment);
+            }
+        };
+
+        fetchDepartment();
+    }, [id, departmentInfo]);
 
     useEffect(() => {
         if (departmentInfo) {
@@ -81,6 +101,14 @@ const DepartmentDetails = () => {
     const handleTabClick = (path) => {
         navigate(path, { state: { department: isEditing ? formData : departmentInfo } });
     };
+
+    if (loading || !departmentInfo) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1EDB]"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>

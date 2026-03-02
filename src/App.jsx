@@ -33,6 +33,14 @@ import Notifications from "./pages/hrms/Notifications/Notifications";
 import NewJobOpening from "./pages/hrms/NewJobOpening/NewJobOpening";
 import TeamList from "./pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList";
 import OnboardedEmployeeList from "./pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList";
+import NewHiring from "./pages/hrms/NewHiring/NewHiring";
+import ATSScreening from "./pages/hrms/ATSScreening/ATSScreening";
+import ScheduleInterview from "./pages/hrms/ScheduleInterview/ScheduleInterview";
+import ScheduleInterviewList from "./pages/hrms/ScheduleInterview/ScheduleInterviewList";
+import ScheduledInterviewDetails from "./pages/hrms/ScheduleInterview/ScheduledInterviewDetails";
+import InterviewResult from "./pages/hrms/ScheduleInterview/InterviewResult";
+import OfferLetterAcceptedList from "./pages/hrms/NewHiring/OfferLetterAcceptedList";
+import NewOnboarding from "./pages/hrms/NewHiring/NewOnboarding";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
 import AddAttendance from "./pages/hrms/Attendance/AddAttendance";
 import EmployeeAttendanceTool from "./pages/hrms/Attendance/EmployeeAttendanceTool";
@@ -132,7 +140,7 @@ function App() {
 
           {/* Department */}
           <Route path="departments" element={<DepartmentList />} />
-          <Route path="department-details" element={<DepartmentDetails />}>
+          <Route path="department-details/:id" element={<DepartmentDetails />}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<DepartmentOverview />} />
             <Route path="employees" element={<DepartmentEmployees />} />
@@ -159,6 +167,16 @@ function App() {
 
           {/* Job Opening */}
           <Route path="job-opening/new" element={<NewJobOpening />} />
+
+          {/* New Hiring */}
+          <Route path="new-hiring" element={<NewHiring />} />
+          <Route path="ats-screening" element={<ATSScreening />} />
+          <Route path="schedule-interview" element={<ScheduleInterview />} />
+          <Route path="schedule-interview-list" element={<ScheduleInterviewList />} />
+          <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
+          <Route path="interview-result/:id" element={<InterviewResult />} />
+          <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
+          <Route path="new-onboarding" element={<NewOnboarding />} />
 
           {/* Onboarding Employee */}
           <Route
