@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
 import CustomDatePicker from '../../../components/ui/CustomDatePicker';
 
@@ -39,13 +40,30 @@ const NewJobOpening = () => {
     };
 
     const handleSaveDraft = () => {
-        console.log('Saving draft...', formData);
-        // Add save draft logic here
+        const loadingToast = toast.loading('Saving draft...');
+        
+        // Simulate API call
+        setTimeout(() => {
+            toast.dismiss(loadingToast);
+            toast.success('Job opening saved as draft!');
+            navigate('/hrms');
+        }, 1500);
     };
 
     const handlePublishJob = () => {
-        console.log('Publishing job...', formData);
-        // Add publish job logic here
+        if (!formData.jobTitle.trim()) {
+            toast.error('Please enter a job title before publishing.');
+            return;
+        }
+
+        const loadingToast = toast.loading('Publishing job...');
+        
+        // Simulate API call
+        setTimeout(() => {
+            toast.dismiss(loadingToast);
+            toast.success('Job opening published successfully!');
+            navigate('/hrms');
+        }, 2000);
     };
 
     return (

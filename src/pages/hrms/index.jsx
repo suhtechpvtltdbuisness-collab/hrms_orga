@@ -136,7 +136,7 @@ const HRMS = () => {
       title: "Financial Reports",
       icon: "/images/report.svg",
       items: [
-        { name: "Profit & Loss", path: "" },
+        { name: "Profit & Loss", path: "/hrms/accounts/profit-and-loss" },
         { name: "Balance Sheet", path: "" },
         { name: "Cash Flow", path: "" },
         { name: "Budget VS Actual Expenses", path: "" },
