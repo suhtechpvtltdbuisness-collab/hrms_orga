@@ -75,12 +75,7 @@ const NewHiring = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <h1 className="text-xl font-semibold text-gray-900">New Hiring</h1>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <button 
-                        className="px-6 py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto"
-                        onClick={() => toast.success('Importing from email...')}
-                    >
-                        Import Form Email
-                    </button>
+
                     <button 
                         className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto flex items-center justify-center gap-2"
                         onClick={() => document.getElementById('resume-upload').click()}

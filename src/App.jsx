@@ -98,6 +98,9 @@ import AddRecurringInvoice from "./pages/hrms/Invoices/RecurringInvoice/AddRecur
 import InvoicePaymentAllocation from "./pages/hrms/Invoices/InvoicePaymentAllocation/InvoicePaymentAllocation";
 import RecordPayment from "./pages/hrms/Invoices/InvoicePaymentAllocation/RecordPayment";
 
+// Financial Reports
+import ProfitAndLoss from "./pages/hrms/accounts/FinancialReports/ProfitAndLoss";
+
 // Auth components
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/hrms/AuthPage";
@@ -327,6 +330,9 @@ function App() {
             path="invoice-payment-allocation/edit/:id"
             element={<RecordPayment />}
           />
+
+          {/* Financial Reports */}
+          <Route path="accounts/profit-and-loss" element={<ProfitAndLoss />} />
 
           {/* Notifications */}
           <Route path="notifications" element={<Notifications />} />
