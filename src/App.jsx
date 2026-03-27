@@ -99,7 +99,10 @@ import InvoicePaymentAllocation from "./pages/hrms/Invoices/InvoicePaymentAlloca
 import RecordPayment from "./pages/hrms/Invoices/InvoicePaymentAllocation/RecordPayment";
 
 // Financial Reports
-import ProfitAndLoss from "./pages/hrms/accounts/FinancialReports/ProfitAndLoss";
+import ProfitAndLoss from "./pages/hrms/FinancialReports/ProfitAndLoss";
+import BalanceSheet from "./pages/hrms/FinancialReports/BalanceSheet";
+import BudgetVsActual from "./pages/hrms/FinancialReports/BudgetVsActual";
+import CashFlow from "./pages/hrms/FinancialReports/CashFlow";
 
 // Auth components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -332,7 +335,10 @@ function App() {
           />
 
           {/* Financial Reports */}
-          <Route path="accounts/profit-and-loss" element={<ProfitAndLoss />} />
+          <Route path="financial-reports/profit-and-loss" element={<ProfitAndLoss />} />
+          <Route path="financial-reports/balance-sheet" element={<BalanceSheet />} />
+          <Route path="financial-reports/budget-vs-actual" element={<BudgetVsActual />} />
+          <Route path="financial-reports/cash-flow" element={<CashFlow />} />
 
           {/* Notifications */}
           <Route path="notifications" element={<Notifications />} />
