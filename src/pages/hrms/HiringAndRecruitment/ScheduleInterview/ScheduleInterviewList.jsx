@@ -92,11 +92,11 @@ const ScheduleInterviewList = () => {
 
     return (
         <div 
-            className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto" 
+            className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9]" 
             style={{ fontFamily: 'Poppins, sans-serif' }}
         >
             {/* Breadcrumb */}
-            <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
+            <div className="flex items-center text-sm text-[#7D1EDB] mb-2 shrink-0">
                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/hrms')}>
                     <ArrowLeft size={14} className="text-gray-900" />
                     <span className="hover:text-purple-500"> HRMS Dashboard</span>
@@ -106,17 +106,17 @@ const ScheduleInterviewList = () => {
             </div>
 
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-6 shrink-0">
                 <h1 className="text-xl font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                     Schedule Interview List
                 </h1>
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto border border-gray-100 rounded-xl shadow-sm">
+            <div className="overflow-x-auto overflow-y-auto custom-scrollbar flex-1 border border-gray-100 rounded-xl shadow-sm">
                 <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead>
-                        <tr className="text-gray-500 border-b border-gray-100">
+                    <thead className="sticky top-0 bg-white z-10 shadow-sm border-b border-gray-100">
+                        <tr className="text-gray-500">
                             <th className="px-4 py-4 w-12"><Square size={16} className="text-[#7D1EDB]" /></th>
                             <th className="px-4 py-4 font-medium text-[12px] uppercase tracking-wider">SR NO</th>
                             <th className="px-4 py-4 font-medium text-[12px] uppercase tracking-wider">CANDIDATE NAME</th>
@@ -154,7 +154,7 @@ const ScheduleInterviewList = () => {
                                         <Eye 
                                             size={18} 
                                             className="text-[#7D1EDB] cursor-pointer hover:text-purple-700 transition-colors" 
-                                            onClick={() => navigate(`/hrms/scheduled-interview/${interview.id}`)}
+                                            onClick={() => navigate(`/hrms/hiring-and-recruitment/scheduled-interview/${interview.id}`)}
                                         />
                                         <Trash2 
                                             size={18} 

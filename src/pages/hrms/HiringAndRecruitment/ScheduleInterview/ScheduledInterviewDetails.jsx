@@ -44,18 +44,15 @@ const ScheduledInterviewDetails = () => {
 
     return (
         <div 
-            className="bg-[#F2F2F7] min-h-[calc(100vh-5rem)] overflow-y-auto"
+            className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col border border-[#D9D9D9]"
             style={{ fontFamily: 'Poppins, sans-serif' }}
         >
-            <div 
-                className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl min-h-[calc(100vh-10rem)] shadow-sm border border-gray-100"
-            >
-                {/* Breadcrumb + Title */}
-                <div className="mb-6">
-                    <div className="flex items-center gap-1 text-sm text-[#7D1EDB] mb-4">
+            {/* Breadcrumb + Title */}
+            <div className="mb-4 shrink-0">
+                <div className="flex items-center gap-1 text-sm text-[#7D1EDB] mb-2">
                         <div 
                             className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => navigate('/hrms/schedule-interview-list')}
+                            onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list')}
                         >
                             <ArrowLeft size={14} className="text-gray-900" />
                             <span className="hover:text-purple-500 font-medium">Schedule Interview List</span>
@@ -69,6 +66,8 @@ const ScheduledInterviewDetails = () => {
                     </h1>
                 </div>
 
+                {/* Inner Content exactly */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
                 {/* ── Candidate Information ── */}
                 <div style={cardStyle} className="mb-4">
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0 }}>Candidate Information</h3>
@@ -114,7 +113,7 @@ const ScheduledInterviewDetails = () => {
                 </div>
 
                 {/* ── Interview Type ── */}
-                <div style={cardStyle} className="mb-4">
+                <div style={cardStyle} className="mb-4 w-1/2">
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0 }}>Interview Type</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7D1EDB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -125,7 +124,7 @@ const ScheduledInterviewDetails = () => {
                 </div>
 
                 {/* ── Interview Mode ── */}
-                <div style={cardStyle} className="mb-4">
+                <div style={cardStyle} className="mb-4 w-1/2">
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0 }}>Interview Mode</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7D1EDB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -172,23 +171,23 @@ const ScheduledInterviewDetails = () => {
                 </div>
 
                 {/* ── Action Buttons ── */}
-                <div className="flex gap-8 mt-8">
+                <div className="flex gap-8 mt-4">
                     <button 
                         className="h-12 px-8 bg-[#7D1EDB] text-white font-semibold rounded-full hover:bg-purple-700 transition-colors"
                         style={{ fontSize: '15px', fontFamily: 'Poppins, sans-serif' }}
-                        onClick={() => navigate(`/hrms/interview-result/${id}`)}
+                        onClick={() => navigate(`/hrms/hiring-and-recruitment/interview-result/${id}`)}
                     >
                         Share Feedback
                     </button>
                     <button 
                         className="h-12 px-8 bg-transparent text-[#7D1EDB] font-semibold rounded-full border-1.5 border-[#7D1EDB] hover:bg-purple-50 transition-colors"
                         style={{ fontSize: '15px', fontFamily: 'Poppins, sans-serif' }}
-                        onClick={() => navigate('/hrms/schedule-interview-list')}
+                        onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list')}
                     >
                         Cancel
                     </button>
                 </div>
-            </div>
+                </div>{/* End Inner Scroll */}
         </div>
     );
 };

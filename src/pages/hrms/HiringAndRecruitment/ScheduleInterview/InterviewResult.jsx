@@ -232,18 +232,15 @@ const InterviewResult = () => {
 
     return (
         <div 
-            className="bg-[#F2F2F7] min-h-[calc(100vh-5rem)] overflow-y-auto"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+            className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
+            style={{ fontFamily: '"Nunito Sans", sans-serif' }}
         >
-            <div 
-                className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl min-h-[calc(100vh-10rem)] shadow-sm border border-gray-100"
-            >
                 {/* ── Header Area ── */}
-                <div className="mb-6">
+                <div className="mb-4 shrink-0">
                     <div className="flex items-center gap-1 text-sm text-[#7D1EDB] mb-4">
                         <div 
                             className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => navigate(`/hrms/scheduled-interview/${id}`)}
+                            onClick={() => navigate(`/hrms/hiring-and-recruitment/scheduled-interview/${id}`)}
                         >
                             <ArrowLeft size={14} className="text-gray-900" />
                             <span className="hover:text-purple-500 font-medium">Scheduled Interview</span>
@@ -258,13 +255,13 @@ const InterviewResult = () => {
                         </h1>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                             <button 
-                                className="bg-transparent border-none text-[#7D1EDB] font-semibold cursor-pointer hover:underline"
-                                style={{ fontSize: '14px', fontFamily: 'Poppins, sans-serif' }}
+                                className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white"
+                        style={{ borderRadius: '30px' }}
                             >
                                 Save Draft
                             </button>
                             <button 
-                                className="h-10 px-8 bg-[#7D1EDB] text-white font-semibold rounded-full hover:bg-purple-700 transition-colors border-none cursor-pointer"
+                                className="px-4 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors border-none cursor-pointer"
                                 style={{ fontSize: '14px', fontFamily: 'Poppins, sans-serif' }}
                             >
                                 Submit Result
@@ -274,6 +271,7 @@ const InterviewResult = () => {
                 </div>
 
                 {/* ── Main Content Area ── */}
+                <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         
                         {/* Candidate Summary */}
@@ -378,11 +376,11 @@ const InterviewResult = () => {
                                     </label>
                                 ))}
                             </div>
+                        </div>
                     </div>
                 </div>
 
                 {showOutcomeModal && <CandidateOutcomeModal />}
-            </div>
         </div>
     );
 };
