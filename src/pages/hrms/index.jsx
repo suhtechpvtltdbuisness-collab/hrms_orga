@@ -11,11 +11,11 @@ const HRMS = () => {
       title: "Hiring and Recruitment",
       icon: "/images/report.svg",
       items: [
-        { name: "New Hiring", path: "/hrms/new-hiring" },
-        { name: "New Job Opening", path: "/hrms/job-opening/new" },
-        { name: "Schedule Interview", path: "/hrms/schedule-interview" },
-        { name: "Schedule Interview List", path: "/hrms/schedule-interview-list" },
-        { name: "Offer Letter Accepted List", path: "/hrms/offer-letter-accepted-list" },
+        { name: "New Hiring", path: "/hrms/hiring-and-recruitment/new-hiring" },
+        { name: "New Job Opening", path: "/hrms/hiring-and-recruitment/job-opening/new" },
+        { name: "Schedule Interview", path: "/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview" },
+        { name: "Schedule Interview List", path: "/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list" },
+        { name: "Offer Letter Accepted List", path: "/hrms/hiring-and-recruitment/offer-letter-accepted-list" },
       ],
     },
     {

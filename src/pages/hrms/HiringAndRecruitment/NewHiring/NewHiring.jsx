@@ -2,20 +2,27 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Briefcase, Mail, Phone, FileText, ChevronDown, Square, ThumbsDown, ThumbsUp, ArrowRight, Copy, Check } from 'lucide-react';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
 
 const NewHiring = () => {
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [candidateList, setCandidateList] = useState([
-        { id: 1, srNo: '01', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
-        { id: 2, srNo: '02', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
-        { id: 3, srNo: '03', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
-        { id: 4, srNo: '04', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
-        { id: 5, srNo: '05', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Shortlisted' },
+        { id: 1, srNo: '01', name: 'Rhye', experience: '5 Years', skills: 'Figma', source: 'News', status: 'Shortlisted' },
+        { id: 2, srNo: '02', name: 'Olivia Rhye', experience: '5 Years', skills: 'Figma', source: 'LinkedIn', status: 'Rejected' },
+        { id: 3, srNo: '03', name: 'Neeraj', experience: '3 Years', skills: 'React', source: 'Youtube', status: 'Shortlisted' },
+        { id: 4, srNo: '04', name: 'Yuvraj ', experience: '15 Years', skills: 'Node.js', source: 'LinkedIn', status: 'Shortlisted' },
+        { id: 5, srNo: '05', name: 'Gautam', experience: '2 Years', skills: 'Postman', source: 'Insta', status: 'Shortlisted' },
     ]);
     const [selectedIds, setSelectedIds] = useState([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 375);
+
+    // Filter states
+    const [statusFilter, setStatusFilter] = useState('');
+    const [experienceFilter, setExperienceFilter] = useState('');
+    const [skillFilter, setSkillFilter] = useState('');
+    const [sourceFilter, setSourceFilter] = useState('');
 
     React.useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 375);
@@ -23,9 +30,15 @@ const NewHiring = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const filteredCandidates = candidateList.filter(candidate =>
-        candidate.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCandidates = candidateList.filter(candidate => {
+        const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = !statusFilter || candidate.status === statusFilter;
+        const matchesExperience = !experienceFilter || candidate.experience === experienceFilter;
+        const matchesSkill = !skillFilter || candidate.skills === skillFilter;
+        const matchesSource = !sourceFilter || candidate.source === sourceFilter;
+        
+        return matchesSearch && matchesStatus && matchesExperience && matchesSkill && matchesSource;
+    });
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
@@ -59,22 +72,30 @@ const NewHiring = () => {
     };
 
     return (
-        <div className="bg-white px-3 sm:px-6 md:px-8 py-4 sm:py-6 mx-1 sm:mx-4 mt-2 sm:mt-4 mb-4 rounded-xl h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div className="shrink-0 mb-3">
             
             {/* Breadcrumb */}
-            <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
+            <div className="flex items-center text-sm text-[#7D1EDB] mb-2">
                 <div className="flex items-center gap-3" onClick={() => navigate('/hrms')}>
                     <ArrowLeft size={14} className="text-gray-900 cursor-pointer" />
-                    <span className="cursor-pointer hover:text-purple-500"> Dashboard</span>
+                    <span className="cursor-pointer hover:text-purple-500">HRMS Dashboard</span>
                 </div>
                 <ChevronRight size={16} className="mx-1" />
                 <span className="text-[#667085] text-[14px] font-base">New Hiring</span>
             </div>
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-4">
                 <h1 className="text-xl font-semibold text-gray-900">New Hiring</h1>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+                    <button 
+                        className="px-4 py-2.5 bg-white text-[#7D1EDB] border border-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
+                    >
+                        <Mail size={18} />
+                        Import From Email
+                    </button>
 
                     <button 
                         className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto flex items-center justify-center gap-2"
@@ -91,11 +112,14 @@ const NewHiring = () => {
                     </button>
                 </div>
             </div>
+        </div>
+
+        <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto' }}>
 
             <div className="flex flex-col lg:flex-row gap-6">
                 
                 {/* Left Content Area */}
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 space-y-6 min-w-0">
                     
                     {/* Active Job Openings Banner */}
                     <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between bg-gray-50/50">
@@ -117,7 +141,7 @@ const NewHiring = () => {
                             </div>
                         </div>
                         <button 
-                            onClick={() => navigate('/hrms/job-opening/new')}
+                            onClick={() => navigate('/hrms/hiring-and-recruitment/job-opening/new')}
                             className="mt-4 sm:mt-0 text-[#2176FF] font-medium flex items-center gap-1"
                         >
                             + Create job opening
@@ -154,39 +178,40 @@ const NewHiring = () => {
                                 />
                             </div>
                             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                {['Status', 'Experience', 'Skills', 'Source'].map((label) => (
-                                    <div key={label} className="relative flex-1 min-w-[45%] sm:min-w-0">
-                                        <select
-                                            className="w-full focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-0 border-0 outline-none"
-                                            style={{
-                                                width: '120px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                padding: '10px 28px 10px 10px',
-                                                background: '#EEECFF',
-                                                color: '#7D1EDB',
-                                                fontFamily: 'Poppins, sans-serif',
-                                                fontWeight: 400,
-                                                fontSize: '13px',
-                                                appearance: 'none',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            <option>{label}</option>
-                                        </select>
-                                        <ChevronDown
-                                            size={12}
-                                            style={{ color: '#7D1EDB' }}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-                                        />
-                                    </div>
-                                ))}
+                                <FilterDropdown
+                                    label="Status"
+                                    options={['Shortlisted', 'Rejected', 'New']}
+                                    value={statusFilter}
+                                    onChange={setStatusFilter}
+                                    minWidth="130px"
+                                />
+                                <FilterDropdown
+                                    label="Experience"
+                                    options={[...new Set(candidateList.map(c => c.experience))]}
+                                    value={experienceFilter}
+                                    onChange={setExperienceFilter}
+                                    minWidth="130px"
+                                />
+                                <FilterDropdown
+                                    label="Skills"
+                                    options={[...new Set(candidateList.map(c => c.skills))]}
+                                    value={skillFilter}
+                                    onChange={setSkillFilter}
+                                    minWidth="130px"
+                                />
+                                <FilterDropdown
+                                    label="Source"
+                                    options={[...new Set(candidateList.map(c => c.source))]}
+                                    value={sourceFilter}
+                                    onChange={setSourceFilter}
+                                    minWidth="130px"
+                                />
                             </div>
                         </div>
 
                         {/* Table */}
                         <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table className="w-full text-left text-sm whitespace-nowrap">
+                            <table className="w-full text-left text-sm">
                                 <thead>
                                     <tr className="text-gray-500 border-b border-gray-200">
                                         <th className="px-4 py-4 font-medium w-12">
@@ -236,8 +261,8 @@ const NewHiring = () => {
                                                 <span 
                                                     className="inline-flex items-center justify-center rounded-full font-medium"
                                                     style={{ 
-                                                        backgroundColor: 'rgba(118, 219, 30, 0.2)', // #76DB1E 20%
-                                                        color: 'var(--Accents-Green, #34C759)', 
+                                                        backgroundColor: candidate.status === 'Rejected' ? 'rgba(255, 59, 48, 0.1)' : 'rgba(118, 219, 30, 0.2)',
+                                                        color: candidate.status === 'Rejected' ? '#FF3B30' : '#34C759', 
                                                         padding: '4px 12px',
                                                         fontSize: '14px',
                                                         lineHeight: '20px'
@@ -270,14 +295,14 @@ const NewHiring = () => {
                 </div>
 
                 {/* Right Panel - Candidate Details */}
-                <div className="lg:w-[320px] xl:w-[380px] border border-gray-200 rounded-xl p-6 bg-white shrink-0">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-1">Sarah Johnson</h2>
+                <div className="w-full lg:w-[300px] xl:w-[340px] border border-gray-200 rounded-xl p-6 bg-white shrink-0 overflow-hidden">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-1 truncate">Sarah Johnson</h2>
                     <p className="text-sm text-gray-600 mb-6">Senior Frontend Engineer</p>
 
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <div 
                             style={{ 
-                                width: isMobile ? '100%' : '154.85px', 
+                                flex: 1, 
                                 height: '88.56px', 
                                 background: '#F0F0F0', 
                                 borderRadius: '5px',
@@ -296,7 +321,7 @@ const NewHiring = () => {
                         </div>
                         <div 
                             style={{ 
-                                width: isMobile ? '100%' : '154.85px', 
+                                flex: 1, 
                                 height: '88.56px', 
                                 background: '#F0F0F0', 
                                 borderRadius: '5px',
@@ -357,7 +382,7 @@ const NewHiring = () => {
 
                     <button 
                         className="w-full py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
-                        onClick={() => navigate('/hrms/ats-screening')}
+                        onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening')}
                     >
                         Move to ATS screening
                         <ArrowRight size={16} />
@@ -366,6 +391,7 @@ const NewHiring = () => {
 
             </div>
 
+            </div>
         </div>
     );
 };

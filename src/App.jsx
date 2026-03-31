@@ -30,17 +30,17 @@ import DesignationSettings from "./pages/hrms/Designation/DesignationViewDetails
 import OrganizationTree from "./pages/hrms/Organization/OrganizationTree/OrganizationTree";
 import NodeDetails from "./pages/hrms/Organization/OrganizationTree/NodeDetails";
 import Notifications from "./pages/hrms/Notifications/Notifications";
-import NewJobOpening from "./pages/hrms/NewJobOpening/NewJobOpening";
+import NewJobOpening from "./pages/hrms/HiringAndRecruitment/NewJobOpening/NewJobOpening";
 import TeamList from "./pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList";
 import OnboardedEmployeeList from "./pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList";
-import NewHiring from "./pages/hrms/NewHiring/NewHiring";
-import ATSScreening from "./pages/hrms/ATSScreening/ATSScreening";
-import ScheduleInterview from "./pages/hrms/ScheduleInterview/ScheduleInterview";
-import ScheduleInterviewList from "./pages/hrms/ScheduleInterview/ScheduleInterviewList";
-import ScheduledInterviewDetails from "./pages/hrms/ScheduleInterview/ScheduledInterviewDetails";
-import InterviewResult from "./pages/hrms/ScheduleInterview/InterviewResult";
-import OfferLetterAcceptedList from "./pages/hrms/NewHiring/OfferLetterAcceptedList";
-import NewOnboarding from "./pages/hrms/NewHiring/NewOnboarding";
+import NewHiring from "./pages/hrms/HiringAndRecruitment/NewHiring/NewHiring";
+import ATSScreening from "./pages/hrms/HiringAndRecruitment/ATSScreening/ATSScreening";
+import ScheduleInterview from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/ScheduleInterview";
+import ScheduleInterviewList from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/ScheduleInterviewList";
+import ScheduledInterviewDetails from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/ScheduledInterviewDetails";
+import InterviewResult from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/InterviewResult";
+import OfferLetterAcceptedList from "./pages/hrms/HiringAndRecruitment/NewHiring/OfferLetterAcceptedList";
+import NewOnboarding from "./pages/hrms/HiringAndRecruitment/NewHiring/NewOnboarding";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
 import AddAttendance from "./pages/hrms/Attendance/AddAttendance";
 import EmployeeAttendanceTool from "./pages/hrms/Attendance/EmployeeAttendanceTool";
@@ -171,18 +171,20 @@ function App() {
             element={<NodeDetails />}
           />
 
-          {/* Job Opening */}
-          <Route path="job-opening/new" element={<NewJobOpening />} />
-
-          {/* New Hiring */}
-          <Route path="new-hiring" element={<NewHiring />} />
-          <Route path="ats-screening" element={<ATSScreening />} />
-          <Route path="schedule-interview" element={<ScheduleInterview />} />
-          <Route path="schedule-interview-list" element={<ScheduleInterviewList />} />
-          <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
-          <Route path="interview-result/:id" element={<InterviewResult />} />
-          <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
-          <Route path="new-onboarding" element={<NewOnboarding />} />
+          {/* Hiring and Recruitment */}
+          <Route path="hiring-and-recruitment">
+            <Route path="job-opening/new" element={<NewJobOpening />} />
+            <Route path="new-hiring" element={<NewHiring />} />
+            <Route path="new-hiring/ats-screening" element={<ATSScreening />} />
+            <Route path="new-hiring/ats-screening/schedule-interview" element={<ScheduleInterview />} />
+            <Route path="new-hiring/ats-screening/schedule-interview/scheduled-interview-list" element={<ScheduleInterviewList />} />
+            <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
+            <Route path="interview-result/:id" element={<InterviewResult />} />
+            <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
+            <Route path="offer-letter-accepted-list/:id" element={<OfferLetterAcceptedList />} />
+            <Route path="offer-letter-accepted-list/:id/onboarding" element={<OfferLetterAcceptedList />} />
+            <Route path="new-onboarding" element={<NewOnboarding />} />
+          </Route>
 
           {/* Onboarding Employee */}
           <Route

@@ -107,7 +107,7 @@ const CashFlow = () => {
           ["Operating Activities", 1330000, 855000, 475000, "Inflow"],
           ["Investing Activities", 90000, 210000, -120000, "Outflow"],
           ["Financial Activities", 330000, 95000, 205000, "Inflow"],
-          ["TOTAL", 1720000, 1160000, 560000, "Inflow"]
+          ["TOTAL", 1720000, 1160000, 560000, "Inflow"] 
         ]
       });
       setIsLoading(false);

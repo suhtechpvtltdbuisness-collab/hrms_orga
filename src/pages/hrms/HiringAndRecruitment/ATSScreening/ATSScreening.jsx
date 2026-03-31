@@ -44,21 +44,13 @@ const ATSScreening = () => {
     );
 
     return (
-        <div
-            style={{
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: '#F2F2F7',
-                minHeight: 'calc(100vh - 5rem)',
-                overflowY: 'auto',
-            }}
-        >
-            <div style={{ padding: isMobile ? '16px' : '20px 24px 24px 24px' }}>
-
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+            <div className="shrink-0 mb-4">
                 {/* Breadcrumb */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
                     <div
                         style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-                        onClick={() => navigate('/hrms/new-hiring')}
+                        onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring')}
                     >
                         <ArrowLeft size={14} style={{ color: '#111827' }} />
                         <span style={{ fontSize: '13px', fontWeight: 500, color: '#7D1EDB' }}>New Hiring</span>
@@ -69,7 +61,9 @@ const ATSScreening = () => {
 
                 {/* Page Title */}
                 <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#494949', margin: '0 0 16px 0', fontFamily: '"Nunito Sans", sans-serif', lineHeight: '140%' }}>ATS Screening</h1>
+            </div>
 
+            <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto' }}>
                 {/* Main Two-Column Layout */}
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
@@ -229,7 +223,7 @@ const ATSScreening = () => {
                             {/* Action Buttons */}
                             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                                 <button
-                                    onClick={() => navigate('/hrms/schedule-interview')}
+                                    onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview')}
                                     style={{
                                         height: '44px',
                                         padding: '0 24px',

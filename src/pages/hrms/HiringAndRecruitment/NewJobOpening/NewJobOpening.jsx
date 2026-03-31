@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import FilterDropdown from '../../../components/ui/FilterDropdown';
-import CustomDatePicker from '../../../components/ui/CustomDatePicker';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 
 const NewJobOpening = () => {
     const navigate = useNavigate();
@@ -67,10 +67,10 @@ const NewJobOpening = () => {
     };
 
     return (
-        <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
             
             {/* Breadcrumb */}
-            <div className="flex items-center text-sm text-[#7D1EDB] mb-3">
+            <div className="flex items-center text-sm text-[#7D1EDB] mb-2 shrink-0">
                 <div className="flex items-center gap-3" onClick={() => navigate('/hrms')}>
                     <ArrowLeft size={14} className="text-gray-900 cursor-pointer" />
                     <span className="cursor-pointer hover:text-purple-500"> HRMS Dashboard</span>
@@ -80,7 +80,7 @@ const NewJobOpening = () => {
             </div>
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0 shrink-0">
                 <h1 className="text-xl font-semibold text-gray-900">Add Job Opening</h1>
                 <div className="flex gap-4 w-full sm:w-auto">
                     <button
@@ -101,6 +101,7 @@ const NewJobOpening = () => {
             </div>
 
             {/* Form Content */}
+            <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto' }}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* Left Column - Wider */}
                 <div className="lg:col-span-3 space-y-6">
@@ -403,6 +404,7 @@ const NewJobOpening = () => {
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

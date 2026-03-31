@@ -86,14 +86,7 @@ const ScheduleInterview = () => {
     );
 
     return (
-        <div
-            style={{
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: '#F2F2F7',
-                minHeight: 'calc(100vh - 5rem)',
-                overflowY: 'auto',
-            }}
-        >
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
             <style>{`
                 input[type="date"]::-webkit-calendar-picker-indicator,
                 input[type="time"]::-webkit-calendar-picker-indicator {
@@ -101,15 +94,15 @@ const ScheduleInterview = () => {
                     -webkit-appearance: none;
                 }
             `}</style>
-            {/* Outer padding: horizontal 20px for consistent alignment with title */}
-            <div style={{ padding: '10px 20px 250px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-                {/* Breadcrumb + Title — same horizontal alignment as cards */}
+            
+            {/* Header shrink wrapper */}
+            <div className="shrink-0 mb-4">
+                {/* Breadcrumb + Title */}
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
                         <div
                             style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-                            onClick={() => navigate('/hrms/ats-screening')}
+                            onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening')}
                         >
                             <ArrowLeft size={14} style={{ color: '#111827' }} />
                             <span style={{ fontSize: '13px', fontWeight: 500, color: '#7D1EDB' }}>ATS Screening</span>
@@ -149,7 +142,9 @@ const ScheduleInterview = () => {
                         </button>
                     </div>
                 </div>
+            </div>
 
+            <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {/* ── Card 1: Candidate Information ── */}
                 <style>{`
                     .autofill-grey:-webkit-autofill,
