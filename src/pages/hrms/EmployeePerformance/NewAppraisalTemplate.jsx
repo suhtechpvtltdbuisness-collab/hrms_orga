@@ -81,7 +81,12 @@ const NewAppraisalTemplate = () => {
                 
                 <button
                     className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                    onClick={() => console.log("Save")}
+                    onClick={() => {
+                        const newTemplate = { id: Date.now(), title, description, goals };
+                        const existingTemplates = JSON.parse(localStorage.getItem('appraisalTemplates')) || [];
+                        localStorage.setItem('appraisalTemplates', JSON.stringify([...existingTemplates, newTemplate]));
+                        navigate('/hrms/appraisal-template');
+                    }}
                 >
                     <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
                 </button>

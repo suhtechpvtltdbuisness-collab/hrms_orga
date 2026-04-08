@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Plus } from 'lucide-react';
 
 const AppraisalTemplate = () => {
     const navigate = useNavigate();
+    const [templates, setTemplates] = useState([]);
+
+    useEffect(() => {
+        const storedTemplates = JSON.parse(localStorage.getItem('appraisalTemplates')) || [];
+        setTemplates(storedTemplates);
+    }, []);
+
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-inter" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -40,25 +47,53 @@ const AppraisalTemplate = () => {
                 </button>
             </div>
 
-            {/* Content (Empty State) */}
-            <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
-                <div className="flex flex-col items-center justify-center text-center py-4">
-                    <img 
-                        src="/images/emptyAttendance.png" 
-                        alt="No Appraisal Templates" 
-                        className="mb-6 w-[280px] md:w-[320px]" 
-                    />
-                    <h3 className="text-[16px] font-semibold text-[#757575] mb-4" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>You haven't created appraisal template yet</h3>
-                    
-                    <button
-                        className="flex items-center justify-center px-4 py-3 bg-[#7D1EDB] text-white rounded-full font-medium hover:bg-purple-700 transition-all shadow-sm"
-                        style={{ fontFamily: 'Poppins, sans-serif' }}
-                        onClick={() => navigate('/hrms/appraisal-template/new')}
-                    >
-                        Create appraisal template
-                    </button>
+            {/* Content */}
+            {templates.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
+                    <div className="flex flex-col items-center justify-center text-center py-4">
+                        <img 
+                            src="/images/emptyAttendance.png" 
+                            alt="No Appraisal Templates" 
+                            className="mb-6 w-[280px] md:w-[320px]" 
+                        />
+                        <h3 className="text-[16px] font-semibold text-[#757575] mb-4" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>You haven't created appraisal template yet</h3>
+                        
+                        <button
+                            className="flex items-center justify-center px-4 py-3 bg-[#7D1EDB] text-white rounded-full font-medium hover:bg-purple-700 transition-all shadow-sm"
+                            style={{ fontFamily: 'Poppins, sans-serif' }}
+                            onClick={() => navigate('/hrms/appraisal-template/new')}
+                        >
+                            Create appraisal template
+                        </button>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="flex-1 overflow-y-auto pr-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {templates.map(template => (
+                            <div key={template.id} className="border border-[#E0E0E0] rounded-xl p-5 flex flex-col hover:shadow-md transition-shadow bg-white pb-6 relative group overflow-hidden min-h-[220px]">
+                                <div className="flex justify-between items-start mb-3">
+                                    <h3 className="text-[18px] font-semibold text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>{template.title}</h3>
+                                </div>
+                                <p className="text-[14px] text-[#757575] mb-6 flex-1 overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', fontFamily: '"Nunito Sans", sans-serif'}}>{template.description}</p>
+                                
+                                <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#F0F0F0]">
+                                   <div className="text-[13px] text-[#7D1EDB] bg-purple-50 rounded-full px-3 py-1 font-medium border border-purple-100 flex items-center gap-1">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-[#7D1EDB]"></span>
+                                       {template.goals?.length || 0} Goals
+                                   </div>
+                                    <button 
+                                        className="text-[#7D1EDB] hover:text-purple-700 font-medium text-[14px] flex items-center transition-colors"
+                                        style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+                                    >
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

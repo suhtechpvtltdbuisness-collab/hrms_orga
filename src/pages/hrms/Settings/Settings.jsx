@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import SettingsAccordion from './SettingsAccordion';
 import EmployeeIDSettings from './EmployeeIDSettings';
 import AttendanceSettings from './AttendanceSettings';
@@ -12,6 +14,8 @@ import NotificationSettings from './NotificationSettings';
 import OrganizationSettings from './OrganizationSettings';
 
 const Settings = () => {
+    const navigate = useNavigate();
+
     const [openSections, setOpenSections] = useState([]);
 
     const settingsSections = [
@@ -39,6 +43,24 @@ const Settings = () => {
         <div
             className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9] flex flex-col font-['Poppins',sans-serif]"
         >
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 shrink-0 mt-2">
+                <img 
+                    src="/images/arrow_left_alt.svg" 
+                    alt="Back" 
+                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
+                    onClick={() => navigate('/hrms')}
+                />
+                <span 
+                    className='cursor-pointer text-[#7D1EDB]'
+                    onClick={() => navigate('/hrms')}
+                >
+                    HRMS Dashboard
+                </span> 
+                <ChevronRight size={14}/> 
+                <span className="text-[#6B7280]">Settings</span>
+            </div>
+
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-[20px] font-semibold text-gray-600 leading-[140%] capitalize font-['Poppins']">
