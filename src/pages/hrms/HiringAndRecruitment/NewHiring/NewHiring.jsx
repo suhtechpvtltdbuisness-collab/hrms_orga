@@ -89,14 +89,6 @@ const NewHiring = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-4">
                 <h1 className="text-xl font-semibold text-gray-900">New Hiring</h1>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-
-                    <button 
-                        className="px-4 py-2.5 bg-white text-[#7D1EDB] border border-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
-                    >
-                        <Mail size={18} />
-                        Import From Email
-                    </button>
-
                     <button 
                         className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto flex items-center justify-center gap-2"
                         onClick={() => document.getElementById('resume-upload').click()}

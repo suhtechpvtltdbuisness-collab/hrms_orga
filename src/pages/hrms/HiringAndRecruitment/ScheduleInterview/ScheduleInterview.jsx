@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X } from 'lucide-react';
 
 const ScheduleInterview = () => {
     const navigate = useNavigate();
@@ -12,6 +12,7 @@ const ScheduleInterview = () => {
 
     const dateInputRef = useRef(null);
     const timeInputRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     /* ── Form State ── */
     const [formData, setFormData] = useState({
@@ -23,6 +24,8 @@ const ScheduleInterview = () => {
         time: '',
         panel: ''
     });
+
+    const [resumeFile, setResumeFile] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -180,30 +183,82 @@ const ScheduleInterview = () => {
                         </div>
                     </div>
 
-                    <button
-                        style={{
-                            height: '38px',
-                            padding: '0 22px',
-                            backgroundColor: 'transparent',
-                            color: '#7D1EDB',
-                            fontWeight: 500,
-                            borderRadius: '999px',
-                            border: '1.5px solid #7D1EDB',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontFamily: 'Poppins, sans-serif',
-                            width: 'fit-content',
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = '#F5EEFB';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                        onClick={() => toast.success('Loading resume...')}
-                    >
-                        View Resume
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {!resumeFile ? (
+                            <>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setResumeFile(e.target.files[0]);
+                                        }
+                                    }}
+                                />
+                                <button
+                                    style={{
+                                        height: '38px',
+                                        padding: '0 22px',
+                                        backgroundColor: 'transparent',
+                                        color: '#7D1EDB',
+                                        fontWeight: 500,
+                                        borderRadius: '999px',
+                                        border: '1.5px solid #7D1EDB',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontFamily: 'Poppins, sans-serif',
+                                        width: 'fit-content',
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.backgroundColor = '#F5EEFB';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                    onClick={() => fileInputRef.current.click()}
+                                >
+                                    Add Resume
+                                </button>
+                            </>
+                        ) : (
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                padding: '8px 16px', 
+                                backgroundColor: '#F5EEFB', 
+                                borderRadius: '999px', 
+                                border: '1px solid #7D1EDB' 
+                            }}>
+                                <span 
+                                    style={{ 
+                                        fontSize: '14px', 
+                                        color: '#7D1EDB', 
+                                        fontWeight: 500, 
+                                        cursor: 'pointer',
+                                        maxWidth: '200px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        fontFamily: 'Poppins, sans-serif'
+                                    }}
+                                    onClick={() => {
+                                        const fileURL = URL.createObjectURL(resumeFile);
+                                        window.open(fileURL, '_blank');
+                                    }}
+                                    title="Click to view resume"
+                                >
+                                    {resumeFile.name}
+                                </span>
+                                <X 
+                                    size={16} 
+                                    style={{ color: '#7D1EDB', cursor: 'pointer', marginLeft: '4px' }} 
+                                    onClick={() => setResumeFile(null)}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* ── Card 2: Interview Type ── */}
