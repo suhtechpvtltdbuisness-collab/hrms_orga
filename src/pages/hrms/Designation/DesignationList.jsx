@@ -70,14 +70,10 @@ const DesignationList = () => {
           reportingTo: d.reportingTo || null,
           status: d.status,
         }));
-
         setDesignations(formatted);
       } else {
-        console.error("Expected array of designations but got:", result.data);
         setDesignations([]);
       }
-    } else {
-      console.error(result.message);
     }
     setLoading(false);
   };
@@ -217,7 +213,6 @@ const DesignationList = () => {
     const result = await designationService.createDesignation(payload);
 
     if (result.success) {
-      console.log("Designation created:", result.data);
       setShowModal(false);
       setShowSuccessModal(true);
       setFormData({
@@ -231,7 +226,6 @@ const DesignationList = () => {
       });
       fetchDesignations();
     } else {
-      console.error(result.message);
       setShowErrorModal(true);
     }
   };

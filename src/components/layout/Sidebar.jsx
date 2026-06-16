@@ -16,7 +16,8 @@ import {
   LogOut,
   ChevronLeft
 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
@@ -24,20 +25,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const handleLogout = () => {
     // Clear user data from localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    // Navigate to login page
-    navigate('/login');
+    localStorage.clear();
+    // Navigate to auth page
+    navigate('/auth');
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/hrms' },
     { name: 'HRMS', icon: Users, path: '/hrms' },
     { name: 'Project Management', icon: Briefcase, path: '' },
-    { name: 'Employees', icon: Mail, path: '' },
-    { name: 'Attendance', icon: CalendarDays, path: '' },
+    { name: 'Employees', icon: Mail, path: '/hrms/employees' },
+    { name: 'Attendance', icon: CalendarDays, path: '/hrms/attendance' },
     { name: 'Tasks', icon: CheckSquare, path: '' },
-    { name: 'Reports', icon: BarChart3, path: '' },
+    { name: 'Reports', icon: BarChart3, path: '/hrms/financial-reports/profit-and-loss' },
     { name: 'Announcements', icon: Megaphone, path: '' },
     { name: 'Messages', icon: MessageSquare, path: '' },
     { name: 'My Profile', icon: UserCircle, path: '' },
@@ -45,13 +45,35 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Support', icon: HelpCircle, path: '' }
   ];
 
-  const isActive = (path) => {
-    if (!path) return false;
-    // Special case: prevent HRMS from being active when in Settings
-    if (path === '/hrms' && location.pathname.startsWith('/hrms/settings')) {
+  const isActive = (item) => {
+    if (!item.path) return false;
+    
+    if (item.name === 'Dashboard') {
+      // Prevent highlighting Dashboard and HRMS at the same time
       return false;
     }
-    return location.pathname.startsWith(path);
+    
+    if (item.name === 'HRMS') {
+      // HRMS is active when we are inside /hrms, except when on specific sub-sections
+      return location.pathname.startsWith('/hrms') &&
+             !location.pathname.startsWith('/hrms/settings') &&
+             !location.pathname.startsWith('/hrms/employees') &&
+             !location.pathname.startsWith('/hrms/attendance') &&
+             !location.pathname.startsWith('/hrms/financial-reports');
+    }
+    
+    return location.pathname.startsWith(item.path);
+  };
+
+  const handleItemClick = (item) => {
+    if (!item.path) {
+      toast(`${item.name} module is coming soon!`, { icon: '🚀' });
+      return;
+    }
+    navigate(item.path);
+    if (window.innerWidth < 1260 && isOpen) {
+      toggleSidebar();
+    }
   };
 
   return (
@@ -93,38 +115,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* Menu */}
       <nav className="flex-1 mt-8 space-y-1">
         {menuItems.map((item) => {
-          const active = isActive(item.path);
-          const isClickable = !!item.path;
-
-          if (!isClickable) {
-            return (
-              <div
-                key={item.name}
-                className={`
-                  flex items-center rounded-full transition-all duration-200 cursor-default
-                  ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
-                  text-gray-700
-                `}
-              >
-                <item.icon className="w-5 h-5 text-gray-800" />
-                {isOpen && (
-                  <span className="text-sm font-medium">{item.name}</span>
-                )}
-              </div>
-            );
-          }
+          const active = isActive(item);
 
           return (
-            <Link
+            <div
               key={item.name}
-              to={item.path}
-              onClick={() => {
-                if (window.innerWidth < 1260 && isOpen) {
-                  toggleSidebar();
-                }
-              }}
+              onClick={() => handleItemClick(item)}
               className={`
-                flex items-center rounded-full transition-all duration-200
+                flex items-center rounded-full transition-all duration-200 cursor-pointer
                 ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
                 ${active
                   ? 'bg-[#EEF2FF] text-[#7D1EDB]'
@@ -133,13 +131,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               `}
             >
               <item.icon
-                className={`w-5 h-5 ${active ? 'text-purple-600' : 'text-gray-800'
+                className={`w-5 h-5 ${active ? 'text-[#7D1EDB]' : 'text-gray-800'
                   }`}
               />
               {isOpen && (
                 <span className="text-sm font-medium">{item.name}</span>
               )}
-            </Link>
+            </div>
           );
         })}
       </nav>

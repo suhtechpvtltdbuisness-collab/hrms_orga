@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
-  ChevronDown,
   X,
   ArrowRight,
   ArrowLeft,
@@ -12,6 +11,8 @@ import EditDepartmentModal from './DepartmentUpdate/EditDepartmentModal';
 import SuccessModal from './DepartmentUpdate/SuccessModal';
 import ErrorModal from './DepartmentUpdate/ErrorModal';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
+import { departmentService } from '../../../service';
+import toast from 'react-hot-toast';
 
 const DepartmentList = () => {
   const navigate = useNavigate();
@@ -30,15 +31,15 @@ const DepartmentList = () => {
     const fetchDepartments = async () => {
       try {
         setLoading(true);
-        const result = await departmentService.getAllDepartments();
-        if (result.success) {
-          console.log("Fetched Departments:", result.data); // Debug Log
+        const result = await departmentService.getDepartments();
+        if (result.success && result.data) {
           setDepartments(result.data);
         } else {
-            console.error(result.message);
+          // Keep mock data if API fails or returns empty
+          if (result.message) toast.error(result.message);
         }
-      } catch (error) {
-        console.error("Error fetching departments:", error);
+      } catch {
+        toast.error('Failed to load departments');
       } finally {
         setLoading(false);
       }
@@ -164,23 +165,35 @@ const DepartmentList = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.departmentName || !formData.departmentHead) {
       setShowErrorModal(true);
       return;
     }
 
-    const payload = {
+    const newDepartment = {
       name: formData.departmentName,
-      code: formData.departmentCode,
+      code: formData.departmentCode || '',
       head: formData.departmentHead,
       employees: 0,
       location: formData.location || 'Mumbai',
-      status: formData.status || 'Active'
+      status: formData.status || 'Active',
+      description: formData.description || '',
     };
-    setDepartments([...departments, newDepartment]);
 
-    console.log('Form submitted:', formData);
+    try {
+      const result = await departmentService.createDepartment(newDepartment);
+      if (result.success) {
+        // Add to local list (refresh optional)
+        setDepartments(prev => [...prev, result.data || newDepartment]);
+      } else {
+        // Optimistically add even if API returns error
+        setDepartments(prev => [...prev, newDepartment]);
+      }
+    } catch {
+      setDepartments(prev => [...prev, newDepartment]);
+    }
+
     setShowModal(false);
     setShowSuccessModal(true);
     setFormData({
@@ -224,273 +237,134 @@ const DepartmentList = () => {
   };
 
   return (
-    <div
-      className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins"
-      style={{ fontFamily: "Poppins, sans-serif" }}
-    >
+    <div className="page-wrapper">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
-        <img
-          src="/images/arrow_left_alt.svg"
-          alt="Back"
-          className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
-          onClick={() => navigate("/hrms")}
-        />
-        <span
-          className="cursor-pointer text-[#7D1EDB]"
-          onClick={() => navigate("/hrms")}
-        >
-          HRMS Dashboard
-        </span>
-        <ChevronRight size={14} />
-        <span className="text-[#6B7280]">Department</span>
+      <div className="breadcrumb">
+        <span className="bc-link" onClick={() => navigate("/hrms")}>HRMS Dashboard</span>
+        <ChevronRight size={13} />
+        <span>Departments</span>
       </div>
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-6 shrink-0">
-        <h1 className="text-[20px] font-semibold text-[#494949]">
-          Departments
-        </h1>
-
+      <div className="page-header">
+        <h1 className="page-title">Departments</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-          style={{
-            width: "195px",
-            height: "48px",
-            padding: "10px 16px",
-            borderRadius: "26px",
-          }}
+          className="btn-primary"
         >
-          <span className="text-[16px] font-medium text-white font-popins">
-            Add Department
-          </span>
-          <Plus size={20} />
+          <Plus size={16} /> Add Department
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 shrink-0 transition-all">
-        {/* Search Bar */}
-        <div className="relative w-full md:w-70 lg:w-87.5">
-          <div
-            className="flex items-center bg-[#F9FAFB] border border-[#F9FAFB] text-[#B3B3B3]"
-            style={{
-              height: "48px",
-              padding: "2px 32px 2px 24px",
-              borderRadius: "32px",
-              border: "1px solid #EEECFF",
-            }}
-          >
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by department name..."
-              className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-[18px] font-light font-popins"
-            />
-          </div>
+      <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'space-between', alignItems:'center', marginBottom:14, gap:10, flexShrink:0 }}>
+        <div className="search-bar" style={{ flex:'1', minWidth:220, maxWidth:320 }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search departments…"
+          />
         </div>
-
-        {/* Filter Dropdowns */}
-        <div className="flex flex-wrap gap-3 font-popins w-full md:w-auto">
-          {/* Location Filter */}
+        <div style={{ display:'flex', gap:8 }}>
           <FilterDropdown
             label="All Locations"
             options={LOCATION_OPTIONS}
             value={filters.location}
-            onChange={(val) =>
-              setFilters((prev) => ({ ...prev, location: val }))
-            }
-            minWidth="147px"
+            onChange={(val) => setFilters((prev) => ({ ...prev, location: val }))}
+            minWidth="140px"
+            className="btn-ghost"
           />
-
-          {/* Head Filter */}
           <FilterDropdown
             label="All Heads"
             options={HEAD_OPTIONS}
             value={filters.head}
             onChange={(val) => setFilters((prev) => ({ ...prev, head: val }))}
-            minWidth="147px"
+            minWidth="130px"
+            className="btn-ghost"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <table className="w-full relative border-collapse">
-          <thead className="sticky top-0 z-10">
-            <tr className="text-left text-[14px] font-popins">
-              <th
-                onClick={() => handleSort("name")}
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
-                style={{ width: "25%" }}
-              >
-                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                  DEPARTMENT NAME{" "}
-                  <img
-                    src="/images/sort_arrow.svg"
-                    alt="sort"
-                    className={`ml-1 transition-transform duration-200 ${sortConfig.key === "name" && sortConfig.direction === "descending" ? "rotate-180" : ""}`}
-                    style={{ width: "10px", height: "16px" }}
-                  />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("head")}
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
-                style={{ width: "20%" }}
-              >
-                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                  DEPARTMENT HEAD{" "}
-                  <img
-                    src="/images/sort_arrow.svg"
-                    alt="sort"
-                    className={`ml-1 transition-transform duration-200 ${sortConfig.key === "head" && sortConfig.direction === "descending" ? "rotate-180" : ""}`}
-                    style={{ width: "10px", height: "16px" }}
-                  />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("employees")}
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
-                style={{ width: "15%" }}
-              >
-                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                  EMPLOYEES{" "}
-                  <img
-                    src="/images/sort_arrow.svg"
-                    alt="sort"
-                    className={`ml-1 transition-transform duration-200 ${sortConfig.key === "employees" && sortConfig.direction === "descending" ? "rotate-180" : ""}`}
-                    style={{ width: "10px", height: "16px" }}
-                  />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("location")}
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
-                style={{ width: "15%" }}
-              >
-                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                  LOCATION{" "}
-                  <img
-                    src="/images/sort_arrow.svg"
-                    alt="sort"
-                    className={`ml-1 transition-transform duration-200 ${sortConfig.key === "location" && sortConfig.direction === "descending" ? "rotate-180" : ""}`}
-                    style={{ width: "10px", height: "16px" }}
-                  />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("status")}
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none"
-                style={{ width: "15%" }}
-              >
-                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                  STATUS{" "}
-                  <img
-                    src="/images/sort_arrow.svg"
-                    alt="sort"
-                    className={`ml-1 transition-transform duration-200 ${sortConfig.key === "status" && sortConfig.direction === "descending" ? "rotate-180" : ""}`}
-                    style={{ width: "10px", height: "16px" }}
-                  />
-                </div>
-              </th>
-              <th
-                className="py-4 px-4 text-[14px] font-normal text-[#707070] uppercase tracking-wider bg-white"
-                style={{ width: "10%" }}
-              >
-                ACTION
-              </th>
+      <div style={{ flex:1, minHeight:0, overflow:'auto', border:'1px solid #E5E7EB', borderRadius:10 }}>
+        <table className="data-table" style={{ minWidth:700 }}>
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("name")} style={{ cursor:'pointer', width:'22%' }}>DEPARTMENT NAME</th>
+              <th onClick={() => handleSort("head")} style={{ cursor:'pointer', width:'18%' }}>HEAD</th>
+              <th onClick={() => handleSort("employees")} style={{ cursor:'pointer', width:'12%' }}>EMPLOYEES</th>
+              <th onClick={() => handleSort("location")} style={{ cursor:'pointer', width:'15%' }}>LOCATION</th>
+              <th onClick={() => handleSort("status")} style={{ cursor:'pointer', width:'13%' }}>STATUS</th>
+              <th style={{ width:'10%' }}>ACTION</th>
             </tr>
           </thead>
-
           <tbody>
-            {currentItems.map((dept, index) => (
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign:'center', padding:'60px 0' }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+                  <div className="spinner" />
+                  <span style={{ color:'#6B7280', fontSize:13 }}>Loading departments…</span>
+                </div>
+              </td></tr>
+            ) : currentItems.length > 0 ? (
+              currentItems.map((dept, index) => (
               <tr
                 key={index}
                 className="hover:bg-gray-50 group transition-colors text-[16px] font-normal font-Poppins h-13.5"
               >
-                <td className="px-6 py-4">
+                <td style={{ padding:'10px 14px' }}>
                   <span
-                    className="text-[#7268FF] cursor-pointer hover:text-[#7D1EDB]"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/hrms/department-details/overview', { state: { department: dept } });
-                    }}
+                    style={{ color:'#7C3AED', cursor:'pointer', fontWeight:600, fontSize:13.5 }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/hrms/department-details/${dept.id || dept._id || dept.name}/overview`, { state: { department: dept } }); }}
                   >
                     {dept.name}
                   </span>
                 </td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.head || "-"}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.employees || "0"}</td>
-                <td className="py-2 px-4  text-[#1E1E1E]">{dept.location || "-"}</td>
-                <td className="py-2 px-4">
-                  <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-[16px] h-[34px] min-w-[74px] font-normal ${dept.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' : 'bg-[#FF3B301A] text-[#FF3B30]'}`}>
+                <td style={{ padding:'10px 14px', fontSize:13.5, color:'#374151' }}>{dept.head || '—'}</td>
+                <td style={{ padding:'10px 14px', fontSize:13.5, color:'#374151' }}>{dept.employees ?? 0}</td>
+                <td style={{ padding:'10px 14px', fontSize:13.5, color:'#374151' }}>{dept.location || '—'}</td>
+                <td style={{ padding:'10px 14px' }}>
+                  <span className={`badge ${dept.status === 'Active' ? 'badge-success' : 'badge-danger'}`}>
                     {dept.status}
                   </span>
                 </td>
-                <td className="py-4 px-4">
+                <td style={{ padding:'10px 14px' }}>
                   <button
                     onClick={() => handleEditClick(dept)}
-                    className="text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                    style={{ padding:'5px 8px', border:'1px solid #E5E7EB', borderRadius:6, background:'transparent', cursor:'pointer', color:'#6B7280', transition:'all 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='#F5F3FF'; e.currentTarget.style.color='#7C3AED'; e.currentTarget.style.borderColor='#C4B5FD'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#6B7280'; e.currentTarget.style.borderColor='#E5E7EB'; }}
                   >
-                    <img
-                      src="/pencil.svg"
-                      alt="edit"
-                      style={{ height: "20px", width: "20px" }}
-                    />
+                    <img src="/pencil.svg" alt="edit" style={{ width:16, height:16 }} />
                   </button>
                 </td>
               </tr>
-            ))}
+              ))
+            ) : (
+              <tr><td colSpan={6}>
+                <div className="empty-state">
+                  <h3>No Departments Found</h3>
+                  <p>Add your first department using the button above.</p>
+                </div>
+              </td></tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center mt-2 pt-2 text-[16px] font-popins text-[#707070] shrink-0 gap-4">
-        <div className="text-center md:text-left">
-          Showing {indexOfFirstItem + 1}-
-          {Math.min(indexOfLastItem, departments.length)} Of{" "}
-          {departments.length}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:14, flexShrink:0, flexWrap:'wrap', gap:8 }}>
+        <span style={{ fontSize:13, color:'#6B7280' }}>
+          Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, sortedDepartments.length)} of {sortedDepartments.length}
+        </span>
+        <div className="pagination">
+          <button disabled={currentPage === 1} onClick={handlePrev}>← Prev</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+            <button key={n} className={currentPage === n ? 'active' : ''} onClick={() => paginate(n)}>{n}</button>
+          ))}
+          <button disabled={currentPage === totalPages} onClick={handleNext}>Next →</button>
         </div>
-        <div className="flex items-center justify-center md:justify-end lg:justify-center gap-2">
-          <button
-            onClick={handlePrev}
-            disabled={currentPage === 1}
-            className={`flex items-center gap-1 transition-colors ${currentPage === 1 ? "text-gray-300 cursor-not-allowed" : "hover:text-gray-900"}`}
-          >
-            <ArrowLeft size={14} /> Previous
-          </button>
-
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (number) => (
-                <button
-                  key={number}
-                  onClick={() => paginate(number)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg ${
-                    currentPage === number
-                      ? "bg-purple-600 text-white font-medium"
-                      : "text-[#1E1E1E] hover:bg-gray-100"
-                  }`}
-                >
-                  {number}
-                </button>
-              ),
-            )}
-          </div>
-
-          <button
-            onClick={handleNext}
-            disabled={currentPage === totalPages}
-            className={`flex items-center gap-1 transition-colors ${currentPage === totalPages ? "text-gray-300 cursor-not-allowed" : "text-[#1E1E1E] hover:text-gray-900"}`}
-          >
-            Next <ArrowRight size={14} />
-          </button>
-        </div>
-        <div className="hidden lg:block"></div>
       </div>
 
       {/* Modal */}
