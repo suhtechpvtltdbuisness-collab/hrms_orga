@@ -1091,6 +1091,25 @@ export const shiftService = {
     }
   },
 
+  deleteShiftType: async (id) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to delete shift type",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getShiftRequests: async (filters = {}) => {
     try {
       const queryString = Object.keys(filters).length
