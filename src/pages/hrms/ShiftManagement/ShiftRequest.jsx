@@ -5,12 +5,36 @@ import { ChevronRight, Plus } from 'lucide-react';
 const ShiftRequest = () => {
     const navigate = useNavigate();
 
-    // Mock Data
-    const shiftRequests = [
+    // Retrieve user data & auto-detect role
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    const userRole = (
+        userData.role ||
+        userData.type ||
+        (userData.isAdmin ? "admin" : "") ||
+        (userData.name && userData.name.toLowerCase().includes("ankit") ? "admin" : "") ||
+        "admin" // Default to admin for admin panel development
+    ).toLowerCase();
+
+    // Default Seed Data
+    const defaultRequests = [
         { id: 1, employeeName: "Alice John", status: "Submitted", shiftType: "Day" },
         { id: 2, employeeName: "Carol White", status: "Submitted", shiftType: "Day" },
         { id: 3, employeeName: "Mike Miller", status: "Submitted", shiftType: "Day" },
     ];
+
+    // State for shift requests loaded from localStorage
+    const [requests, setRequests] = useState(() => {
+        const stored = localStorage.getItem("hrms_shift_requests");
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                console.error("Failed to parse shift requests:", e);
+            }
+        }
+        localStorage.setItem("hrms_shift_requests", JSON.stringify(defaultRequests));
+        return defaultRequests;
+    });
 
     // State for checkbox selection
     const [selectedRows, setSelectedRows] = useState([]);
@@ -25,6 +49,33 @@ const ShiftRequest = () => {
             }
         });
     };
+
+    // Update Status Handler
+    const handleStatusUpdate = (id, newStatus) => {
+        const updated = requests.map(req => {
+            if (req.id === id) {
+                return { ...req, status: newStatus };
+            }
+            return req;
+        });
+        setRequests(updated);
+        localStorage.setItem("hrms_shift_requests", JSON.stringify(updated));
+    };
+
+    // Style badge dynamically depending on status
+    const getStatusBadgeClass = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'approved':
+                return 'inline-block px-3 py-1 bg-[#E4F8D2] text-[#76DB1E] border border-[#D0F2B4] rounded-full text-xs font-medium';
+            case 'rejected':
+                return 'inline-block px-3 py-1 bg-[#FEE2E2] text-[#EF4444] border border-[#FCA5A5] rounded-full text-xs font-medium';
+            case 'submitted':
+            default:
+                return 'inline-block px-3 py-1 bg-[#F3E8FF] text-[#7D1EDB] border border-[#E9D5FF] rounded-full text-xs font-medium';
+        }
+    };
+
+    const isAdmin = userRole === 'admin';
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
@@ -51,13 +102,15 @@ const ShiftRequest = () => {
             <div className="flex justify-between items-center mb-4 shrink-0">
                 <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Shift Request</h1>
 
-                <button
-                    onClick={() => navigate('/hrms/shift-request/new')}
-                    className="flex items-center justify-center gap-2 rounded-full py-2 px-4 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                >
-                    <span className='text-[16px] font-medium text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>New Shift Request</span>
-                    <Plus size={18} />
-                </button>
+                {(userRole === 'employee' || userRole === 'hr') && (
+                    <button
+                        onClick={() => navigate('/hrms/shift-request/new')}
+                        className="flex items-center justify-center gap-2 rounded-full py-2 px-4 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
+                    >
+                        <span className='text-[16px] font-medium text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>New Shift Request</span>
+                        <Plus size={18} />
+                    </button>
+                )}
             </div>
 
             {/* Table */}
@@ -67,19 +120,24 @@ const ShiftRequest = () => {
                         <tr className="text-left text-[14px] border-b border-[#CECECE]">
                             <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[5%]">
                             </th>
-                            <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[35%]">
+                            <th className={`py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 ${isAdmin ? 'w-[30%]' : 'w-[35%]'}`}>
                                 Employee Name
                             </th>
-                            <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[30%] text-center">
+                            <th className={`py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 text-center ${isAdmin ? 'w-[20%]' : 'w-[30%]'}`}>
                                 Status
                             </th>
-                            <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 w-[30%] text-right">
+                            <th className={`py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 ${isAdmin ? 'text-center w-[20%]' : 'text-right w-[30%]'}`}>
                                 Shift Type
                             </th>
+                            {isAdmin && (
+                                <th className="py-3 px-6 text-[14px] font-normal text-[#757575] opacity-80 text-right w-[25%]">
+                                    Actions
+                                </th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
-                        {shiftRequests.map((request, index) => (
+                        {requests.map((request, index) => (
                             <tr key={request.id} className="hover:bg-gray-50 transition-colors text-[14px] font-medium text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                                 <td className="py-3 px-6">
                                     <div className="relative flex items-center justify-center">
@@ -107,13 +165,35 @@ const ShiftRequest = () => {
                                     {request.employeeName}
                                 </td>
                                 <td className="py-3 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-[#E4F8D2] text-[#76DB1E] rounded-full text-xs font-medium">
+                                    <span className={getStatusBadgeClass(request.status)}>
                                         {request.status}
                                     </span>
                                 </td>
-                                <td className="py-3 px-6 text-right">
+                                <td className={`py-3 px-6 ${isAdmin ? 'text-center' : 'text-right'}`}>
                                     {request.shiftType}
                                 </td>
+                                {isAdmin && (
+                                    <td className="py-3 px-6 text-right">
+                                        {request.status.toLowerCase() === 'submitted' ? (
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleStatusUpdate(request.id, "Approved")}
+                                                    className="px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleStatusUpdate(request.id, "Rejected")}
+                                                    className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-400 font-normal">No action required</span>
+                                        )}
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
