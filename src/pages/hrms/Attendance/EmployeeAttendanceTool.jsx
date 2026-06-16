@@ -85,7 +85,11 @@ const EmployeeAttendanceTool = () => {
     try {
       const results = await Promise.all(
         selected.map(emp =>
-          attendanceService.addAttendance({ empId: emp.empId || emp.id, date, status })
+          attendanceService.addAttendance({ 
+            empId: emp.empId || emp.id, 
+            attendanceDate: date, 
+            status: status.toLowerCase() 
+          })
         )
       );
       const success = results.filter(r => r.success).length;
