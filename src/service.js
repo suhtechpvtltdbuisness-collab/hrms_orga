@@ -713,3 +713,297 @@ export const payrollService = {
   },
 };
 
+// ─── Attendance helpers ────────────────────────────────────────────────────────
+const ATTENDANCE_STATUS_TO_API = {
+  Present: "present",
+  Absent: "absent",
+  "Half Day": "half_day",
+  Leave: "on_leave",
+  Holiday: "absent",
+  "Work From Home": "present",
+};
+
+const ATTENDANCE_STATUS_TO_UI = {
+  present: "Present",
+  absent: "Absent",
+  half_day: "Half Day",
+  on_leave: "Leave",
+};
+
+const LEAVE_TYPE_TO_API = {
+  "Sick Leave": "sick",
+  "Personal Leave": "casual",
+  "Earned Leave": "earned",
+  "Maternity Leave": "maternity",
+  "Paternity Leave": "paternity",
+};
+
+const LEAVE_TYPE_TO_UI = {
+  sick: "Sick Leave",
+  casual: "Personal Leave",
+  earned: "Earned Leave",
+  maternity: "Maternity Leave",
+  paternity: "Paternity Leave",
+};
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export const attendanceUtils = {
+  toApiDate: (dateStr) => {
+    if (!dateStr) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    const [day, month, year] = dateStr.split("/");
+    if (!day || !month || !year) return dateStr;
+    return `${year}-${month}-${day}`;
+  },
+
+  toDisplayDate: (dateStr) => {
+    if (!dateStr) return "-";
+    const iso = dateStr.split("T")[0];
+    const [year, month, day] = iso.split("-");
+    if (!year || !month || !day) return dateStr;
+    return `${day}/${month}/${year}`;
+  },
+
+  statusToApi: (status) =>
+    ATTENDANCE_STATUS_TO_API[status] || status?.toLowerCase?.() || status,
+
+  statusToUi: (status) =>
+    ATTENDANCE_STATUS_TO_UI[status] || status || "-",
+
+  leaveTypeToApi: (leaveType) =>
+    LEAVE_TYPE_TO_API[leaveType] || leaveType?.toLowerCase?.() || leaveType,
+
+  leaveTypeToUi: (leaveType) =>
+    leaveType ? LEAVE_TYPE_TO_UI[leaveType] || leaveType : "-",
+
+  monthNameToApi: (monthName, year = new Date().getFullYear()) => {
+    const index = MONTH_NAMES.indexOf(monthName);
+    if (index === -1) return "";
+    return `${year}-${String(index + 1).padStart(2, "0")}`;
+  },
+
+  mapRecordToRow: (record, index) => ({
+    srNo: String(index + 1).padStart(2, "0"),
+    name: record.empName || "-",
+    empId: record.empId ? `EMP-${String(record.empId).padStart(3, "0")}` : "-",
+    status: ATTENDANCE_STATUS_TO_UI[record.status] || record.status,
+    date: attendanceUtils.toDisplayDate(record.attendanceDate),
+    leaveType: LEAVE_TYPE_TO_UI[record.leaveType] || "-",
+    rawStatus: record.status,
+    rawLeaveType: record.leaveType,
+    id: record.id,
+  }),
+};
+
+// ─── Attendance Service ──────────────────────────────────────────────────────────
+export const attendanceService = {
+  getAttendances: async (filters = {}) => {
+    try {
+      const apiFilters = {};
+      if (filters.employeeName && filters.employeeName !== "All") {
+        apiFilters.employeeName = filters.employeeName;
+      }
+      if (filters.leaveType && filters.leaveType !== "All") {
+        apiFilters.leaveType = attendanceUtils.leaveTypeToApi(filters.leaveType);
+      }
+      if (filters.month) {
+        apiFilters.month = filters.month;
+      }
+
+      const queryString = Object.keys(apiFilters).length
+        ? "?" +
+          new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(apiFilters).filter(([, v]) => v != null),
+            ),
+          ).toString()
+        : "";
+
+      const response = await fetch(`${BASE_URL}/attendance${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch attendance",
+        };
+      }
+
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : data.data || [],
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createAttendance: async (payload) => {
+    try {
+      const response = await fetch(`${BASE_URL}/attendance`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to add attendance",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getNextSeries: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/attendance/next-series`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch series",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getEmployeeInfo: async (empId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/attendance/employee-info/${empId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch employee info",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getUnmarkedDates: async (empId, month) => {
+    try {
+      const params = new URLSearchParams({ empId: String(empId), month });
+      const response = await fetch(
+        `${BASE_URL}/attendance/unmarked?${params.toString()}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch unmarked dates",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  markAttendanceBulk: async (payload) => {
+    try {
+      const response = await fetch(`${BASE_URL}/attendance/mark`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to mark attendance",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  markSelfAttendance: async (payload = {}) => {
+    try {
+      const response = await fetch(`${BASE_URL}/attendance/self`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to mark attendance",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getAttendancesByEmployee: async (empId, month) => {
+    try {
+      const queryString = month ? `?month=${month}` : "";
+      const response = await fetch(
+        `${BASE_URL}/attendance/employee/${empId}${queryString}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch attendance",
+        };
+      }
+
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : data.data || [],
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
