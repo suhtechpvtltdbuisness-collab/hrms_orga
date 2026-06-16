@@ -34,7 +34,7 @@ const EmployeeList = () => {
             setFetchError(null);
             try {
                 const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-                const adminId = userData?.id;
+                const adminId = userData?.id || userData?._id;
 
                 if (!adminId) {
                     setFetchError('Could not determine admin ID. Please log out and log in again.');

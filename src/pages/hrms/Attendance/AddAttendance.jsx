@@ -46,17 +46,22 @@ const AddAttendance = () => {
 
       try {
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-        const adminId = userData.id;
+        const adminId = userData.id || userData._id;
         if (!adminId) return;
 
         const response = await employeeService.getAllEmployeesByAdminId(adminId);
         if (response.success && Array.isArray(response.data)) {
           const options = response.data
-            .filter((item) => item.user?.id)
-            .map((item) => ({
-              label: `${item.user.name} (EMP-${String(item.user.id).padStart(3, '0')})`,
-              value: String(item.user.id),
-            }));
+            .map((item) => {
+              const u = item.user || item;
+              if (!u || !u.id) return null;
+              const name = u.name || u.email || `EMP-${u.id}`;
+              return {
+                label: `${name} (EMP-${String(u.id).padStart(3, '0')})`,
+                value: String(u.id),
+              };
+            })
+            .filter(Boolean);
           setEmployeeOptions(options);
         }
       } catch {

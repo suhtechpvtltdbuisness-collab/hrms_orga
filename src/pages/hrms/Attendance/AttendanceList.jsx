@@ -40,13 +40,16 @@ const AttendanceList = () => {
   const fetchEmployees = useCallback(async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-      const adminId = userData.id;
+      const adminId = userData.id || userData._id;
       if (!adminId) return;
 
       const response = await employeeService.getAllEmployeesByAdminId(adminId);
       if (response.success && Array.isArray(response.data)) {
         const names = response.data
-          .map((item) => item.user?.name)
+          .map((item) => {
+            const u = item.user || item;
+            return u?.name;
+          })
           .filter(Boolean);
         setEmployeeNames(["All", ...new Set(names)]);
       }
