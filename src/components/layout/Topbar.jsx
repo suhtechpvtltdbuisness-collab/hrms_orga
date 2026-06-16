@@ -2,8 +2,18 @@ import React from 'react';
 import { Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const getRoleLabel = (user) => {
+    if (user.isAdmin) return 'Admin';
+    if (user.type) return user.type.charAt(0).toUpperCase() + user.type.slice(1);
+    return 'User';
+};
+
 const Topbar = () => {
     const navigate = useNavigate();
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userName = userData.name || 'User';
+    const userRole = getRoleLabel(userData);
+    const userImage = userData.profileImage || '/EMP_IMG.svg';
 
     return (
         <div className="bg-white px-4 py-6 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
@@ -49,13 +59,13 @@ const Topbar = () => {
                     <div className="relative">
                         <img
                             className="h-13 w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
-                            src="/images/ankit.png"
-                            alt="Ankit Kumar"
+                            src={userImage}
+                            alt={userName}
                         />
                     </div>
                     <div className="hidden md:flex flex-col">
-                        <span className="text-sm font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">Ankit Kumar</span>
-                        <span className="text-xs text-gray-500 font-medium">Admin</span>
+                        <span className="text-sm font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">{userName}</span>
+                        <span className="text-xs text-gray-500 font-medium">{userRole}</span>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" className="hidden md:block h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

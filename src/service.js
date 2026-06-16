@@ -1090,5 +1090,92 @@ export const shiftService = {
       return { success: false, message: "Something went wrong" };
     }
   },
+
+  getShiftRequests: async (filters = {}) => {
+    try {
+      const queryString = Object.keys(filters).length
+        ? "?" +
+          new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(filters).filter(([, v]) => v != null),
+            ),
+          ).toString()
+        : "";
+
+      const response = await fetch(`${BASE_URL}/shift-requests${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch shift requests",
+        };
+      }
+      return { success: true, data: data.data || [] };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createShiftRequest: async (payload) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-requests`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to submit shift request",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  approveShiftRequest: async (id) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-requests/${id}/approve`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to approve shift request",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  rejectShiftRequest: async (id, rejectionReason = "") => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-requests/${id}/reject`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ rejectionReason }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to reject shift request",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
 };
 

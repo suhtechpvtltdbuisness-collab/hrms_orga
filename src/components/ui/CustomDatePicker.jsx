@@ -1,7 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CustomDatePicker = ({ value, onChange, placeholder = "Select date", className, disabled = false }) => {
+const parseDateValue = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string' && val.includes('/')) {
+        const parts = val.split('/');
+        if (parts.length === 3) {
+            const date = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+            return isNaN(date.getTime()) ? null : date;
+        }
+    }
+    const date = new Date(val);
+    return isNaN(date.getTime()) ? null : date;
+};
+
+const startOfDay = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+};
+
+const CustomDatePicker = ({
+    value,
+    onChange,
+    placeholder = "Select date",
+    className,
+    disabled = false,
+    allowFuture = false,
+    minDate = null,
+    maxDate = null,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(null);
@@ -14,20 +42,10 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
     // Initialize selectedDate from props
     useEffect(() => {
-        if (value) {
-            let date;
-            // Handle DD/MM/YYYY format
-            if (typeof value === 'string' && value.includes('/')) {
-                const parts = value.split('/');
-                if (parts.length === 3) date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            } else {
-                date = new Date(value);
-            }
-
-            if (date && !isNaN(date.getTime())) {
-                setSelectedDate(date);
-                setViewDate(date);
-            }
+        const date = parseDateValue(value);
+        if (date) {
+            setSelectedDate(date);
+            setViewDate(date);
         } else {
             setSelectedDate(null);
         }
@@ -68,16 +86,8 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
     const handleCancel = () => {
         setIsOpen(false);
-        if (value) {
-            // Re-parse value to reset state
-            if (typeof value === 'string' && value.includes('/')) {
-                const parts = value.split('/');
-                if (parts.length === 3) setSelectedDate(new Date(`${parts[2]}-${parts[1]}-${parts[0]}`));
-            } else {
-                setSelectedDate(new Date(value));
-            }
-        }
-        else setSelectedDate(null);
+        const date = parseDateValue(value);
+        setSelectedDate(date);
     };
 
     const changeMonth = (offset) => {
@@ -94,8 +104,9 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
         const daysInMonth = getDaysInMonth(year, month);
         const firstDay = getFirstDayOfMonth(year, month);
         const days = [];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
+        const today = startOfDay(new Date());
+        const min = minDate ? startOfDay(minDate) : null;
+        const max = maxDate ? startOfDay(maxDate) : null;
 
         // Empty slots for previous month
         for (let i = 0; i < firstDay; i++) {
@@ -104,8 +115,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
 
         // Days
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
-            date.setHours(0, 0, 0, 0);
+            const date = startOfDay(new Date(year, month, day));
 
             const isSelected = selectedDate &&
                 date.getDate() === selectedDate.getDate() &&
@@ -113,15 +123,18 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
                 date.getFullYear() === selectedDate.getFullYear();
 
             const isToday = today.toDateString() === date.toDateString();
-            const isFuture = date > today; // Check if date is in future
+            const isFuture = !allowFuture && date > today;
+            const isBeforeMin = min && date < min;
+            const isAfterMax = max && date > max;
+            const isDisabled = isFuture || isBeforeMin || isAfterMax;
 
             days.push(
                 <div
                     key={day}
-                    onClick={() => !isFuture && handleDayClick(day)}
+                    onClick={() => !isDisabled && handleDayClick(day)}
                     className={`w-7 h-7 flex items-center justify-center rounded-full text-sm transition-colors
-                    ${isFuture
-                            ? 'text-gray-300 cursor-not-allowed' // Disabled style for future dates
+                    ${isDisabled
+                            ? 'text-gray-300 cursor-not-allowed'
                             : isSelected
                                 ? 'bg-[#6750A4] text-white font-medium cursor-pointer'
                                 : isToday
