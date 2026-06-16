@@ -1007,3 +1007,88 @@ export const attendanceService = {
   },
 };
 
+// ─── Shift Type Service ──────────────────────────────────────────────────────────
+export const shiftService = {
+  getShiftTypes: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-types`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch shift types",
+        };
+      }
+      return {
+        success: true,
+        message: data.message,
+        data: data.data || [],
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getShiftTypeById: async (id) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch shift type",
+        };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createShiftType: async (payload) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-types`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to create shift type",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateShiftType: async (id, payload) => {
+    try {
+      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to update shift type",
+        };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+

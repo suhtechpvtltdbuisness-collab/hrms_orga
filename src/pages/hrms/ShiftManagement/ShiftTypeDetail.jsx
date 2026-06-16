@@ -1,37 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
 import CustomDatePicker from '../../../components/ui/CustomDatePicker';
+import { shiftService } from '../../../service';
+
+const emptyForm = {
+    name: '',
+    startTime: '',
+    endTime: '',
+    holidayList: '',
+    enableAutoAttendance: false,
+    determineCheckinCheckout: 'Alternating entries IN and OUT during the same shifts',
+    workingHoursCalculation: 'First Check-in and last check-out',
+    beginCheckinBefore: '',
+    allowCheckoutAfter: '',
+    workingHoursThresholdHalfDay: '',
+    workingHoursThresholdAbsent: '',
+    processAttendanceAfter: '',
+    lastSyncOfCheckin: '',
+    enableEntryGracePeriod: false,
+    lateEntryGracePeriod: '',
+    enableExitGracePeriod: false,
+};
 
 const ShiftTypeDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const location = useLocation();
     const isNew = !id;
 
-    // Initial state
-    const [formData, setFormData] = useState({
-        startTime: '9:00',
-        endTime: '2:00',
-        holidayList: '29/01/2026',
-        enableAutoAttendance: false,
-        
-        // Auto Attendance Settings
-        determineCheckinCheckout: 'Alternating entries IN and OUT during the same shifts',
-        workingHoursCalculation: 'First Check-in and last check-out',
-        beginCheckinBefore: '60',
-        allowCheckoutAfter: '60',
-        workingHoursThresholdHalfDay: '0.0',
-        workingHoursThresholdAbsent: '0.0',
-        processAttendanceAfter: '',
-        lastSyncOfCheckin: '',
-
-        // Grace Period Settings
-        enableEntryGracePeriod: true,
-        lateEntryGracePeriod: '15',
-        enableExitGracePeriod: false
-    });
+    const [formData, setFormData] = useState(emptyForm);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(!isNew);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const CHECKIN_CHECKOUT_OPTIONS = [
         "Alternating entries IN and OUT during the same shifts",
@@ -44,27 +45,44 @@ const ShiftTypeDetail = () => {
     ];
 
     useEffect(() => {
-        if (isNew) {
-            // Reset form for new entry
-            setFormData({
-                startTime: '',
-                endTime: '',
-                holidayList: '',
-                enableAutoAttendance: false,
-                determineCheckinCheckout: 'Alternating entries IN and OUT during the same shifts',
-                workingHoursCalculation: 'First Check-in and last check-out',
-                beginCheckinBefore: '',
-                allowCheckoutAfter: '',
-                workingHoursThresholdHalfDay: '',
-                workingHoursThresholdAbsent: '',
-                processAttendanceAfter: '',
-                lastSyncOfCheckin: '',
-                enableEntryGracePeriod: false,
-                lateEntryGracePeriod: '',
-                enableExitGracePeriod: false
-            });
-        } else {
-        }
+        const loadShiftType = async () => {
+            if (isNew) {
+                setFormData(emptyForm);
+                return;
+            }
+
+            setIsLoading(true);
+            setErrorMessage('');
+
+            const response = await shiftService.getShiftTypeById(id);
+            if (response.success && response.data) {
+                const shift = response.data;
+                setFormData({
+                    name: shift.name || '',
+                    startTime: shift.startTime || '',
+                    endTime: shift.endTime || '',
+                    holidayList: shift.holidayList || '',
+                    enableAutoAttendance: shift.enableAutoAttendance || false,
+                    determineCheckinCheckout: shift.determineCheckinCheckout || CHECKIN_CHECKOUT_OPTIONS[0],
+                    workingHoursCalculation: shift.workingHoursCalculation || WORKING_HOURS_CALC_OPTIONS[0],
+                    beginCheckinBefore: shift.beginCheckinBefore?.toString() || '',
+                    allowCheckoutAfter: shift.allowCheckoutAfter?.toString() || '',
+                    workingHoursThresholdHalfDay: shift.workingHoursThresholdHalfDay || '',
+                    workingHoursThresholdAbsent: shift.workingHoursThresholdAbsent || '',
+                    processAttendanceAfter: shift.processAttendanceAfter || '',
+                    lastSyncOfCheckin: shift.lastSyncOfCheckin || '',
+                    enableEntryGracePeriod: shift.enableEntryGracePeriod || false,
+                    lateEntryGracePeriod: shift.lateEntryGracePeriod?.toString() || '',
+                    enableExitGracePeriod: shift.enableExitGracePeriod || false,
+                });
+            } else {
+                setErrorMessage(response.message || 'Failed to load shift type.');
+            }
+
+            setIsLoading(false);
+        };
+
+        loadShiftType();
     }, [isNew, id]);
 
     const handleChange = (e) => {
@@ -79,57 +97,131 @@ const ShiftTypeDetail = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const buildPayload = () => ({
+        name: formData.name,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        holidayList: formData.holidayList || null,
+        enableAutoAttendance: formData.enableAutoAttendance,
+        determineCheckinCheckout: formData.determineCheckinCheckout,
+        workingHoursCalculation: formData.workingHoursCalculation,
+        beginCheckinBefore: formData.beginCheckinBefore
+            ? Number(formData.beginCheckinBefore)
+            : null,
+        allowCheckoutAfter: formData.allowCheckoutAfter
+            ? Number(formData.allowCheckoutAfter)
+            : null,
+        workingHoursThresholdHalfDay: formData.workingHoursThresholdHalfDay || null,
+        workingHoursThresholdAbsent: formData.workingHoursThresholdAbsent || null,
+        processAttendanceAfter: formData.processAttendanceAfter || null,
+        lastSyncOfCheckin: formData.lastSyncOfCheckin || null,
+        enableEntryGracePeriod: formData.enableEntryGracePeriod,
+        lateEntryGracePeriod: formData.lateEntryGracePeriod
+            ? Number(formData.lateEntryGracePeriod)
+            : null,
+        enableExitGracePeriod: formData.enableExitGracePeriod,
+    });
+
+    const handleSave = async () => {
+        setErrorMessage('');
+
+        if (!formData.name || !formData.startTime || !formData.endTime) {
+            setErrorMessage('Name, start time, and end time are required.');
+            return;
+        }
+
+        setIsSaving(true);
+        const payload = buildPayload();
+
+        const response = isNew
+            ? await shiftService.createShiftType(payload)
+            : await shiftService.updateShiftType(id, payload);
+
+        setIsSaving(false);
+
+        if (response.success) {
+            navigate('/hrms/shift-type');
+        } else {
+            setErrorMessage(response.message || 'Failed to save shift type.');
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="bg-white px-6 py-6 mx-4 mt-4 rounded-xl">
+                <p className="text-gray-500">Loading shift type...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
-             {/* Breadcrumb */}
              <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
-                <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
+                <img
+                    src="/images/arrow_left_alt.svg"
+                    alt="Back"
+                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
                     onClick={() => navigate('/hrms/shift-type')}
                 />
-                <span 
+                <span
                     className='cursor-pointer text-[#7D1EDB]'
                     onClick={() => navigate('/hrms/shift-type')}
                 >
                     Shift Type
-                </span> 
-                <ChevronRight size={14}/> 
-                <span className="text-[#6B7280]">Auto Attendance</span>
+                </span>
+                <ChevronRight size={14}/>
+                <span className="text-[#6B7280]">{isNew ? 'Add Shift Type' : 'Edit Shift Type'}</span>
             </div>
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-4 shrink-0">
-                <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Auto Attendance</h1>
-                
+                <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                    {isNew ? 'Add Shift Type' : 'Edit Shift Type'}
+                </h1>
+
                 <button
-                    className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                    onClick={() => navigate('/hrms/shift-type')}
+                    className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB] disabled:opacity-60"
+                    onClick={handleSave}
+                    disabled={isSaving}
                 >
-                    <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
+                    <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        {isSaving ? 'Saving...' : 'Save'}
+                    </span>
                 </button>
             </div>
 
-            {/* Form Content */}
+            {errorMessage && (
+                <p className="text-sm text-red-500 mb-2">{errorMessage}</p>
+            )}
+
             <div className="flex-1 w-full max-w-full overflow-y-auto pr-2" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-3">
                     <div className="w-full grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4">
-                         {/* Start Time */}
+                        <div>
+                            <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Shift Name</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. Morning Shift"
+                                className="w-[320px] border border-[#E0E0E0] rounded-lg px-3 py-2 text-sm text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
+                            />
+                        </div>
+
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Start Time</label>
                             <div className="relative w-[320px]">
-                                <input 
+                                <input
                                     type="text"
                                     name="startTime"
                                     value={formData.startTime}
                                     onChange={handleChange}
+                                    placeholder="9:00"
                                     className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-sm text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                                 />
                             </div>
                         </div>
 
-                         {/* Holiday List */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Holiday List</label>
                             <div className="w-[320px]">
@@ -142,25 +234,24 @@ const ShiftTypeDetail = () => {
                             </div>
                         </div>
 
-                         {/* End Time */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">End Time</label>
                             <div className="relative w-[320px]">
-                                <input 
+                                <input
                                     type="text"
                                     name="endTime"
                                     value={formData.endTime}
                                     onChange={handleChange}
+                                    placeholder="18:00"
                                     className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-sm text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                                 />
                             </div>
                         </div>
 
-                        {/* Enable Auto Attendance */}
                         <div className="flex flex-col pt-6">
                             <label className="flex items-center gap-2 cursor-pointer mb-1">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     name="enableAutoAttendance"
                                     checked={formData.enableAutoAttendance}
                                     onChange={handleChange}
@@ -168,17 +259,15 @@ const ShiftTypeDetail = () => {
                                 />
                                 <span className="text-[16px] font-medium text-[#1E1E1E]">Enable Auto Attendance</span>
                             </label>
-                            <p className="text-sm text-[#757575] ml-6">Mark attendance based on employee checkin for employee for employees assigned to this shift</p>
+                            <p className="text-sm text-[#757575] ml-6">Mark attendance based on employee check-in for employees assigned to this shift</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Auto Attendance Settings Section */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-3">
                     <h2 className="text-[16px] font-semibold text-[#1E1E1E] mb-2" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Auto Attendance Settings</h2>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                         {/* Determine Checkin and Checkout */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Determine Checkin and Checkout</label>
                             <FilterDropdown
@@ -193,10 +282,9 @@ const ShiftTypeDetail = () => {
                             />
                         </div>
 
-                         {/* Working Hours Threshold For Half Day */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Working Hours Threshold For Half Day</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="workingHoursThresholdHalfDay"
                                 value={formData.workingHoursThresholdHalfDay}
@@ -206,7 +294,6 @@ const ShiftTypeDetail = () => {
                              <p className="text-sm text-[#757575] mt-1">Working hours below which half day is marked.(Zero to disable)</p>
                         </div>
 
-                        {/* Working Hours Calculation Based On */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Working Hours Calculation Based On</label>
                             <FilterDropdown
@@ -221,10 +308,9 @@ const ShiftTypeDetail = () => {
                             />
                         </div>
 
-                         {/* Working Hours Threshold For Absent */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Working Hours Threshold For Absent</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="workingHoursThresholdAbsent"
                                 value={formData.workingHoursThresholdAbsent}
@@ -234,10 +320,9 @@ const ShiftTypeDetail = () => {
                              <p className="text-sm text-[#757575] mt-1">Working hours below which absent is marked.(Zero to disable)</p>
                         </div>
 
-                        {/* Begin Check-in Before Shift Starts Time */}
                         <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Begin Check-in Before Shift Starts Time(in minutes)</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="beginCheckinBefore"
                                 value={formData.beginCheckinBefore}
@@ -247,10 +332,9 @@ const ShiftTypeDetail = () => {
                             <p className="text-sm text-[#757575] mt-1">The time before the shift start time during which employee check-in is considered for attendance</p>
                         </div>
 
-                         {/* Process Attendance After */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Process Attendance After</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="processAttendanceAfter"
                                 value={formData.processAttendanceAfter}
@@ -260,10 +344,9 @@ const ShiftTypeDetail = () => {
                             <p className="text-sm text-[#757575] mt-1">Attendance will be marked automatically only after this date.</p>
                         </div>
 
-                         {/* Allow Check-out After Shift End Time */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Allow Check-out After Shift End Time(in minutes)</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="allowCheckoutAfter"
                                 value={formData.allowCheckoutAfter}
@@ -273,32 +356,27 @@ const ShiftTypeDetail = () => {
                             <p className="text-sm text-[#757575] mt-1">The time after the end of shift during which check-out is considered for attendance.</p>
                         </div>
 
-                        {/* Last Sync Of Check-in */}
                         <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Last Sync Of Check-in</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="lastSyncOfCheckin"
                                 value={formData.lastSyncOfCheckin}
                                 onChange={handleChange}
                                 className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-sm text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
                             />
-                             <p className="text-sm text-[#757575] mt-1">Last unknown successful sync of employee checkin. Reset this only if you are sure that all logs are sync from all the locations. Please don't modify this if you are unsure.</p>
+                             <p className="text-sm text-[#757575] mt-1">Last unknown successful sync of employee checkin.</p>
                         </div>
-
                     </div>
                 </div>
 
-                {/* Grace Period Settings For Attendance */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-3">
                      <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-2" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Grace Period Settings For Attendance</h2>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                        
-                         {/* Enable Entry Grace Period */}
                         <div>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     name="enableEntryGracePeriod"
                                     checked={formData.enableEntryGracePeriod}
                                     onChange={handleChange}
@@ -309,10 +387,9 @@ const ShiftTypeDetail = () => {
                         </div>
                         <div className='hidden md:block'></div>
 
-                         {/* Late Entry Grace Period */}
                          <div>
                             <label className="block text-[16px] font-normal text-[#1E1E1E] mb-1">Late Entry Grace Period</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="lateEntryGracePeriod"
                                 value={formData.lateEntryGracePeriod}
@@ -324,23 +401,12 @@ const ShiftTypeDetail = () => {
                      </div>
                 </div>
 
-                 {/* Extra Grace Period Settings*/}
                  <div className="border border-[#E0E0E0] rounded-lg p-4">
-                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-4" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Grace Period Settings For Attendance</h2>
+                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-4" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Exit Grace Period</h2>
                      <div className="flex gap-8">
-                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                name="enableEntryGracePeriod"
-                                checked={formData.enableEntryGracePeriod}
-                                onChange={handleChange}
-                                className="w-4 h-4 rounded border-[#1F1F1F] text-[#1E1E1E] focus:ring-0"
-                            />
-                            <span className="text-[16px] font-normal text-[#1E1E1E]">Enable Entry Grace Period</span>
-                        </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 name="enableExitGracePeriod"
                                 checked={formData.enableExitGracePeriod}
                                 onChange={handleChange}
@@ -350,7 +416,6 @@ const ShiftTypeDetail = () => {
                         </label>
                      </div>
                 </div>
-
             </div>
         </div>
     );
