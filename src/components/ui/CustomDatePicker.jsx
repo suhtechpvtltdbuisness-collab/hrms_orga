@@ -9,18 +9,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select date", classN
     const [position, setPosition] = useState('bottom');
 
     useEffect(() => {
-        if (isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const dropdownHeight = 350; // Estimated height
-
-            // Only flip to top if there isn't enough space below AND there IS enough space above
-            if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-                setPosition('top');
-            } else {
-                setPosition('bottom');
-            }
-        }
+        setPosition('bottom');
     }, [isOpen]);
 
     // Initialize selectedDate from props
