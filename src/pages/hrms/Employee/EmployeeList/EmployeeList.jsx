@@ -25,62 +25,50 @@ const EmployeeList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [employees, setEmployees] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(null);
 
     // Fetch employees from API
     useEffect(() => {
         const fetchEmployees = async () => {
             setIsLoading(true);
+            setFetchError(null);
             try {
-                // Get admin ID from stored user data
-                const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-                console.log("Stored userData:", userData); // Debug log
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const adminId = userData?.id || userData?._id;
 
-                // Try to get admin ID from userData.id or use a fallback
-                let adminId = userData.id;
-
-                // If not found in userData, try to get from logged in user
                 if (!adminId) {
-                    console.log("Admin ID not found in userData, checking if current user is admin");
-                    // For now, let's fetch all employees without admin filter
-                    // You'll need to update this based on your backend API
-                    adminId = 3; // Temporary fallback - replace with actual logged in user ID
+                    setFetchError('Could not determine admin ID. Please log out and log in again.');
+                    setIsLoading(false);
+                    return;
                 }
 
-                console.log("Using admin ID:", adminId);
-
-                if (adminId) {
-                    const response = await employeeService.getAllEmployeesByAdminId(adminId);
-                    console.log("API Response:", response); // Debug log
-                    if (response.success && response.data) {
-                        console.log("Fetched Employees:", response.data); // Debug log
-                        // Map API data to table format
-                        const mappedEmployees = response.data.map((item, index) => {
-                            console.log("Mapping item:", item); // Debug each item
-                            return {
-                                srNo: String(index + 1).padStart(2, '0'),
-                                name: item.user?.name || '-',
-                                empId: `EMP-${String(item.user?.id).padStart(3, '0')}`,
-                                department: item.user?.department || '-',
-                                designation: item.user?.designation || '-',
-                                joiningDate: item.user?.createdAt ? new Date(item.user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-                                contact: item.user?.email || '-',
-                                phone: item.user?.phone || '-',
-                                status: item.user?.active ? 'Active' : 'Inactive',
-                                gender: item.user?.gender || '-',
-                                id: item.user?.id,
-                                employeeId: item.employee?.id,
-                            };
-                        });
-                        console.log("Mapped Employees:", mappedEmployees); // Debug mapped data
-                        setEmployees(mappedEmployees);
-                    } else {
-                        console.log("No employees found or API failed");
-                    }
+                const response = await employeeService.getAllEmployeesByAdminId(adminId);
+                if (response.success && response.data) {
+                    const mappedEmployees = response.data.map((item, index) => {
+                        const u = item.user || item;
+                        return {
+                            srNo: String(index + 1).padStart(2, '0'),
+                            name: u.name || '-',
+                            empId: `EMP-${String(u.id || index + 1).padStart(3, '0')}`,
+                            department: u.department || '-',
+                            designation: u.designation || '-',
+                            joiningDate: u.createdAt
+                                ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                : '-',
+                            contact: u.email || '-',
+                            phone: u.phone || '-',
+                            status: u.active ? 'Active' : 'Inactive',
+                            gender: u.gender || '-',
+                            id: u.id,
+                            employeeId: item.employee?.id,
+                        };
+                    });
+                    setEmployees(mappedEmployees);
                 } else {
-                    console.log("No admin ID found");
+                    setFetchError(response.message || 'Failed to load employee data');
                 }
-            } catch (error) {
-                console.error("Error fetching employees:", error);
+            } catch {
+                setFetchError('An unexpected error occurred while loading employees');
             } finally {
                 setIsLoading(false);
             }
@@ -270,172 +258,64 @@ const EmployeeList = () => {
     };
 
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9] font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="page-wrapper">
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
-                <img
-                    src="/images/arrow_left_alt.svg"
-                    alt="Back"
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform"
-                    onClick={() => navigate('/hrms')}
-                />
-                <span
-                    className='cursor-pointer text-[#7D1EDB]'
-                    onClick={() => navigate('/hrms')}
-                >
-                    HRMS Dashboard
-                </span>
-                <ChevronRight size={14} />
-                <span className="text-[#6B7280]">Employee List</span>
+            <div className="breadcrumb">
+                <span className="bc-link" onClick={() => navigate('/hrms')}>HRMS Dashboard</span>
+                <ChevronRight size={13} />
+                <span>Employee List</span>
             </div>
 
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-xl font-semibold text-gray-800">Employee List</h1>
-
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                    {/* Export Button */}
-                    <button
-                        onClick={handleExportPDF}
-                        className="flex items-center cursor-pointer justify-center gap-2 text-[#7D1EDB] font-medium hover:bg-purple-50 transition-colors bg-white w-full sm:w-auto min-w-[110px]"
-                        style={{
-                            height: '48px',
-                            padding: '10px 16px',
-                            borderRadius: '26px',
-                            border: '1px solid #7D1EDB'
-                        }}
-                    >
-                        <span>Export</span>
-                        <Download size={18} />
+            {/* Header */}
+            <div className="page-header">
+                <h1 className="page-title">Employee List</h1>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                    <button onClick={handleExportPDF} className="btn-ghost">
+                        <Download size={15} /> Export PDF
                     </button>
-
-                    {/* Add Employee Button */}
-                    <Link
-                        to="/hrms/employees/add"
-                        className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB] w-full sm:w-auto min-w-[177px]"
-                        style={{
-                            height: '48px',
-                            padding: '10px 16px',
-                            borderRadius: '26px'
-                        }}
-                    >
-                        <span>Add Employee</span>
-                        <Plus size={18} />
+                    <Link to="/hrms/employees/add" className="btn-primary" style={{ textDecoration:'none' }}>
+                        <Plus size={15} /> Add Employee
                     </Link>
                 </div>
             </div>
 
-            {/* Filters Section */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
-                {/* Search Bar */}
-                <div className="relative w-full lg:w-[380px]">
-                    <div
-                        className="flex items-center bg-gray-50 text-gray-400 w-full"
-                        style={{
-                            height: '48px',
-                            padding: '2px 32px 2px 24px',
-                            borderRadius: '32px',
-                            border: '1px solid transparent'
-                        }}
-                    >
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by name,id,email..."
-                            className="bg-transparent w-full outline-none text-gray-700 placeholder-[#B3B3B3] text-base font-normal"
-                        />
-                    </div>
+            {/* Filters */}
+            <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'space-between', alignItems:'center', marginBottom:14, gap:10, flexShrink:0 }}>
+                <div className="search-bar" style={{ flex:'1', minWidth:220, maxWidth:320 }}>
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name, ID, email…"
+                    />
                 </div>
-
-                {/* Filter Dropdowns */}
-                <div className="flex flex-wrap gap-3 w-full lg:w-auto">
-                    {/* Department Filter */}
-                    <FilterDropdown
-                        label="Department"
-                        options={DEPARTMENT_OPTIONS}
-                        value={filters.department}
-                        onChange={(val) => setFilters(prev => ({ ...prev, department: val }))}
-                        minWidth="148px"
-                    />
-
-                    {/* Designation Filter */}
-                    <FilterDropdown
-                        label="Designation"
-                        options={DESIGNATION_OPTIONS}
-                        value={filters.designation}
-                        onChange={(val) => setFilters(prev => ({ ...prev, designation: val }))}
-                        minWidth="158px"
-                    />
-
-                    {/* Status Filter */}
-                    <FilterDropdown
-                        label="Status"
-                        options={STATUS_OPTIONS}
-                        value={filters.status}
-                        onChange={(val) => setFilters(prev => ({ ...prev, status: val }))}
-                        minWidth="120px"
-                    />
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                    <FilterDropdown label="Department" options={DEPARTMENT_OPTIONS} value={filters.department} onChange={(val) => setFilters(prev => ({ ...prev, department: val }))} minWidth="148px" className="btn-ghost" />
+                    <FilterDropdown label="Designation" options={DESIGNATION_OPTIONS} value={filters.designation} onChange={(val) => setFilters(prev => ({ ...prev, designation: val }))} minWidth="148px" className="btn-ghost" />
+                    <FilterDropdown label="Status" options={STATUS_OPTIONS} value={filters.status} onChange={(val) => setFilters(prev => ({ ...prev, status: val }))} minWidth="120px" className="btn-ghost" />
                 </div>
             </div>
 
-            {/* Table Section */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
-                <table className="w-full table-fixed">
-                    <thead className="sticky top-0 bg-white z-10">
-                        <tr className="text-left border-b border-gray-200">
-                            <th className="py-3 px-1 w-[40px] bg-white">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4 rounded border border-[#7D1EDB] accent-[#7D1EDB] cursor-pointer"
-                                    style={{ borderColor: '#7D1EDB' }}
+            {/* Table */}
+            <div style={{ flex:1, minHeight:0, overflow:'auto', border:'1px solid #E5E7EB', borderRadius:10 }}>
+                <table className="data-table" style={{ minWidth:900 }}>
+                    <thead>
+                        <tr>
+                            <th style={{ width:36, padding:'10px 12px' }}>
+                                <input type="checkbox" style={{ accentColor:'#7C3AED' }}
                                     checked={employees.length > 0 && selectedEmployees.length === employees.length}
-                                    onChange={handleSelectAll}
-                                />
+                                    onChange={handleSelectAll} />
                             </th>
-
-                            <th onClick={() => handleSort('srNo')} className="py-3 px-1 w-[60px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    SR NO <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'srNo' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('name')} className="py-3 px-1 w-[140px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    EMP NAME <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'name' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('empId')} className="py-3 px-1 w-[90px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    EMP ID <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'empId' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('department')} className="py-3 px-1 w-[110px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    DEPARTMENT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'department' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('designation')} className="py-3 px-1 w-[130px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    DESIGNATION <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'designation' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('joiningDate')} className="py-3 px-1 w-[130px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    JOINING DATE <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'joiningDate' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('contact')} className="py-3 px-1 w-[170px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    CONTACT <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'contact' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th onClick={() => handleSort('status')} className="py-3 px-1 w-[90px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white cursor-pointer select-none">
-                                <div className="flex items-center hover:text-gray-900 transition-colors whitespace-nowrap">
-                                    STATUS <img src="/images/sort_arrow.svg" alt="sort" className={`ml-1 transition-transform duration-200 ${sortConfig.key === 'status' && sortConfig.direction === 'descending' ? 'rotate-180' : ''}`} />
-                                </div>
-                            </th>
-                            <th className="py-3 px-1 w-[70px] text-[12px] font-normal text-[#707070] uppercase tracking-wider bg-white">ACTION</th>
+                            <th onClick={() => handleSort('srNo')} style={{ cursor:'pointer' }}>SR NO.</th>
+                            <th onClick={() => handleSort('name')} style={{ cursor:'pointer' }}>EMPLOYEE NAME</th>
+                            <th onClick={() => handleSort('empId')} style={{ cursor:'pointer' }}>EMP ID</th>
+                            <th onClick={() => handleSort('department')} style={{ cursor:'pointer' }}>DEPARTMENT</th>
+                            <th onClick={() => handleSort('designation')} style={{ cursor:'pointer' }}>DESIGNATION</th>
+                            <th onClick={() => handleSort('joiningDate')} style={{ cursor:'pointer' }}>JOINING DATE</th>
+                            <th onClick={() => handleSort('contact')} style={{ cursor:'pointer' }}>CONTACT</th>
+                            <th onClick={() => handleSort('status')} style={{ cursor:'pointer' }}>STATUS</th>
+                            <th>ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -445,6 +325,14 @@ const EmployeeList = () => {
                                     <div className="flex flex-col items-center justify-center">
                                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1EDB] mb-4"></div>
                                         <p className="text-gray-500">Loading employees...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : fetchError ? (
+                            <tr>
+                                <td colSpan="10" className="py-12 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <p className="text-red-500 font-medium">{fetchError}</p>
                                     </div>
                                 </td>
                             </tr>
