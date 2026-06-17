@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { authService } from "../service";
+import { isLocalAuthEnabled } from "../utils/authMode";
 
 const ProtectedRoute = ({ children }) => {
   const [authState, setAuthState] = useState("loading");
@@ -20,7 +21,10 @@ const ProtectedRoute = ({ children }) => {
         return;
       }
 
-      if (!authService.isSubscribed(profile.data?.subscription)) {
+      if (
+        !isLocalAuthEnabled() &&
+        !authService.isSubscribed(profile.data?.subscription)
+      ) {
         window.location.href = authService.getPricingUrl();
         return;
       }

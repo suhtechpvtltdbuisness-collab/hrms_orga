@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../../service";
+import { isLocalAuthEnabled } from "../../utils/authMode";
 
 export default function SsoCallback() {
   const navigate = useNavigate();
@@ -37,7 +38,13 @@ export default function SsoCallback() {
         <p>{error}</p>
         <button
           type="button"
-          onClick={() => navigate("/auth", { replace: true })}
+          onClick={() => {
+            if (isLocalAuthEnabled()) {
+              navigate("/auth", { replace: true });
+              return;
+            }
+            window.location.href = `${authService.getMainSiteUrl()}/auth?mode=login`;
+          }}
           className="px-6 py-2 rounded-full bg-[#7D1EDB] text-white"
         >
           Go to Login
