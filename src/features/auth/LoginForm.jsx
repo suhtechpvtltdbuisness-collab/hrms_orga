@@ -27,13 +27,20 @@ export const LoginForm = ({ onRegister, onForgotPassword }) => {
     const result = await authService.login(form);
     
     if (result.success) {
+      const subscribed = authService.isSubscribed(result.data?.subscription);
       setToast({
         type: "success",
         title: "Login Successful",
-        message: "Redirecting to dashboard...",
+        message: subscribed
+          ? "Redirecting to dashboard..."
+          : "Please choose a subscription plan...",
       });
       setTimeout(() => {
-        navigate("/hrms");
+        if (subscribed) {
+          navigate("/hrms");
+        } else {
+          window.location.href = authService.getPricingUrl();
+        }
       }, 1500);
     } else {
       setToast({

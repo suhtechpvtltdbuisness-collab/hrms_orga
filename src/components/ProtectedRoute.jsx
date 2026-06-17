@@ -7,21 +7,25 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const verifySession = async () => {
-      const isLoggedIn = localStorage.getItem("isLoggedIn");
-      const authToken = localStorage.getItem("authToken");
-
-      if (isLoggedIn && authToken) {
-        setAuthState("authenticated");
-        return;
-      }
-
       const profile = await authService.getProfile();
-      if (profile.success) {
-        setAuthState("authenticated");
+
+      if (!profile.success) {
+        const isLoggedIn = localStorage.getItem("isLoggedIn");
+        const authToken = localStorage.getItem("authToken");
+        if (isLoggedIn && authToken) {
+          setAuthState("unauthenticated");
+          return;
+        }
+        setAuthState("unauthenticated");
         return;
       }
 
-      setAuthState("unauthenticated");
+      if (!authService.isSubscribed(profile.data?.subscription)) {
+        window.location.href = authService.getPricingUrl();
+        return;
+      }
+
+      setAuthState("authenticated");
     };
 
     verifySession();

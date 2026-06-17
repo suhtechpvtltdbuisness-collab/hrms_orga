@@ -12,7 +12,7 @@ import Payroll from './Payroll';
 import TrainingDevelopment from './TrainingDevelopment';
 import OffBoarding from './OffBoarding';
 import ActivityLog from './ActivityLog';
-import { employeeService, leaveService, performanceService, payrollService } from '../../../../service';
+import { employeeService, leaveService, performanceService, payrollService, authService } from '../../../../service';
 
 const AddEmployee = () => {
     const navigate = useNavigate();
@@ -24,6 +24,17 @@ const AddEmployee = () => {
     const [leaveSavedAt, setLeaveSavedAt] = useState(null);             // triggers Leave list refresh
     const [performanceSavedAt, setPerformanceSavedAt] = useState(null);  // triggers Performance list refresh
     const [payrollSavedAt, setPayrollSavedAt] = useState(null);          // triggers Payroll list refresh
+    const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+
+    useEffect(() => {
+        const loadSubscription = async () => {
+            const profile = await authService.getProfile();
+            if (profile.success && profile.data?.plan) {
+                setSubscriptionInfo(profile.data.plan);
+            }
+        };
+        loadSubscription();
+    }, []);
 
     // ═══════════════════════════════════════════════════════════════════
     // CENTRALIZED ID STORE
@@ -380,6 +391,16 @@ const AddEmployee = () => {
 
         setIsLoading(true);
         try {
+            if (subscriptionInfo && subscriptionInfo.canAddEmployee === false) {
+                setToast({
+                    type: 'error',
+                    title: 'Employee Limit Reached',
+                    message: `Your plan allows up to ${subscriptionInfo.maxEmployees} employees. Upgrade your subscription to add more.`,
+                });
+                setIsLoading(false);
+                return;
+            }
+
             // Map form data to API format
             const employeeData = {
                 name: formData.name || '',
@@ -523,6 +544,21 @@ const AddEmployee = () => {
                     <ChevronRight size={16} className="mx-1" />
                     <span className="text-[#667085] text-[14px] font-base">Add Employee</span>
                 </div>
+
+                {subscriptionInfo && (
+                    <div className={`mb-4 px-4 py-3 rounded-lg text-sm shrink-0 ${
+                        subscriptionInfo.canAddEmployee
+                            ? "bg-purple-50 text-purple-800 border border-purple-100"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
+                    }`}>
+                        Plan: <strong>{subscriptionInfo.planType?.replace("_", " ") || "active"}</strong>
+                        {" · "}
+                        Employees: {subscriptionInfo.employeeCount ?? 0} / {subscriptionInfo.maxEmployees ?? 0}
+                        {!subscriptionInfo.canAddEmployee && (
+                            <span> — Upgrade your plan on suhtech.store/pricing to add more employees.</span>
+                        )}
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 sm:gap-0 shrink-0">

@@ -11,8 +11,13 @@ export default function AuthPage() {
   useEffect(() => {
     const checkExistingSession = async () => {
       const profile = await authService.getProfile();
-      if (profile.success) {
+      if (
+        profile.success &&
+        authService.isSubscribed(profile.data?.subscription)
+      ) {
         navigate("/hrms", { replace: true });
+      } else if (profile.success) {
+        window.location.href = authService.getPricingUrl();
       }
     };
 

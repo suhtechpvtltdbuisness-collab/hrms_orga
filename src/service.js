@@ -5,7 +5,7 @@ const BASE_URL =
 const MAIN_SITE_URL =
   import.meta.env.VITE_MAIN_SITE_URL || "https://suhtech.store";
 
-const persistUserSession = (user, tokens) => {
+const persistUserSession = (user, tokens, subscription) => {
   if (tokens?.accessToken) {
     localStorage.setItem("authToken", tokens.accessToken);
   }
@@ -15,6 +15,9 @@ const persistUserSession = (user, tokens) => {
   if (user) {
     localStorage.setItem("userData", JSON.stringify(user));
   }
+  if (subscription) {
+    localStorage.setItem("subscription", JSON.stringify(subscription));
+  }
   localStorage.setItem("isLoggedIn", "true");
 };
 
@@ -23,6 +26,7 @@ const clearUserSession = () => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("userData");
+  localStorage.removeItem("subscription");
 };
 
 const getAuthHeaders = () => {
@@ -61,7 +65,11 @@ export const authService = {
         };
       }
 
-      persistUserSession(data.data?.user, data.data?.tokens);
+      persistUserSession(
+        data.data?.user,
+        data.data?.tokens,
+        data.data?.subscription,
+      );
 
       return {
         success: true,
@@ -91,7 +99,11 @@ export const authService = {
         };
       }
 
-      persistUserSession(data.data?.user, data.data?.tokens);
+      persistUserSession(
+        data.data?.user,
+        data.data?.tokens,
+        data.data?.subscription,
+      );
 
       return {
         success: true,
@@ -131,6 +143,12 @@ export const authService = {
       if (data.data?.user) {
         localStorage.setItem("userData", JSON.stringify(data.data.user));
         localStorage.setItem("isLoggedIn", "true");
+      }
+      if (data.data?.subscription) {
+        localStorage.setItem(
+          "subscription",
+          JSON.stringify(data.data.subscription),
+        );
       }
 
       return {
@@ -175,13 +193,51 @@ export const authService = {
       };
     }
   },
-  hasActiveSubscription: (plan) => {
+  isSubscribed: (subscription) => subscription?.isSubscribed === true,
+
+  hasActiveSubscription: (subscriptionOrPlan) => {
+    if (subscriptionOrPlan?.isSubscribed !== undefined) {
+      return subscriptionOrPlan.isSubscribed === true;
+    }
+    const plan = subscriptionOrPlan;
     if (!plan) return false;
     if (!plan.active) return false;
     if (!plan.expired) return true;
     return new Date(plan.expired) > new Date();
   },
   getMainSiteUrl: () => MAIN_SITE_URL,
+  getPricingUrl: () => `${MAIN_SITE_URL}/pricing`,
+
+  importSessionFromHash: () => {
+    const hash = window.location.hash?.replace(/^#/, "");
+    if (!hash) return false;
+
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("accessToken");
+    if (!accessToken) return false;
+
+    const refreshToken = params.get("refreshToken");
+    let user = null;
+    let subscription = null;
+
+    try {
+      const userData = params.get("userData");
+      if (userData) user = JSON.parse(decodeURIComponent(userData));
+      const subData = params.get("subscription");
+      if (subData) subscription = JSON.parse(decodeURIComponent(subData));
+    } catch {
+      return false;
+    }
+
+    persistUserSession(
+      user,
+      { accessToken, refreshToken: refreshToken || undefined },
+      subscription,
+    );
+
+    window.history.replaceState(null, "", window.location.pathname);
+    return true;
+  },
 };
 
 export const departmentService = {
@@ -1197,6 +1253,196 @@ export const shiftService = {
     } catch {
       return { success: false, message: "Something went wrong" };
     }
+  },
+};
+
+const loadRazorpayScript = () =>
+  new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.body.appendChild(script);
+  });
+
+export const subscriptionService = {
+  getCurrent: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/current`);
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch subscription" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createOrder: async (planType) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/create-order`, {
+        method: "POST",
+        body: JSON.stringify({ planType }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create order" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  verifyPayment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/verify-payment`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Payment verification failed" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  openCheckout: async (orderData, user) => {
+    await loadRazorpayScript();
+
+    return new Promise((resolve) => {
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Suhtech ORGA",
+        description: orderData.planName,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          const result = await subscriptionService.verifyPayment({
+            planType: orderData.planType,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+          resolve(result);
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#756FCC" },
+        modal: {
+          ondismiss: () => resolve({ success: false, message: "Payment cancelled" }),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  },
+};
+
+const loadRazorpayScript = () =>
+  new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.body.appendChild(script);
+  });
+
+export const subscriptionService = {
+  getCurrent: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/current`);
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch subscription" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createOrder: async (planType) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/create-order`, {
+        method: "POST",
+        body: JSON.stringify({ planType }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create order" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  verifyPayment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/verify-payment`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Payment verification failed" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  openCheckout: async (orderData, user) => {
+    await loadRazorpayScript();
+
+    return new Promise((resolve) => {
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Suhtech ORGA",
+        description: orderData.planName,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          const result = await subscriptionService.verifyPayment({
+            planType: orderData.planType,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+          resolve(result);
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#756FCC" },
+        modal: {
+          ondismiss: () => resolve({ success: false, message: "Payment cancelled" }),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
   },
 };
 
