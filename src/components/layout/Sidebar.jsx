@@ -18,16 +18,16 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { authService } from '../../service';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.clear();
-    // Navigate to auth page
+  const handleLogout = async () => {
+    await authService.logout();
     navigate('/auth');
+    toast.success('Logged out successfully');
   };
 
   const menuItems = [

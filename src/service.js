@@ -2,14 +2,55 @@ const BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL ||
   "https://hrms-orga-backend.vercel.app";
 
+const MAIN_SITE_URL =
+  import.meta.env.VITE_MAIN_SITE_URL || "https://suhtech.store";
+
+const persistUserSession = (user, tokens) => {
+  if (tokens?.accessToken) {
+    localStorage.setItem("authToken", tokens.accessToken);
+  }
+  if (tokens?.refreshToken) {
+    localStorage.setItem("refreshToken", tokens.refreshToken);
+  }
+  if (user) {
+    localStorage.setItem("userData", JSON.stringify(user));
+  }
+  localStorage.setItem("isLoggedIn", "true");
+};
+
+const clearUserSession = () => {
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("userData");
+};
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+const apiFetch = (url, options = {}) =>
+  fetch(url, {
+    credentials: "include",
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+
 export const authService = {
   register: async (userData) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/register`, {
+      const response = await apiFetch(`${BASE_URL}/auth/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(userData),
       });
       const data = await response.json();
@@ -20,24 +61,7 @@ export const authService = {
         };
       }
 
-      // Token is at data.tokens.accessToken
-      const token = data.data?.tokens?.accessToken;
-
-      if (token) {
-        localStorage.setItem("authToken", token);
-      }
-
-      // Store refresh token if available
-      if (data.data?.tokens?.refreshToken) {
-        localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
-      }
-
-      // Store user data
-      if (data.data?.user) {
-        localStorage.setItem("userData", JSON.stringify(data.data.user));
-      }
-
-      localStorage.setItem("isLoggedIn", "true");
+      persistUserSession(data.data?.user, data.data?.tokens);
 
       return {
         success: true,
@@ -53,17 +77,12 @@ export const authService = {
   },
   login: async (userData) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
+      const response = await apiFetch(`${BASE_URL}/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(userData),
       });
 
       const data = await response.json();
-      console.log("LOGIN RESPONSE:", data);
-
 
       if (!response.ok) {
         return {
@@ -72,34 +91,7 @@ export const authService = {
         };
       }
 
-      const accessToken = data?.data?.tokens?.accessToken;
-
-      if (accessToken) {
-        localStorage.setItem("authToken", accessToken);
-        console.log("Token Saved:", accessToken);
-      } else {
-        console.error("Token not found in response");
-      }
-
-
-      // Token is at data.tokens.accessToken
-      const token = data.data?.tokens?.accessToken;
-
-      if (token) {
-        localStorage.setItem("authToken", token);
-      }
-
-      // Store refresh token if available
-      if (data.data?.tokens?.refreshToken) {
-        localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
-      }
-
-      // Store user data
-      if (data.data?.user) {
-        localStorage.setItem("userData", JSON.stringify(data.data.user));
-      }
-
-      localStorage.setItem("isLoggedIn", "true");
+      persistUserSession(data.data?.user, data.data?.tokens);
 
       return {
         success: true,
@@ -113,29 +105,90 @@ export const authService = {
       };
     }
   },
-  logout: () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("authToken");
+  logout: async () => {
+    try {
+      await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" });
+    } catch {
+      // clear local session even if API call fails
+    }
+    clearUserSession();
+    return { success: true, message: "Logout successful" };
   },
+  getProfile: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/auth/profile`, {
+        method: "GET",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Not authenticated",
+        };
+      }
+
+      if (data.data?.user) {
+        localStorage.setItem("userData", JSON.stringify(data.data.user));
+        localStorage.setItem("isLoggedIn", "true");
+      }
+
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+  refreshToken: async () => {
+    try {
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      const response = await apiFetch(`${BASE_URL}/auth/refresh-token`, {
+        method: "POST",
+        body: JSON.stringify(
+          storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+        ),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Token refresh failed",
+        };
+      }
+
+      persistUserSession(null, data.data?.tokens);
+
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+  hasActiveSubscription: (plan) => {
+    if (!plan) return false;
+    if (!plan.active) return false;
+    if (!plan.expired) return true;
+    return new Date(plan.expired) > new Date();
+  },
+  getMainSiteUrl: () => MAIN_SITE_URL,
 };
 
 export const departmentService = {
   createDepartment: async (departmentData) => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        return {
-          success: false,
-          message: "No authentication token found. Please login again.",
-        };
-      }
-
-      const response = await fetch(`${BASE_URL}/departments`, {
+      const response = await apiFetch(`${BASE_URL}/departments`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(departmentData),
       });
 
@@ -169,20 +222,8 @@ export const departmentService = {
   },
   getDepartments: async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        return {
-          success: false,
-          message: "No authentication token found. Please login again.",
-        };
-      }
-
-      const response = await fetch(`${BASE_URL}/departments`, {
+      const response = await apiFetch(`${BASE_URL}/departments`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (response.status === 401) {
@@ -217,20 +258,8 @@ export const departmentService = {
 export const designationService = {
   createDesignation: async (designationData) => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        return {
-          success: false,
-          message: "No authentication token found. Please login again.",
-        };
-      }
-
-      const response = await fetch(`${BASE_URL}/designation`, {
+      const response = await apiFetch(`${BASE_URL}/designation`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(designationData),
       });
 
@@ -264,20 +293,8 @@ export const designationService = {
   },
   getDesignations: async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        return {
-          success: false,
-          message: "No authentication token found. Please login again.",
-        };
-      }
-
-      const response = await fetch(`${BASE_URL}/designation`, {
+      const response = await apiFetch(`${BASE_URL}/designation`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (response.status === 401) {
@@ -309,21 +326,6 @@ export const designationService = {
   },
 };
 
-localStorage.removeItem("refreshToken");
-localStorage.removeItem("userData");
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const headers = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-};
-
 export const employeeService = {
   // Get all employees by admin ID
   getAllEmployeesByAdminId: async (adminId) => {
@@ -332,7 +334,7 @@ export const employeeService = {
       console.log("API URL:", `${BASE_URL}/users/employees/admin/${adminId}`);
       console.log("Auth Token:", localStorage.getItem("authToken"));
 
-      const response = await fetch(`${BASE_URL}/users/employees/admin/${adminId}`, {
+      const response = await apiFetch(`${BASE_URL}/users/employees/admin/${adminId}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -364,7 +366,7 @@ export const employeeService = {
   // Get employee by ID
   getEmployee: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/users/employee/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/users/employee/${id}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -392,7 +394,7 @@ export const employeeService = {
   // Get user by ID (for viewing employee details)
   getUserById: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/users/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/users/${id}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -420,7 +422,7 @@ export const employeeService = {
   // Add new employee
   addEmployee: async (employeeData) => {
     try {
-      const response = await fetch(`${BASE_URL}/users`, {
+      const response = await apiFetch(`${BASE_URL}/users`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(employeeData),
@@ -451,7 +453,7 @@ export const employeeService = {
   // then falls back to PUT /users/update/:id if backend returns 404
   updateEmployee: async (id, employeeData) => {
     const attemptRequest = async (method, url) => {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: getAuthHeaders(),
         body: JSON.stringify(employeeData),
@@ -508,7 +510,7 @@ export const employeeService = {
   // POST /employment — create employment details for an employee
   addEmploymentDetails: async (employmentData) => {
     try {
-      const response = await fetch(`${BASE_URL}/employment`, {
+      const response = await apiFetch(`${BASE_URL}/employment`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(employmentData),
@@ -526,7 +528,7 @@ export const employeeService = {
   // GET /employment/:employeeId — fetch employment details for a specific employee
   getEmploymentByEmployee: async (employeeId) => {
     try {
-      const response = await fetch(`${BASE_URL}/employment/${employeeId}`, {
+      const response = await apiFetch(`${BASE_URL}/employment/${employeeId}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -545,7 +547,7 @@ export const leaveService = {
   // POST /leave — create leave record for an employee
   addLeave: async (leaveData) => {
     try {
-      const response = await fetch(`${BASE_URL}/leave`, {
+      const response = await apiFetch(`${BASE_URL}/leave`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(leaveData),
@@ -570,7 +572,7 @@ export const leaveService = {
         ).toString()
         : '';
 
-      const response = await fetch(`${BASE_URL}/leave${queryString}`, {
+      const response = await apiFetch(`${BASE_URL}/leave${queryString}`, {
         method: "GET",
         headers: getAuthHeaders(),
         // NOTE: No body on GET requests — browsers ignore it
@@ -586,7 +588,7 @@ export const leaveService = {
   // GET /leave/:id — fetch a single leave record by its ID
   getLeaveById: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/leave/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/leave/${id}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -605,7 +607,7 @@ export const performanceService = {
   // Payload: { empId, date, rating, status }
   addPerformance: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/performance`, {
+      const response = await apiFetch(`${BASE_URL}/performance`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -626,7 +628,7 @@ export const performanceService = {
           Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null))
         ).toString()
         : '';
-      const response = await fetch(`${BASE_URL}/performance${queryString}`, {
+      const response = await apiFetch(`${BASE_URL}/performance${queryString}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -642,7 +644,7 @@ export const performanceService = {
   // PUT /performance/:id — update an existing performance record
   updatePerformance: async (id, payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/performance/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/performance/${id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -663,7 +665,7 @@ export const payrollService = {
   //            departmentId, baseSalary, hra, conveyancePay, overtimePay, specialPay }
   addPayroll: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/payroll`, {
+      const response = await apiFetch(`${BASE_URL}/payroll`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -684,7 +686,7 @@ export const payrollService = {
           Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null))
         ).toString()
         : '';
-      const response = await fetch(`${BASE_URL}/payroll${queryString}`, {
+      const response = await apiFetch(`${BASE_URL}/payroll${queryString}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -699,7 +701,7 @@ export const payrollService = {
   // PUT /payroll/:id — update an existing payroll record
   updatePayroll: async (id, payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/payroll/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/payroll/${id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -823,7 +825,7 @@ export const attendanceService = {
           ).toString()
         : "";
 
-      const response = await fetch(`${BASE_URL}/attendance${queryString}`, {
+      const response = await apiFetch(`${BASE_URL}/attendance${queryString}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -847,7 +849,7 @@ export const attendanceService = {
 
   createAttendance: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/attendance`, {
+      const response = await apiFetch(`${BASE_URL}/attendance`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -869,7 +871,7 @@ export const attendanceService = {
 
   getNextSeries: async () => {
     try {
-      const response = await fetch(`${BASE_URL}/attendance/next-series`, {
+      const response = await apiFetch(`${BASE_URL}/attendance/next-series`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -890,7 +892,7 @@ export const attendanceService = {
 
   getEmployeeInfo: async (empId) => {
     try {
-      const response = await fetch(`${BASE_URL}/attendance/employee-info/${empId}`, {
+      const response = await apiFetch(`${BASE_URL}/attendance/employee-info/${empId}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -912,7 +914,7 @@ export const attendanceService = {
   getUnmarkedDates: async (empId, month) => {
     try {
       const params = new URLSearchParams({ empId: String(empId), month });
-      const response = await fetch(
+      const response = await apiFetch(
         `${BASE_URL}/attendance/unmarked?${params.toString()}`,
         {
           method: "GET",
@@ -936,7 +938,7 @@ export const attendanceService = {
 
   markAttendanceBulk: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/attendance/mark`, {
+      const response = await apiFetch(`${BASE_URL}/attendance/mark`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -958,7 +960,7 @@ export const attendanceService = {
 
   markSelfAttendance: async (payload = {}) => {
     try {
-      const response = await fetch(`${BASE_URL}/attendance/self`, {
+      const response = await apiFetch(`${BASE_URL}/attendance/self`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -981,7 +983,7 @@ export const attendanceService = {
   getAttendancesByEmployee: async (empId, month) => {
     try {
       const queryString = month ? `?month=${month}` : "";
-      const response = await fetch(
+      const response = await apiFetch(
         `${BASE_URL}/attendance/employee/${empId}${queryString}`,
         {
           method: "GET",
@@ -1011,7 +1013,7 @@ export const attendanceService = {
 export const shiftService = {
   getShiftTypes: async () => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-types`, {
+      const response = await apiFetch(`${BASE_URL}/shift-types`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -1034,7 +1036,7 @@ export const shiftService = {
 
   getShiftTypeById: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/shift-types/${id}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -1053,7 +1055,7 @@ export const shiftService = {
 
   createShiftType: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-types`, {
+      const response = await apiFetch(`${BASE_URL}/shift-types`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -1073,7 +1075,7 @@ export const shiftService = {
 
   updateShiftType: async (id, payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/shift-types/${id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -1121,7 +1123,7 @@ export const shiftService = {
           ).toString()
         : "";
 
-      const response = await fetch(`${BASE_URL}/shift-requests${queryString}`, {
+      const response = await apiFetch(`${BASE_URL}/shift-requests${queryString}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -1140,7 +1142,7 @@ export const shiftService = {
 
   createShiftRequest: async (payload) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-requests`, {
+      const response = await apiFetch(`${BASE_URL}/shift-requests`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -1160,7 +1162,7 @@ export const shiftService = {
 
   approveShiftRequest: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-requests/${id}/approve`, {
+      const response = await apiFetch(`${BASE_URL}/shift-requests/${id}/approve`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       });
@@ -1179,7 +1181,7 @@ export const shiftService = {
 
   rejectShiftRequest: async (id, rejectionReason = "") => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-requests/${id}/reject`, {
+      const response = await apiFetch(`${BASE_URL}/shift-requests/${id}/reject`, {
         method: "PATCH",
         headers: getAuthHeaders(),
         body: JSON.stringify({ rejectionReason }),

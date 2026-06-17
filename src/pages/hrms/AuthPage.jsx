@@ -1,10 +1,23 @@
-import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { LoginForm } from "../../features/auth/LoginForm";
+import { authService } from "../../service";
 
 export default function AuthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const mode = searchParams.get("mode") || "login";
+
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const profile = await authService.getProfile();
+      if (profile.success) {
+        navigate("/hrms", { replace: true });
+      }
+    };
+
+    checkExistingSession();
+  }, [navigate]);
 
   const switchMode = (newMode) => {
     setSearchParams({ mode: newMode });
