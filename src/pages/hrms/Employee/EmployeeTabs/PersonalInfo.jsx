@@ -83,61 +83,9 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                         />
                     </div>
 
-                    {/* Phone Number */}
-                    <div>
-                        <label className={labelClasses}>Phone Number</label>
-                        <input
-                            type="text"
-                            name="phone"
-                            value={formData.phone || ''}
-                            onChange={onChange}
-                            placeholder="Enter phone number"
-                            className={inputClasses}
-                        />
-                    </div>
-
-                    {/* Password */}
-                    <div>
-                        <label className={labelClasses}>Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password || ''}
-                            onChange={onChange}
-                            placeholder="Enter password"
-                            className={inputClasses}
-                        />
-                    </div>
-
-                    {/* Name */}
-                    <div>
-                        <label className={labelClasses}>Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name || ''}
-                            onChange={onChange}
-                            placeholder="Enter full name"
-                            className={inputClasses}
-                        />
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                        <label className={labelClasses}>Email</label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email || ''}
-                            onChange={onChange}
-                            placeholder="Enter email address"
-                            className={inputClasses}
-                        />
-                    </div>
-
                     {/* Phone */}
                     <div>
-                        <label className={labelClasses}>Phone</label>
+                        <label className={labelClasses}>Phone Number</label>
                         <input
                             type="text"
                             name="phone"
