@@ -20,11 +20,18 @@ export default function AuthPage() {
       const profile = await authService.getProfile();
       if (profile.success) {
         const userData = profile.data?.user || profile.data;
-        const role = (userData?.role || "admin").toLowerCase();
-        if (role === "employee") {
-          navigate("/employee", { replace: true });
-        } else {
+        const role = (userData?.role || "").toLowerCase();
+        const type = (userData?.type || "").toLowerCase();
+        const isAdmin =
+          role === "admin" ||
+          role === "superadmin" ||
+          type === "admin" ||
+          type === "superadmin" ||
+          userData?.isAdmin === true;
+        if (isAdmin) {
           navigate("/hrms", { replace: true });
+        } else {
+          navigate("/employee", { replace: true });
         }
       }
     };
