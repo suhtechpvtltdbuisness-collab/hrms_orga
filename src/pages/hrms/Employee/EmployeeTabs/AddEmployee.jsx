@@ -13,6 +13,7 @@ import TrainingDevelopment from './TrainingDevelopment';
 import OffBoarding from './OffBoarding';
 import ActivityLog from './ActivityLog';
 import { employeeService, leaveService, performanceService, payrollService, authService } from '../../../../service';
+import { isOrgAdmin } from '../../../../utils/authMode';
 
 const AddEmployee = () => {
     const navigate = useNavigate();
@@ -27,7 +28,14 @@ const AddEmployee = () => {
     const [subscriptionInfo, setSubscriptionInfo] = useState(null);
 
     useEffect(() => {
+        if (!isOrgAdmin()) {
+            navigate('/hrms/employees', { replace: true });
+        }
+    }, [navigate]);
+
+    useEffect(() => {
         const loadSubscription = async () => {
+            if (!isOrgAdmin()) return;
             const profile = await authService.getProfile();
             if (profile.success && profile.data?.plan) {
                 setSubscriptionInfo(profile.data.plan);

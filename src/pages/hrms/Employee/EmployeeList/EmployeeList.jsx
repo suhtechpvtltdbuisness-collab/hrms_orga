@@ -16,10 +16,12 @@ import AssignReportingManager from '../../OnboardedEmployeeList/ReportingManager
 import AssignedModal from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignedModal';
 import SuccessModal from '../../OnboardedEmployeeList/ReportingManager/Assign/SuccessModal';
 import { employeeService } from '../../../../service';
+import { isOrgAdmin } from '../../../../utils/authMode';
 
 
 
 const EmployeeList = () => {
+    const canAddEmployee = isOrgAdmin();
     // Mock Data
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
@@ -274,9 +276,11 @@ const EmployeeList = () => {
                     <button onClick={handleExportPDF} className="btn-ghost">
                         <Download size={15} /> Export PDF
                     </button>
+                    {canAddEmployee && (
                     <Link to="/hrms/employees/add" className="btn-primary" style={{ textDecoration:'none' }}>
                         <Plus size={15} /> Add Employee
                     </Link>
+                    )}
                 </div>
             </div>
 
@@ -396,6 +400,7 @@ const EmployeeList = () => {
                                         <img src="/images/emptyEmpList.png" alt="No Employees" className="mb-6 max-w-[400px]" />
                                         <h3 className="text-2xl font-medium text-black mb-2">No Employees found</h3>
                                         <p className="text-[#B3B3B3] text-lg mb-8">Get started by adding employees to the system</p>
+                                        {canAddEmployee && (
                                         <Link
                                             to="/hrms/employees/add"
                                             className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
@@ -409,6 +414,7 @@ const EmployeeList = () => {
                                             <Plus size={18} />
                                             <span>Add Employee</span>
                                         </Link>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
