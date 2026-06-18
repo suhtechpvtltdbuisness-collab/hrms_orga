@@ -24,6 +24,7 @@ import EmployeePerformance from "./pages/employee/Performance/EmployeePerformanc
 import EmployeeAnnouncements from "./pages/employee/Announcements/EmployeeAnnouncements";
 import EmployeeHolidays from "./pages/employee/Holidays/EmployeeHolidays";
 import EmployeeMeetings from "./pages/employee/Meetings/EmployeeMeetings";
+import EmployeeShift from "./pages/employee/Shift/EmployeeShift";
 import EmployeeSupport from "./pages/employee/Support/EmployeeSupport";
 import EmployeeSettings from "./pages/employee/Settings/EmployeeSettings";
 import DepartmentList from "./pages/hrms/Department/DepartmentList";
@@ -390,6 +391,7 @@ function App() {
           <Route path="announcements" element={<EmployeeAnnouncements />} />
           <Route path="holidays" element={<EmployeeHolidays />} />
           <Route path="meetings" element={<EmployeeMeetings />} />
+          <Route path="shift" element={<EmployeeShift />} />
           <Route path="support" element={<EmployeeSupport />} />
           <Route path="settings" element={<EmployeeSettings />} />
         </Route>

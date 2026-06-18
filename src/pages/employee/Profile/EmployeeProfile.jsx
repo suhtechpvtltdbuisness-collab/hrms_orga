@@ -93,7 +93,7 @@ export default function EmployeeProfile() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Profile Header */}
-      <div className="bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-700 rounded-2xl p-6 text-white">
+      <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #756FCC 0%, #9B7FDC 50%, #B58CEC 100%)' }}>
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
           <div className="relative">
             <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/40 flex items-center justify-center text-3xl font-bold">

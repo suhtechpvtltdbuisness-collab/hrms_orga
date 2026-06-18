@@ -4,12 +4,10 @@ import EmployeeTopbar from './EmployeeTopbar';
 import { Outlet } from 'react-router-dom';
 
 const EmployeeLayout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= 1260 : true
-  );
-  const [darkMode, setDarkMode] = useState(() =>
-    localStorage.getItem('emp_darkMode') === 'true'
-  );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth >= 1260;
+    return true;
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -19,22 +17,12 @@ const EmployeeLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('emp_darkMode', darkMode);
-    if (darkMode) {
-      document.documentElement.setAttribute('data-emp-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-emp-theme');
-    }
-  }, [darkMode]);
-
-  const sidebarWidth = isSidebarOpen ? 240 : 64;
-
   return (
-    <div className={`min-h-screen ${darkMode ? 'emp-dark' : ''} bg-[#F4F5F9] font-sans`}>
+    <div className="min-h-screen bg-[#eeeff1] font-sans">
+      {/* Sidebar */}
       <EmployeeSidebar
         isOpen={isSidebarOpen}
-        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        toggleSidebar={() => setIsSidebarOpen(prev => !prev)}
       />
 
       {/* Mobile backdrop */}
@@ -45,18 +33,18 @@ const EmployeeLayout = () => {
         />
       )}
 
-      {/* Main content area */}
+      {/* Main area shifts right based on sidebar state */}
       <div
-        className="transition-all duration-300 flex flex-col min-h-screen"
-        style={{ marginLeft: `${sidebarWidth}px` }}
+        className="transition-all duration-300"
+        style={{ marginLeft: isSidebarOpen ? '268px' : '64px' }}
       >
-        <div className="sticky top-0 z-30">
-          <EmployeeTopbar
-            darkMode={darkMode}
-            toggleDarkMode={() => setDarkMode(!darkMode)}
-          />
+        {/* Topbar */}
+        <div className="sticky top-0 z-30 pt-4 px-2 pb-0 bg-[#eeeff1]">
+          <EmployeeTopbar />
         </div>
-        <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+
+        {/* Page Content */}
+        <main className="px-4 py-4">
           <Outlet />
         </main>
       </div>

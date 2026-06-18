@@ -30,16 +30,19 @@ export default function EmployeeMeetings() {
 
       {/* Next Meeting Banner */}
       {meetings.filter(m=>m.status==='upcoming')[0] && (
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-5 text-white flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div
+          className="rounded-2xl p-5 text-white flex flex-col sm:flex-row items-start sm:items-center gap-4"
+          style={{ background: 'linear-gradient(135deg, #756FCC 0%, #9B7FDC 50%, #B58CEC 100%)' }}
+        >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 text-2xl">
             {platIcon[meetings[0].platform] || '📅'}
           </div>
           <div className="flex-1">
-            <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wide">Next Meeting</p>
+            <p className="text-purple-100 text-xs font-semibold uppercase tracking-wide">Next Meeting</p>
             <h2 className="text-lg font-bold mt-0.5">{meetings[0].title}</h2>
-            <p className="text-indigo-200 text-sm mt-0.5">{meetings[0].date} · {meetings[0].time} · {meetings[0].duration}</p>
+            <p className="text-purple-100 text-sm mt-0.5">{meetings[0].date} · {meetings[0].time} · {meetings[0].duration}</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white text-indigo-700 text-sm font-bold rounded-xl hover:bg-indigo-50 transition-all active:scale-95 shrink-0">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-[#756FCC] text-sm font-bold rounded-xl hover:bg-purple-50 transition-all active:scale-95 shrink-0">
             <Link className="w-3.5 h-3.5" /> Join Meeting
           </button>
         </div>
@@ -85,7 +88,9 @@ export default function EmployeeMeetings() {
                 <p className="text-xs text-gray-400 mt-0.5">Organized by {m.organizer} · {m.platform}</p>
               </div>
               {m.status === 'upcoming' && (
-                <button className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all shrink-0">
+                <button
+                  style={{ background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)' }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all shrink-0">
                   <Link className="w-3 h-3" /> Join
                 </button>
               )}

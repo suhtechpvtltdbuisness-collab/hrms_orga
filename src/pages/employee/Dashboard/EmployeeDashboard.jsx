@@ -100,22 +100,23 @@ export default function EmployeeDashboard() {
   ];
 
   const leaveBalance = [
-    { type: 'Casual Leave', used: 3, total: 12, color: 'from-violet-500 to-violet-400' },
-    { type: 'Sick Leave', used: 1, total: 8, color: 'from-blue-500 to-blue-400' },
-    { type: 'Earned Leave', used: 5, total: 15, color: 'from-green-500 to-green-400' },
+    { type: 'Casual Leave', used: 3, total: 12, gradFrom: '#756FCC', gradTo: '#9B7FDC' },
+    { type: 'Sick Leave', used: 1, total: 8, gradFrom: '#85C3C2', gradTo: '#6B74BB' },
+    { type: 'Earned Leave', used: 5, total: 15, gradFrom: '#B58CEC', gradTo: '#EDC0F3' },
   ];
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
-      {/* Welcome Banner */}
-      <div className="relative bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-700 rounded-2xl p-6 text-white overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-20" />
-        <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-white/5 rounded-full translate-y-16" />
+      {/* Welcome Banner — using Orga logo gradient colors */}
+      <div className="relative rounded-2xl p-6 text-white overflow-hidden" style={{ background: 'linear-gradient(135deg, #756FCC 0%, #9B7FDC 50%, #B58CEC 100%)' }}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-20" />
+        <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-white/10 rounded-full translate-y-16" />
+        <div className="absolute top-4 left-1/3 w-48 h-48 bg-white/5 rounded-full" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-violet-200 text-sm font-medium mb-1">{greetIcon} {greeting}</p>
+            <p className="text-purple-100 text-sm font-medium mb-1">{greetIcon} {greeting}</p>
             <h1 className="text-2xl md:text-3xl font-bold mb-1">{displayName}</h1>
-            <p className="text-violet-200 text-sm">
+            <p className="text-purple-100 text-sm">
               {userData?.designation || 'Software Engineer'} · {userData?.department || 'Engineering'}
             </p>
           </div>
@@ -123,7 +124,7 @@ export default function EmployeeDashboard() {
             <p className="text-3xl font-bold tabular-nums">
               {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
-            <p className="text-violet-200 text-sm">
+            <p className="text-purple-100 text-sm">
               {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
           </div>
@@ -159,7 +160,9 @@ export default function EmployeeDashboard() {
             </div>
           </div>
           {!checkInTime ? (
-            <button onClick={handleCheckIn} className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95">
+            <button onClick={handleCheckIn}
+              style={{ background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)' }}
+              className="w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95">
               ✓ Check In
             </button>
           ) : !checkOutTime ? (
@@ -204,8 +207,8 @@ export default function EmployeeDashboard() {
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full bg-gradient-to-r ${l.color} transition-all`}
-                    style={{ width: `${((l.total - l.used) / l.total) * 100}%` }}
+                    style={{ width: `${((l.total - l.used) / l.total) * 100}%`, background: `linear-gradient(90deg, ${l.gradFrom}, ${l.gradTo})` }}
+                    className="h-full rounded-full transition-all"
                   />
                 </div>
               </div>

@@ -11,7 +11,7 @@ const STATUS_STYLE = {
   leave:   'bg-blue-100 text-blue-600 border-blue-200',
   weekend: 'bg-gray-100 text-gray-400 border-gray-100',
   holiday: 'bg-violet-100 text-violet-600 border-violet-200',
-  today:   'bg-violet-600 text-white border-violet-600',
+  today:   'text-white border-transparent',
 };
 
 // Mock attendance data for current month
@@ -67,34 +67,39 @@ export default function EmployeeAttendance() {
           <h1 className="text-xl font-bold text-gray-900">Attendance</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track your daily attendance and working hours</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all">
+        <button
+          style={{ background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)' }}
+          className="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all">
           <Download className="w-4 h-4" /> Export Report
         </button>
       </div>
 
-      {/* Check-in Banner */}
-      <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-5 text-white flex flex-col sm:flex-row items-center gap-5">
+      {/* Check-in Banner — logo gradient */}
+      <div
+        className="rounded-2xl p-5 text-white flex flex-col sm:flex-row items-center gap-5"
+        style={{ background: 'linear-gradient(135deg, #756FCC 0%, #9B7FDC 50%, #B58CEC 100%)' }}
+      >
         <div className="text-center sm:text-left">
-          <p className="text-violet-200 text-sm">Live Time</p>
+          <p className="text-purple-100 text-sm">Live Time</p>
           <p className="text-3xl font-bold tabular-nums mt-1">{time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</p>
-          <p className="text-violet-200 text-xs mt-1">{time.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</p>
+          <p className="text-purple-100 text-xs mt-1">{time.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</p>
         </div>
         <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="flex-1 bg-white/10 rounded-xl p-4 text-center backdrop-blur">
-            <p className="text-xs text-violet-200 mb-1">Check In</p>
+          <div className="flex-1 bg-white/15 rounded-xl p-4 text-center backdrop-blur">
+            <p className="text-xs text-purple-100 mb-1">Check In</p>
             <p className="text-lg font-bold">{checkIn || '--:--'}</p>
-            {!checkIn && <button onClick={handleCheckIn} className="mt-2 w-full py-1.5 bg-white text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-50 transition-all active:scale-95">Check In</button>}
+            {!checkIn && <button onClick={handleCheckIn} className="mt-2 w-full py-1.5 bg-white text-[#756FCC] text-xs font-bold rounded-lg hover:bg-purple-50 transition-all active:scale-95">Check In</button>}
           </div>
-          <div className="flex-1 bg-white/10 rounded-xl p-4 text-center backdrop-blur">
-            <p className="text-xs text-violet-200 mb-1">Check Out</p>
+          <div className="flex-1 bg-white/15 rounded-xl p-4 text-center backdrop-blur">
+            <p className="text-xs text-purple-100 mb-1">Check Out</p>
             <p className="text-lg font-bold">{checkOut || '--:--'}</p>
             {checkIn && !checkOut && <button onClick={handleCheckOut} className="mt-2 w-full py-1.5 bg-red-400 text-white text-xs font-bold rounded-lg hover:bg-red-500 transition-all active:scale-95">Check Out</button>}
-            {checkIn && checkOut && <p className="text-xs text-green-300 mt-1.5 font-medium">✓ Day Complete</p>}
+            {checkIn && checkOut && <p className="text-xs text-green-200 mt-1.5 font-medium">✓ Day Complete</p>}
           </div>
-          <div className="flex-1 bg-white/10 rounded-xl p-4 text-center backdrop-blur">
-            <p className="text-xs text-violet-200 mb-1">Work Hours</p>
+          <div className="flex-1 bg-white/15 rounded-xl p-4 text-center backdrop-blur">
+            <p className="text-xs text-purple-100 mb-1">Work Hours</p>
             <p className="text-lg font-bold">{(checkIn && checkOut) ? '8h 42m' : checkIn ? 'In progress' : '--'}</p>
-            <p className="text-xs text-violet-300 mt-1">Goal: 9h / day</p>
+            <p className="text-xs text-purple-200 mt-1">Goal: 9h / day</p>
           </div>
         </div>
       </div>
@@ -146,7 +151,11 @@ export default function EmployeeAttendance() {
                 const isToday = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                 const status = isToday ? 'today' : mockAttendance[day] || (new Date(year,month,day).getDay()===0||new Date(year,month,day).getDay()===6?'weekend':'');
                 return (
-                  <div key={day} className={`aspect-square rounded-xl flex flex-col items-center justify-center border text-[11px] font-semibold transition-all hover:scale-105 ${STATUS_STYLE[status] || 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                  <div
+                    key={day}
+                    className={`aspect-square rounded-xl flex flex-col items-center justify-center border text-[11px] font-semibold transition-all hover:scale-105 ${STATUS_STYLE[status] || 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                    style={status === 'today' ? { background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)', borderColor: 'transparent' } : {}}
+                  >
                     <span>{day}</span>
                     {status && status !== 'weekend' && status !== 'today' && (
                       <span className="text-[8px] mt-0.5 font-bold capitalize opacity-80">{status.slice(0,1).toUpperCase()}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, Eye, EyeOff, Building2, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../../service";
 
@@ -59,15 +59,9 @@ export default function EmployeeLoginPage() {
       <img src="/bg.svg" className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-md">
-        {/* Logo */}
+        {/* Logo — same as admin panel */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-base font-bold text-gray-900 leading-tight">ORGA HRMS</p>
-            <p className="text-xs text-violet-600 font-semibold">Employee Portal</p>
-          </div>
+          <img src="/images/Orga Logo.svg" alt="ORGA" className="h-8" />
         </div>
 
         {/* Card */}
