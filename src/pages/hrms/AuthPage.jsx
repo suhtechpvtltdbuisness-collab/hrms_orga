@@ -19,7 +19,13 @@ export default function AuthPage() {
     const checkExistingSession = async () => {
       const profile = await authService.getProfile();
       if (profile.success) {
-        navigate("/hrms", { replace: true });
+        const userData = profile.data?.user || profile.data;
+        const role = (userData?.role || "admin").toLowerCase();
+        if (role === "employee") {
+          navigate("/employee", { replace: true });
+        } else {
+          navigate("/hrms", { replace: true });
+        }
       }
     };
 

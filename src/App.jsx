@@ -9,6 +9,23 @@ import Layout from "./components/layout/Layout";
 import HRMS from "./pages/hrms";
 import EmployeeList from "./pages/hrms/Employee/EmployeeList/EmployeeList";
 import AddEmployee from "./pages/hrms/Employee/EmployeeTabs/AddEmployee";
+
+// Employee Panel
+import EmployeeLayout from "./components/employee-layout/EmployeeLayout";
+import EmployeeProtectedRoute from "./components/EmployeeProtectedRoute";
+import EmployeeDashboard from "./pages/employee/Dashboard/EmployeeDashboard";
+import EmployeeProfile from "./pages/employee/Profile/EmployeeProfile";
+import EmployeeAttendance from "./pages/employee/Attendance/EmployeeAttendance";
+import EmployeeLeave from "./pages/employee/Leave/EmployeeLeave";
+import EmployeePayroll from "./pages/employee/Payroll/EmployeePayroll";
+import EmployeeDocuments from "./pages/employee/Documents/EmployeeDocuments";
+import EmployeeTasks from "./pages/employee/Tasks/EmployeeTasks";
+import EmployeePerformance from "./pages/employee/Performance/EmployeePerformance";
+import EmployeeAnnouncements from "./pages/employee/Announcements/EmployeeAnnouncements";
+import EmployeeHolidays from "./pages/employee/Holidays/EmployeeHolidays";
+import EmployeeMeetings from "./pages/employee/Meetings/EmployeeMeetings";
+import EmployeeSupport from "./pages/employee/Support/EmployeeSupport";
+import EmployeeSettings from "./pages/employee/Settings/EmployeeSettings";
 import DepartmentList from "./pages/hrms/Department/DepartmentList";
 import Settings from "./pages/hrms/Settings/Settings";
 import DesignationList from "./pages/hrms/Designation/DesignationList";
@@ -108,6 +125,7 @@ import CashFlow from "./pages/hrms/FinancialReports/CashFlow";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
+import EmployeeLoginPage from "./pages/employee/EmployeeLoginPage";
 
 function App() {
   return (
@@ -117,6 +135,7 @@ function App() {
         {/* ================= AUTH PAGE ================= */}
         <Route path="/auth/sso" element={<SsoCallback />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/employee/login" element={<EmployeeLoginPage />} />
 
         {/* ================= PROTECTED HRMS ROUTES ================= */}
         <Route
@@ -349,6 +368,30 @@ function App() {
 
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* ================= EMPLOYEE PANEL ROUTES ================= */}
+        <Route
+          path="/employee/*"
+          element={
+            <EmployeeProtectedRoute>
+              <EmployeeLayout />
+            </EmployeeProtectedRoute>
+          }
+        >
+          <Route index element={<EmployeeDashboard />} />
+          <Route path="profile" element={<EmployeeProfile />} />
+          <Route path="attendance" element={<EmployeeAttendance />} />
+          <Route path="leave" element={<EmployeeLeave />} />
+          <Route path="payroll" element={<EmployeePayroll />} />
+          <Route path="documents" element={<EmployeeDocuments />} />
+          <Route path="tasks" element={<EmployeeTasks />} />
+          <Route path="performance" element={<EmployeePerformance />} />
+          <Route path="announcements" element={<EmployeeAnnouncements />} />
+          <Route path="holidays" element={<EmployeeHolidays />} />
+          <Route path="meetings" element={<EmployeeMeetings />} />
+          <Route path="support" element={<EmployeeSupport />} />
+          <Route path="settings" element={<EmployeeSettings />} />
         </Route>
 
         {/* ================= DEFAULT ROUTE ================= */}

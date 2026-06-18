@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Mail, Lock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { InputField } from "../../components/common/InputField";
 import { Button } from "../../components/common/Button";
 import { Toast } from "../../components/common/Toast";
@@ -32,8 +32,18 @@ export const LoginForm = () => {
         title: "Login Successful",
         message: "Redirecting to dashboard...",
       });
+
+      // Check role and redirect accordingly
+      // If backend returns role field, use it; otherwise default to admin (/hrms)
+      const userData = result.data?.user || result.data || {};
+      const role = (userData?.role || "admin").toLowerCase();
+
       setTimeout(() => {
-        navigate("/hrms", { replace: true });
+        if (role === "employee") {
+          navigate("/employee", { replace: true });
+        } else {
+          navigate("/hrms", { replace: true });
+        }
       }, 1000);
     } else {
       setToast({
@@ -90,6 +100,16 @@ export const LoginForm = () => {
               loading={loading}
               disabled={!form.email || !form.password}
             />
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400 mb-2">Are you an Employee?</p>
+            <Link
+              to="/employee/login"
+              className="text-sm text-violet-600 font-semibold hover:underline"
+            >
+              → Go to Employee Portal Login
+            </Link>
           </div>
         </div>
       )}
