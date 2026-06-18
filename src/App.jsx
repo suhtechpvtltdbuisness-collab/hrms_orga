@@ -128,7 +128,7 @@ import CashFlow from "./pages/hrms/FinancialReports/CashFlow";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
-import EmployeeLoginPage from "./pages/employee/EmployeeLoginPage";
+
 
 function App() {
   return (
@@ -138,7 +138,7 @@ function App() {
         {/* ================= AUTH PAGE ================= */}
         <Route path="/auth/sso" element={<SsoCallback />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/employee/login" element={<EmployeeLoginPage />} />
+
 
         {/* ================= PROTECTED HRMS ROUTES ================= */}
         <Route

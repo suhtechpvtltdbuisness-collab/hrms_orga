@@ -15,11 +15,18 @@ const EmployeeProtectedRoute = ({ children }) => {
         return;
       }
 
-      // If user is admin, redirect them to admin panel
+      // Admin detection: check role, type, AND isAdmin fields
       const userData = profile.data?.user || profile.data;
-      const role = userData?.role?.toLowerCase?.() || "employee";
+      const role = (userData?.role?.toLowerCase?.()) || "";
+      const type = (userData?.type?.toLowerCase?.()) || "";
+      const isAdmin =
+        role === "admin" ||
+        role === "superadmin" ||
+        type === "admin" ||
+        type === "superadmin" ||
+        userData?.isAdmin === true;
 
-      if (role === "admin" || role === "superadmin") {
+      if (isAdmin) {
         setAuthState("admin");
         return;
       }

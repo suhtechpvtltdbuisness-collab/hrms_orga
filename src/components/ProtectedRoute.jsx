@@ -15,10 +15,19 @@ const ProtectedRoute = ({ children }) => {
         return;
       }
 
-      // If user is an employee, redirect to employee panel
+      // Admin detection: check role, type, AND isAdmin — backend may use any of these
       const userData = profile.data?.user || profile.data;
-      const role = (userData?.role || "admin").toLowerCase();
-      if (role === "employee") {
+      const role = (userData?.role || "").toLowerCase();
+      const type = (userData?.type || "").toLowerCase();
+      const isAdmin =
+        role === "admin" ||
+        role === "superadmin" ||
+        type === "admin" ||
+        type === "superadmin" ||
+        userData?.isAdmin === true;
+      console.log("🔍 [ProtectedRoute] userData:", userData);
+      console.log("🔍 [ProtectedRoute] role:", role, "| type:", type, "| isAdmin field:", userData?.isAdmin, "→ isAdmin:", isAdmin);
+      if (!isAdmin) {
         setAuthState("employee");
         return;
       }
