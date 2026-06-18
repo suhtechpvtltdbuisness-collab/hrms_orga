@@ -306,7 +306,7 @@ const EmployeeList = () => {
                 <table className="data-table" style={{ minWidth:900 }}>
                     <thead>
                         <tr>
-                            <th style={{ width:36, padding:'10px 12px' }}>
+                            <th style={{ width: 40, padding: '12px 16px', textAlign: 'left' }}>
                                 <input type="checkbox" style={{ accentColor:'#7C3AED' }}
                                     checked={employees.length > 0 && selectedEmployees.length === employees.length}
                                     onChange={handleSelectAll} />
@@ -319,7 +319,7 @@ const EmployeeList = () => {
                             <th onClick={() => handleSort('joiningDate')} style={{ cursor:'pointer' }}>JOINING DATE</th>
                             <th onClick={() => handleSort('contact')} style={{ cursor:'pointer' }}>CONTACT</th>
                             <th onClick={() => handleSort('status')} style={{ cursor:'pointer' }}>STATUS</th>
-                            <th>ACTION</th>
+                            <th style={{ textAlign: 'center' }}>ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -343,7 +343,7 @@ const EmployeeList = () => {
                         ) : currentItems.length > 0 ? (
                             currentItems.map((employee, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 group transition-colors font-Poppins">
-                                    <td className="py-2 px-2">
+                                    <td style={{ width: 40, padding: '12px 16px' }}>
                                         <input
                                             type="checkbox"
                                             className="w-4 h-4 rounded border border-[#7D1EDB] accent-[#7D1EDB] cursor-pointer"
@@ -353,14 +353,14 @@ const EmployeeList = () => {
                                         />
                                     </td>
 
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#1E1E1E]">{employee.srNo}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#7268FF]">{employee.name}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#1E1E1E]">{employee.empId}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-gray-900">{employee.department}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#1E1E1E]">{employee.designation}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#1E1E1E]">{employee.joiningDate}</td>
-                                    <td className="py-3 px-2 text-[14px] font-normal text-[#1E1E1E]">{employee.contact}</td>
-                                    <td className="py-3 px-2">
+                                    <td className="text-[14px] font-normal text-[#1E1E1E]">{employee.srNo}</td>
+                                    <td className="text-[14px] font-normal text-[#7268FF]">{employee.name}</td>
+                                    <td className="text-[14px] font-normal text-[#1E1E1E]">{employee.empId}</td>
+                                    <td className="text-[14px] font-normal text-gray-900">{employee.department}</td>
+                                    <td className="text-[14px] font-normal text-[#1E1E1E]">{employee.designation}</td>
+                                    <td className="text-[14px] font-normal text-[#1E1E1E]">{employee.joiningDate}</td>
+                                    <td className="text-[14px] font-normal text-[#1E1E1E]">{employee.contact}</td>
+                                    <td>
                                         <span className={`inline-flex items-center justify-center px-4 py-1 rounded-[18px] text-sm h-[34px] min-w-[80px] font-normal whitespace-nowrap ${employee.status === 'Active' ? 'bg-[#76DB1E33] text-[#34C759]' :
                                             // employee.status === 'Inactive' ? 'bg-[#FF3B301A] text-[#FF3B30]' :
                                             //     employee.status === 'On Leave' ? 'bg-[#FF95001A] text-[#FF9500]' :
@@ -369,7 +369,7 @@ const EmployeeList = () => {
                                             {employee.status}
                                         </span>
                                     </td>
-                                    <td className="py-3 px-2">
+                                    <td style={{ textAlign: 'center' }}>
                                         <div className="flex items-center justify-center gap-3">
                                             <button
                                                 onClick={(e) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 const parseDateValue = (val) => {
     if (!val) return null;
@@ -20,6 +20,11 @@ const startOfDay = (date) => {
     return d;
 };
 
+const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
 const CustomDatePicker = ({
     value,
     onChange,
@@ -35,10 +40,35 @@ const CustomDatePicker = ({
     const [selectedDate, setSelectedDate] = useState(null);
     const dropdownRef = useRef(null);
     const [position, setPosition] = useState('bottom');
+    const [currentView, setCurrentView] = useState('calendar'); // 'calendar', 'months', 'years'
+    const yearsListRef = useRef(null);
+
+    const minYear = minDate ? minDate.getFullYear() : 1900;
+    const currentYear = new Date().getFullYear();
+    let maxYear = currentYear;
+    if (maxDate) {
+        maxYear = maxDate.getFullYear();
+    } else if (allowFuture) {
+        maxYear = currentYear + 10;
+    }
+    const years = [];
+    for (let y = maxYear; y >= minYear; y--) {
+        years.push(y);
+    }
 
     useEffect(() => {
         setPosition('bottom');
     }, [isOpen]);
+
+    // Scroll active year into view
+    useEffect(() => {
+        if (currentView === 'years' && yearsListRef.current) {
+            const activeBtn = yearsListRef.current.querySelector('[data-active="true"]');
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ block: 'center', behavior: 'auto' });
+            }
+        }
+    }, [currentView]);
 
     // Initialize selectedDate from props
     useEffect(() => {
@@ -55,8 +85,9 @@ const CustomDatePicker = ({
         e.stopPropagation();
         if (disabled) return;
         setIsOpen(!isOpen);
-        // Reset view date to selected or today when opening
+        // Reset view state when opening
         if (!isOpen) {
+            setCurrentView('calendar');
             if (selectedDate) setViewDate(selectedDate);
             else setViewDate(new Date());
         }
@@ -156,8 +187,6 @@ const CustomDatePicker = ({
         day: 'numeric'
     }) : 'Select date';
 
-    const monthYearString = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
     // Close outside
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -192,11 +221,9 @@ const CustomDatePicker = ({
                 />
             </div>
 
-
-
             {/* Popup */}
             {isOpen && (
-                <div className={`absolute left-0 z-50 bg-white border border-[#D0D0D0] mt-1 rounded-[20px] overflow-hidden w-[230px] shadow-lg ${position === 'bottom' ? 'top-full mb-2' : 'bottom-full mt-2'}`}>
+                <div className={`absolute left-0 z-50 bg-white border border-[#D0D0D0] mt-1 rounded-[20px] overflow-hidden w-[260px] shadow-lg ${position === 'bottom' ? 'top-full mb-2' : 'bottom-full mt-2'}`}>
                     {/* Header */}
                     <div className="px-5 pt-4 pb-2 border-b border-[#CAC4D0]">
                         <p className="text-[#49454F] text-xs font-medium mb-1">Select date</p>
@@ -208,43 +235,117 @@ const CustomDatePicker = ({
                     </div>
 
                     <div className="bg-white px-4 py-2">
-                        {/* Month Navigation */}
+                        {/* Month & Year Selectors Header */}
                         <div className="flex items-center justify-between px-1 mb-2">
-                            <div className="flex items-center gap-1">
-                                <span className="text-[#49454F] text-sm font-medium">{monthYearString}</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
-                                    <ChevronLeft size={20} />
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={() => setCurrentView(currentView === 'months' ? 'calendar' : 'months')}
+                                    className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
+                                        currentView === 'months'
+                                            ? 'bg-[#6750A4] text-white hover:bg-[#5a4490]'
+                                            : 'bg-[#F4EFF4] hover:bg-[#EADDFF] text-[#1D1B20]'
+                                    }`}
+                                >
+                                    <span>{months[viewDate.getMonth()]}</span>
+                                    <ChevronDown size={14} className={`transform transition-transform ${currentView === 'months' ? 'rotate-180' : ''}`} />
                                 </button>
-                                <button onClick={() => changeMonth(1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
-                                    <ChevronRight size={20} />
+                                <button
+                                    onClick={() => setCurrentView(currentView === 'years' ? 'calendar' : 'years')}
+                                    className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
+                                        currentView === 'years'
+                                            ? 'bg-[#6750A4] text-white hover:bg-[#5a4490]'
+                                            : 'bg-[#F4EFF4] hover:bg-[#EADDFF] text-[#1D1B20]'
+                                    }`}
+                                >
+                                    <span>{viewDate.getFullYear()}</span>
+                                    <ChevronDown size={14} className={`transform transition-transform ${currentView === 'years' ? 'rotate-180' : ''}`} />
                                 </button>
                             </div>
+                            
+                            {currentView === 'calendar' && (
+                                <div className="flex gap-1">
+                                    <button onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
+                                        <ChevronLeft size={18} />
+                                    </button>
+                                    <button onClick={() => changeMonth(1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Days Grid */}
-                        <div className="grid grid-cols-7 gap-y-1 mb-2 text-center justify-items-center">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                                <div key={d} className="text-[#49454F] text-xs font-medium w-7 h-7 flex items-center justify-center">{d}</div>
-                            ))}
-                            {renderDays()}
-                        </div>
+                        {/* View rendering */}
+                        {currentView === 'calendar' && (
+                            <>
+                                {/* Days Grid */}
+                                <div className="grid grid-cols-7 gap-y-1 mb-2 text-center justify-items-center">
+                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                                        <div key={d} className="text-[#49454F] text-xs font-medium w-7 h-7 flex items-center justify-center">{d}</div>
+                                    ))}
+                                    {renderDays()}
+                                </div>
 
-                        {/* Footer Buttons */}
-                        <div className="flex justify-between items-center px-1 mt-1">
-                            <button onClick={handleClear} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
-                                Clear
-                            </button>
-                            <div className="flex gap-1">
-                                <button onClick={handleCancel} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
-                                    Cancel
-                                </button>
-                                <button onClick={handleOk} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
-                                    OK
-                                </button>
+                                {/* Footer Buttons */}
+                                <div className="flex justify-between items-center px-1 mt-1 border-t border-gray-100 pt-2">
+                                    <button onClick={handleClear} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                        Clear
+                                    </button>
+                                    <div className="flex gap-1">
+                                        <button onClick={handleCancel} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                            Cancel
+                                        </button>
+                                        <button onClick={handleOk} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                            OK
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {currentView === 'months' && (
+                            <div className="grid grid-cols-3 gap-2 py-3 text-center">
+                                {months.map((m, idx) => (
+                                    <button
+                                        key={m}
+                                        onClick={() => {
+                                            setViewDate(new Date(viewDate.getFullYear(), idx, 1));
+                                            setCurrentView('calendar');
+                                        }}
+                                        className={`py-2 text-xs rounded-lg transition-colors font-medium
+                                            ${viewDate.getMonth() === idx
+                                                ? 'bg-[#6750A4] text-white'
+                                                : 'text-[#1D1B20] hover:bg-purple-50 bg-[#F4EFF4]'
+                                            }`}
+                                    >
+                                        {m.slice(0, 3)}
+                                    </button>
+                                ))}
                             </div>
-                        </div>
+                        )}
+
+                        {currentView === 'years' && (
+                            <div ref={yearsListRef} className="h-[188px] overflow-y-auto pr-1 py-1 scrollbar-thin">
+                                <div className="grid grid-cols-3 gap-2 text-center">
+                                    {years.map(y => (
+                                        <button
+                                            key={y}
+                                            data-active={viewDate.getFullYear() === y}
+                                            onClick={() => {
+                                                setViewDate(new Date(y, viewDate.getMonth(), 1));
+                                                setCurrentView('calendar');
+                                            }}
+                                            className={`py-2 text-xs rounded-lg transition-colors font-medium
+                                                ${viewDate.getFullYear() === y
+                                                    ? 'bg-[#6750A4] text-white'
+                                                    : 'text-[#1D1B20] hover:bg-purple-50 bg-[#F4EFF4]'
+                                                }`}
+                                        >
+                                            {y}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -253,5 +354,3 @@ const CustomDatePicker = ({
 };
 
 export default CustomDatePicker;
-
-
