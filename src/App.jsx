@@ -68,6 +68,13 @@ import LeavePeriod from "./pages/hrms/LeaveManagement/LeavePeriod";
 import NewLeavePeriod from "./pages/hrms/LeaveManagement/NewLeavePeriod";
 import LeaveApplication from "./pages/hrms/LeaveManagement/LeaveApplication";
 import LeaveAllocation from "./pages/hrms/LeaveManagement/LeaveAllocation";
+import HolidayList from "./pages/hrms/LeaveManagement/HolidayList";
+import LeaveBlockList from "./pages/hrms/LeaveManagement/LeaveBlockList";
+import CompensatoryLeave from "./pages/hrms/LeaveManagement/CompensatoryLeave";
+import LeaveType from "./pages/hrms/LeaveManagement/LeaveType";
+import LeavePolicyAssignment from "./pages/hrms/LeaveManagement/LeavePolicyAssignment";
+import LeaveEncashment from "./pages/hrms/LeaveManagement/LeaveEncashment";
+import LeavePolicy from "./pages/hrms/LeaveManagement/LeavePolicy";
 import ShiftAssignment from "./pages/hrms/ShiftManagement/ShiftAssignment";
 import ShiftType from "./pages/hrms/ShiftManagement/ShiftType";
 import ShiftRequest from "./pages/hrms/ShiftManagement/ShiftRequest";
@@ -235,6 +242,13 @@ function App() {
           <Route path="leave-period/new" element={<NewLeavePeriod />} />
           <Route path="leave-application" element={<LeaveApplication />} />
           <Route path="leave-allocation" element={<LeaveAllocation />} />
+          <Route path="holiday-list" element={<HolidayList />} />
+          <Route path="leave-block-list" element={<LeaveBlockList />} />
+          <Route path="compensatory-leave" element={<CompensatoryLeave />} />
+          <Route path="leave-type" element={<LeaveType />} />
+          <Route path="leave-policy-assignment" element={<LeavePolicyAssignment />} />
+          <Route path="leave-encashment" element={<LeaveEncashment />} />
+          <Route path="leave-policy" element={<LeavePolicy />} />
 
           {/* Shift Management */}
           <Route path="shift-assignment" element={<ShiftAssignment />} />
