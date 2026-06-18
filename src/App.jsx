@@ -66,6 +66,8 @@ import UploadAttendance from "./pages/hrms/Attendance/UploadAttendance/UploadAtt
 import RequestAttendance from "./pages/hrms/Attendance/RequestAttendance/RequestAttendance";
 import LeavePeriod from "./pages/hrms/LeaveManagement/LeavePeriod";
 import NewLeavePeriod from "./pages/hrms/LeaveManagement/NewLeavePeriod";
+import LeaveApplication from "./pages/hrms/LeaveManagement/LeaveApplication";
+import LeaveAllocation from "./pages/hrms/LeaveManagement/LeaveAllocation";
 import ShiftAssignment from "./pages/hrms/ShiftManagement/ShiftAssignment";
 import ShiftType from "./pages/hrms/ShiftManagement/ShiftType";
 import ShiftRequest from "./pages/hrms/ShiftManagement/ShiftRequest";
@@ -231,6 +233,8 @@ function App() {
           {/* Leave Management */}
           <Route path="leave-period" element={<LeavePeriod />} />
           <Route path="leave-period/new" element={<NewLeavePeriod />} />
+          <Route path="leave-application" element={<LeaveApplication />} />
+          <Route path="leave-allocation" element={<LeaveAllocation />} />
 
           {/* Shift Management */}
           <Route path="shift-assignment" element={<ShiftAssignment />} />

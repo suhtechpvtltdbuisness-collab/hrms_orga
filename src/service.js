@@ -655,6 +655,132 @@ export const leaveService = {
       return { success: false, message: "Something went wrong" };
     }
   },
+
+  getBalance: async (userId) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave/balance/${userId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch leave balance" };
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  allocateLeave: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave/allocate`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to allocate leave" };
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
+export const leaveRequestService = {
+  getLeaveRequests: async (filters = {}) => {
+    try {
+      const queryString = Object.keys(filters).length
+        ? "?" + new URLSearchParams(
+            Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null)),
+          ).toString()
+        : "";
+
+      const response = await apiFetch(`${BASE_URL}/leave-requests${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch leave requests" };
+      }
+      return { success: true, data: data.data || [] };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createLeaveRequest: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave-requests`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to submit leave request" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  approveLeaveRequest: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave-requests/${id}/approve`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to approve leave request" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  rejectLeaveRequest: async (id, rejectionReason = "") => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave-requests/${id}/reject`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ rejectionReason }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to reject leave request" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  leaveTypeToApi: (label) => {
+    const map = {
+      "Sick Leave": "sick",
+      "Casual Leave": "casual",
+      "Earned Leave": "earned",
+      "Maternity Leave": "maternity",
+      "Paternity Leave": "paternity",
+      "Compensatory Off": "earned",
+    };
+    return map[label] || label?.toLowerCase?.().replace(/\s+/g, "_");
+  },
+
+  leaveTypeToLabel: (type) => {
+    const map = {
+      sick: "Sick Leave",
+      casual: "Casual Leave",
+      earned: "Earned Leave",
+      maternity: "Maternity Leave",
+      paternity: "Paternity Leave",
+    };
+    return map[type] || type;
+  },
 };
 
 // ─── Performance Service ───────────────────────────────────────────────────────
