@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Camera, Loader2 } from 'lucide-react';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import { employeeService, getProfilePicUrl } from '../../../../service';
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -35,6 +36,17 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
         emergencyContact: false,
         identification: false
     });
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const localUrl = URL.createObjectURL(file);
+        onChange({ target: { name: 'profilePic', value: localUrl } });
+        onChange({ target: { name: 'profilePicFile', value: file } });
+    };
+
 
     const toggleSection = (section) => {
         setSections(prev => ({
@@ -57,6 +69,47 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6 ">
                     
+                    {/* Profile Picture Upload */}
+                    <div className="col-span-1 sm:col-span-2 xl:col-span-4 flex flex-col sm:flex-row items-center gap-6 pb-4 border-b border-gray-100 mb-2">
+                        <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-purple-200 bg-purple-50 flex items-center justify-center cursor-pointer shadow-inner">
+                            {formData.profilePic ? (
+                                <img
+                                    src={getProfilePicUrl(formData.profilePic)}
+                                    alt="Profile Preview"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <Camera className="w-8 h-8 text-purple-400 group-hover:scale-110 transition-transform" />
+                            )}
+                            {uploading && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                disabled={uploading}
+                            />
+                        </div>
+                        <div className="flex flex-col text-center sm:text-left gap-1">
+                            <h3 className="text-sm font-semibold text-gray-800">Profile Picture</h3>
+                            <p className="text-xs text-gray-500">Supports JPG, PNG, GIF. Max size 5MB.</p>
+                            <label className="text-xs text-purple-600 font-semibold cursor-pointer hover:text-purple-700 underline mt-1">
+                                {formData.profilePic ? "Change Photo" : "Upload Photo"}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    disabled={uploading}
+                                />
+                            </label>
+                        </div>
+                    </div>
+
                     {/* Full Name */}
                     <div>
                         <label className={labelClasses}>Full Name</label>

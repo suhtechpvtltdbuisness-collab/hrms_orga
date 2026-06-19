@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getProfilePicUrl } from '../../service';
 
 const getRoleLabel = (user) => {
     if (user.isAdmin) return 'Admin';
@@ -13,7 +14,7 @@ const Topbar = () => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const userName = userData.name || 'User';
     const userRole = getRoleLabel(userData);
-    const userImage = userData.profileImage || '/EMP_IMG.svg';
+    const userImage = getProfilePicUrl(userData.profilePic || userData.profileImage) || '/EMP_IMG.svg';
 
     return (
         <div className="bg-white px-4 py-6 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9]">

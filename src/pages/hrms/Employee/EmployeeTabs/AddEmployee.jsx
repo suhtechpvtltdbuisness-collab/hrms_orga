@@ -102,7 +102,7 @@ const AddEmployee = () => {
         'personal-information': [
             'name', 'email', 'phone', 'password', 'employeeId', 'gender', 'dob', 'bloodGroup',
             'maritalStatus', 'address', 'contactName', 'contactNumber', 'relation', 'aadharNo',
-            'pancardNo'
+            'pancardNo', 'profilePic'
         ],
         employment: [
             'employmentJobTitle', 'employmentDepartment', 'employmentTeamSubDepartment',
@@ -409,6 +409,22 @@ const AddEmployee = () => {
                 return;
             }
 
+            let profilePicUrl = formData.profilePic || '';
+            if (formData.profilePicFile) {
+                const uploadRes = await employeeService.uploadImage(formData.profilePicFile);
+                if (uploadRes.success && uploadRes.url) {
+                    profilePicUrl = uploadRes.url;
+                } else {
+                    setToast({
+                        type: 'error',
+                        title: 'Upload Failed',
+                        message: uploadRes.message || 'Failed to upload profile picture'
+                    });
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             // Map form data to API format
             const employeeData = {
                 name: formData.name || '',
@@ -425,6 +441,7 @@ const AddEmployee = () => {
                 email: formData.email || '',
                 phone: formData.phone || '',
                 address: formData.address || '',
+                profilePic: profilePicUrl,
             };
 
             const response = await employeeService.addEmployee(employeeData);
@@ -485,6 +502,8 @@ const AddEmployee = () => {
                         contactNumber: savedData.user.eContactNumber || prev.contactNumber,
                         relation: savedData.user.eRelation || prev.relation,
                         employeeId: savedData.user.id || prev.employeeId,
+                        profilePic: savedData.user.profilePic || prev.profilePic,
+                        profilePicFile: null,
                     }));
                 }
                 setIsEmployeeSaved(true);

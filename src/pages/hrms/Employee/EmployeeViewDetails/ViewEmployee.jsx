@@ -16,7 +16,7 @@ import EmpActivityLog from "./EmpActivityLog";
 import EmpPersonalInfo from "./EmpPersonalInfo";
 import EmpEmployment from "./EmpEmployment";
 import EmpAttendance from "./EmpAttendance";
-import { employeeService } from "../../../../service";
+import { employeeService, getProfilePicUrl } from "../../../../service";
 
 const ViewEmployee = () => {
   const navigate = useNavigate();
@@ -59,6 +59,7 @@ const ViewEmployee = () => {
             relation: d.eRelation || "",
             aadharNumber: d.aadharNo || "",
             panNumber: d.pancardNo || "",
+            profilePic: d.profilePic || "",
           });
         }
       } catch (error) {
@@ -95,6 +96,7 @@ const ViewEmployee = () => {
         relation: d.eRelation || "",
         aadharNumber: d.aadharNo || "",
         panNumber: d.pancardNo || "",
+        profilePic: d.profilePic || "",
       });
     }
     setSearchParams({});
@@ -104,6 +106,22 @@ const ViewEmployee = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      let profilePicUrl = formData.profilePic || "";
+      if (formData.profilePicFile) {
+        const uploadRes = await employeeService.uploadImage(formData.profilePicFile);
+        if (uploadRes.success && uploadRes.url) {
+          profilePicUrl = uploadRes.url;
+        } else {
+          setToast({
+            type: "error",
+            title: "Upload Failed",
+            message: uploadRes.message || "Failed to upload profile picture.",
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         name: formData.name,
         email: formData.email,
@@ -118,6 +136,7 @@ const ViewEmployee = () => {
         eRelation: formData.relation,
         aadharNo: formData.aadharNumber,
         pancardNo: formData.panNumber,
+        profilePic: profilePicUrl,
       };
 
       const response = await employeeService.updateEmployee(id, payload);
@@ -125,6 +144,7 @@ const ViewEmployee = () => {
       if (response.success) {
         // Update local UI with confirmed data from server
         setEmployeeData(prev => ({ ...prev, ...payload }));
+        setFormData(prev => ({ ...prev, profilePicFile: null }));
         setSearchParams({}); // exit edit mode
         setToast({
           type: "success",
@@ -152,6 +172,18 @@ const ViewEmployee = () => {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const localUrl = URL.createObjectURL(file);
+    setFormData(prev => ({
+      ...prev,
+      profilePic: localUrl,
+      profilePicFile: file
+    }));
   };
 
   const tabConfig = [
@@ -259,8 +291,10 @@ const ViewEmployee = () => {
           {activeTab.name === "Personal Information" && (
             <div className="w-full lg:w-[320px] shrink-0 h-auto lg:h-full">
               <EmployeeProfileCard
+                isEditable={isEditMode}
                 data={cardData}
-                profileImage={employeeData?.profileImage}
+                profileImage={getProfilePicUrl(formData.profilePic || employeeData?.profilePic || employeeData?.profileImage) || "/EMP_IMG.svg"}
+                onImageChange={handleImageChange}
               />
             </div>
           )}

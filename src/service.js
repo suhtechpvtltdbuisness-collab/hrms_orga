@@ -40,15 +40,20 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-const apiFetch = (url, options = {}) =>
-  fetch(url, {
+const apiFetch = (url, options = {}) => {
+  const headers = {
+    ...getAuthHeaders(),
+    ...options.headers,
+  };
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+  return fetch(url, {
     credentials: "include",
     ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
+    headers,
   });
+};
 
 export const authService = {
   register: async (userData) => {
@@ -560,6 +565,25 @@ export const employeeService = {
         success: false,
         message: "Network error while updating employee. Please try again.",
       };
+    }
+  },
+
+  // Upload an image (for profile pictures)
+  uploadImage: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const response = await apiFetch(`${BASE_URL}/upload/image`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to upload image" };
+      }
+      return { success: true, url: data.url };
+    } catch (error) {
+      return { success: false, message: "Network error while uploading image." };
     }
   },
 
@@ -1568,4 +1592,14 @@ export const subscriptionService = {
     });
   },
 };
+
+export const getProfilePicUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+  if (url.includes("blob.vercel-storage.com")) {
+    return `${BASE_URL}/upload/blob?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Lock, Bell, Shield, Camera, Eye, EyeOff, CheckCircle2, User, Palette, Globe } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Lock, Bell, Shield, Camera, Eye, EyeOff, CheckCircle2, User, Palette, Globe, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { employeeService, getProfilePicUrl } from '../../../service';
 
 const SectionCard = ({ title, icon: Icon, iconColor, children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -25,6 +26,75 @@ const Toggle = ({ checked, onChange, label, desc }) => (
 );
 
 export default function EmployeeSettings() {
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const userData = (() => { try { return JSON.parse(localStorage.getItem('userData')||'{}'); } catch { return {}; } })();
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSavePhoto = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    try {
+      const res = await employeeService.uploadImage(selectedFile);
+      if (res.success && res.url) {
+        const payload = { profilePic: res.url };
+        const updateRes = await employeeService.updateEmployee(userData.id, payload);
+        if (updateRes.success) {
+          const updatedUser = { ...userData, profilePic: res.url };
+          localStorage.setItem('userData', JSON.stringify(updatedUser));
+          setSelectedFile(null);
+          setPreviewUrl(null);
+          window.location.reload();
+        } else {
+          toast.error('Failed to update profile picture in your account');
+        }
+      } else {
+        toast.error(res.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error uploading image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCancelPhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!userData.profilePic) return;
+    if (!window.confirm("Are you sure you want to remove your profile picture?")) return;
+    setUploading(true);
+    try {
+      const payload = { profilePic: null };
+      const updateRes = await employeeService.updateEmployee(userData.id, payload);
+      if (updateRes.success) {
+        const updatedUser = { ...userData, profilePic: null };
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
+        window.location.reload();
+      } else {
+        toast.error('Failed to remove profile picture');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error removing profile picture');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const [pwForm, setPwForm] = useState({ current:'', new:'', confirm:'' });
   const [showPw, setShowPw] = useState({ current:false, new:false, confirm:false });
   const [notifs, setNotifs] = useState({ email:true, push:true, leave:true, payroll:true, tasks:true, announcements:true, birthday:false });
@@ -41,8 +111,6 @@ export default function EmployeeSettings() {
 
   const toggle = (k) => setNotifs(prev => ({ ...prev, [k]: !prev[k] }));
 
-  const userData = (() => { try { return JSON.parse(localStorage.getItem('userData')||'{}'); } catch { return {}; } })();
-
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       <div>
@@ -54,10 +122,35 @@ export default function EmployeeSettings() {
       <SectionCard title="Profile Picture" icon={Camera} iconColor="bg-violet-100 text-violet-600">
         <div className="flex items-center gap-5">
           <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
-              {(userData?.name||'E').charAt(0).toUpperCase()}
-            </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center text-white hover:bg-violet-700 transition-all">
+            {previewUrl || userData?.profilePic ? (
+              <img
+                src={previewUrl || getProfilePicUrl(userData.profilePic)}
+                alt="Profile"
+                className="w-20 h-20 rounded-2xl object-cover border border-gray-150 shadow-sm animate-fadeIn"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
+                {(userData?.name||'E').charAt(0).toUpperCase()}
+              </div>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="image/*"
+              disabled={uploading}
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center text-white hover:bg-violet-700 transition-all cursor-pointer disabled:opacity-50"
+            >
               <Camera className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -65,8 +158,43 @@ export default function EmployeeSettings() {
             <p className="text-sm font-semibold text-gray-800">{userData?.name || 'Employee'}</p>
             <p className="text-xs text-gray-400 mb-3">{userData?.email || 'employee@company.com'}</p>
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 transition-all">Upload Photo</button>
-              <button className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-all">Remove</button>
+              {previewUrl ? (
+                <>
+                  <button 
+                    onClick={handleSavePhoto}
+                    disabled={uploading}
+                    className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Save Photo
+                  </button>
+                  <button 
+                    onClick={handleCancelPhoto}
+                    disabled={uploading}
+                    className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Upload Photo
+                  </button>
+                  {userData?.profilePic && (
+                    <button 
+                      onClick={handleRemovePhoto}
+                      disabled={uploading}
+                      className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

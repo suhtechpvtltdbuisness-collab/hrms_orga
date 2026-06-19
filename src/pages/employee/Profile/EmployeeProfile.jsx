@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   User, Phone, Mail, MapPin, Shield, Briefcase, Edit3, Camera,
   ChevronRight, Building2, Users, CalendarDays, Award, FileText,
-  AlertCircle, CheckCircle2, Save, X
+  AlertCircle, CheckCircle2, Save, X, Loader2
 } from 'lucide-react';
+import { employeeService, getProfilePicUrl } from '../../../service';
 
 const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text' }) => {
   const [editing, setEditing] = useState(false);
@@ -59,9 +60,54 @@ const SectionCard = ({ title, icon: Icon, iconColor, children }) => (
 );
 
 export default function EmployeeProfile() {
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
   })();
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSavePhoto = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    try {
+      const res = await employeeService.uploadImage(selectedFile);
+      if (res.success && res.url) {
+        const payload = { profilePic: res.url };
+        const updateRes = await employeeService.updateEmployee(userData.id, payload);
+        if (updateRes.success) {
+          const updatedUser = { ...userData, profilePic: res.url };
+          localStorage.setItem('userData', JSON.stringify(updatedUser));
+          setSelectedFile(null);
+          setPreviewUrl(null);
+          window.location.reload();
+        } else {
+          alert('Failed to update profile picture in your account');
+        }
+      } else {
+        alert(res.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCancelPhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
 
   const displayName = userData?.name || userData?.fullName || userData?.email?.split('@')[0] || 'Employee';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -96,16 +142,59 @@ export default function EmployeeProfile() {
       <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #756FCC 0%, #9B7FDC 50%, #B58CEC 100%)' }}>
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
           <div className="relative">
-            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/40 flex items-center justify-center text-3xl font-bold">
-              {initials}
-            </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-lg shadow-lg flex items-center justify-center text-violet-600 hover:bg-violet-50 transition-all">
+            {previewUrl || userData?.profilePic ? (
+              <img
+                src={previewUrl || getProfilePicUrl(userData.profilePic)}
+                alt="Profile"
+                className="w-24 h-24 rounded-2xl object-cover border-2 border-white/40 shadow-md bg-white/10"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/40 flex items-center justify-center text-3xl font-bold">
+                {initials}
+              </div>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="image/*"
+              disabled={uploading}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-lg shadow-lg flex items-center justify-center text-violet-600 hover:bg-violet-50 transition-all cursor-pointer disabled:opacity-50"
+            >
               <Camera className="w-3.5 h-3.5" />
             </button>
           </div>
           <div className="text-center sm:text-left flex-1">
             <h1 className="text-2xl font-bold">{localData.name}</h1>
             <p className="text-violet-200 text-sm mt-1">{localData.designation} · {localData.department}</p>
+            {previewUrl && (
+              <div className="flex gap-2 mt-2 justify-center sm:justify-start">
+                <button 
+                  onClick={handleSavePhoto} 
+                  disabled={uploading} 
+                  className="px-3 py-1 bg-white text-violet-600 text-xs font-semibold rounded-lg hover:bg-violet-50 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Save Photo
+                </button>
+                <button 
+                  onClick={handleCancelPhoto} 
+                  disabled={uploading} 
+                  className="px-3 py-1 bg-white/20 text-white border border-white/20 text-xs font-semibold rounded-lg hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
               <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium">{localData.empId}</span>
               <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium">{localData.employmentType}</span>
