@@ -1189,6 +1189,97 @@ export const attendanceService = {
       return { success: false, message: "Something went wrong" };
     }
   },
+
+  getTodayStatus: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance/today-status`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch status",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  checkInSelf: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance/check-in`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to check in",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  checkOutSelf: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance/check-out`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to check out",
+        };
+      }
+
+      return { success: true, data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getMyAttendance: async (month) => {
+    try {
+      const queryString = month ? `?month=${month}` : "";
+      const response = await apiFetch(
+        `${BASE_URL}/attendance/my-attendance${queryString}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to fetch attendance",
+        };
+      }
+
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : data.data || [],
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
 };
 
 // ─── Shift Type Service ──────────────────────────────────────────────────────────

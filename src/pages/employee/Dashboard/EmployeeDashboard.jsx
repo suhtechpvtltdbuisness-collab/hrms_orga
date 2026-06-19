@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Clock, Calendar, TrendingUp, DollarSign, CheckSquare, Bell, ChevronRight,
-  ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star
+  ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { attendanceService } from '../../../service';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -44,8 +45,9 @@ const QuickAction = ({ icon: Icon, label, color, onClick }) => (
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [checkInTime, setCheckInTime] = useState(() => localStorage.getItem('emp_checkIn'));
-  const [checkOutTime, setCheckOutTime] = useState(() => localStorage.getItem('emp_checkOut'));
+  const [todayRecord, setTodayRecord] = useState(null);
+  const [checkInLoading, setCheckInLoading] = useState(false);
+  const [checkOutLoading, setCheckOutLoading] = useState(false);
 
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
@@ -58,17 +60,63 @@ export default function EmployeeDashboard() {
     return () => clearInterval(t);
   }, []);
 
-  const handleCheckIn = () => {
-    const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setCheckInTime(now);
-    localStorage.setItem('emp_checkIn', now);
+  const fetchTodayAttendance = async () => {
+    try {
+      const res = await attendanceService.getTodayStatus();
+      if (res.success && res.data) {
+        setTodayRecord(res.data.record || null);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleCheckOut = () => {
-    const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setCheckOutTime(now);
-    localStorage.setItem('emp_checkOut', now);
+  useEffect(() => {
+    fetchTodayAttendance();
+  }, []);
+
+  const formatTime = (isoString) => {
+    if (!isoString) return null;
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
+
+  const handleCheckIn = async () => {
+    setCheckInLoading(true);
+    try {
+      const res = await attendanceService.checkInSelf();
+      if (res.success) {
+        await fetchTodayAttendance();
+      } else {
+        alert(res.message || 'Failed to check in');
+      }
+    } catch (err) {
+      alert('Failed to check in');
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setCheckOutLoading(true);
+    try {
+      const res = await attendanceService.checkOutSelf();
+      if (res.success) {
+        await fetchTodayAttendance();
+      } else {
+        alert(res.message || 'Failed to check out');
+      }
+    } catch (err) {
+      alert('Failed to check out');
+    } finally {
+      setCheckOutLoading(false);
+    }
+  };
+
+  const checkInTime = todayRecord && todayRecord.checkIn ? formatTime(todayRecord.checkIn) : null;
+  const checkOutTime = todayRecord && todayRecord.checkOut ? formatTime(todayRecord.checkOut) : null;
 
   const attendance = [
     { day: 'Mon', status: 'present' }, { day: 'Tue', status: 'present' },
@@ -160,14 +208,35 @@ export default function EmployeeDashboard() {
             </div>
           </div>
           {!checkInTime ? (
-            <button onClick={handleCheckIn}
+            <button
+              onClick={handleCheckIn}
+              disabled={checkInLoading}
               style={{ background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)' }}
-              className="w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95">
-              ✓ Check In
+              className="w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              {checkInLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Checking In...</span>
+                </>
+              ) : (
+                "✓ Check In"
+              )}
             </button>
           ) : !checkOutTime ? (
-            <button onClick={handleCheckOut} className="w-full py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95">
-              ✗ Check Out
+            <button
+              onClick={handleCheckOut}
+              disabled={checkOutLoading}
+              className="w-full py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              {checkOutLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Checking Out...</span>
+                </>
+              ) : (
+                "✗ Check Out"
+              )}
             </button>
           ) : (
             <div className="text-center py-2">
