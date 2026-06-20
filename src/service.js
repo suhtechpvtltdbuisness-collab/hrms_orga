@@ -388,6 +388,31 @@ export const designationService = {
 };
 
 export const employeeService = {
+  getAllUsersForSuperAdmin: async (page = 1, limit = 10, search = "") => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch all users",
+        };
+      }
+      return {
+        success: true,
+        data: data.data || { users: [], total: 0 },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
   // Get all employees by admin ID
   getAllEmployeesByAdminId: async (adminId) => {
     try {
@@ -1552,6 +1577,19 @@ export const subscriptionService = {
         return { success: false, message: data.message || "Payment verification failed" };
       }
       return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getAllSubscriptions: async (page = 1, limit = 10, search = "") => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch all subscriptions" };
+      }
+      return { success: true, data: data.data || { subscriptions: [], total: 0 } };
     } catch {
       return { success: false, message: "Something went wrong" };
     }

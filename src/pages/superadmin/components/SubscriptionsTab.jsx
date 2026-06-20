@@ -1,13 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreditCard, ChevronRight, Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock } from 'lucide-react';
-
-const DUMMY_SUBSCRIPTIONS = [
-  { id: 'SUB-1001', orgName: 'Acme Corp', plan: 'Enterprise', status: 'Active', billing: 'Yearly', nextBilling: 'Oct 24, 2026', amount: '$4,999' },
-  { id: 'SUB-1002', orgName: 'Globex Inc', plan: 'Pro', status: 'Past Due', billing: 'Monthly', nextBilling: 'Jun 15, 2026', amount: '$499' },
-  { id: 'SUB-1003', orgName: 'Stark Industries', plan: 'Enterprise', status: 'Active', billing: 'Yearly', nextBilling: 'Jan 10, 2027', amount: '$12,000' },
-  { id: 'SUB-1004', orgName: 'Wayne Enterprises', plan: 'Pro', status: 'Active', billing: 'Monthly', nextBilling: 'Jul 01, 2026', amount: '$499' },
-  { id: 'SUB-1005', orgName: 'Umbrella Corp', plan: 'Basic', status: 'Canceled', billing: 'Monthly', nextBilling: '-', amount: '$99' },
-];
+import { subscriptionService } from '../../../service';
+import toast from 'react-hot-toast';
 
 const getStatusColor = (status) => {
   switch(status) {
@@ -29,6 +23,39 @@ const getStatusIcon = (status) => {
 
 const SubscriptionsTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const limit = 10;
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [page, searchTerm]);
+
+  const fetchSubscriptions = async () => {
+    setLoading(true);
+    try {
+      const res = await subscriptionService.getAllSubscriptions(page, limit, searchTerm);
+      if (res.success) {
+        setSubscriptions(res.data.subscriptions || []);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalCount(res.data.total || 0);
+      } else {
+        toast.error(res.message || "Failed to fetch subscriptions");
+      }
+    } catch (err) {
+      toast.error("Error loading subscriptions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
 
   return (
     <div className="fade-in space-y-6">
@@ -53,14 +80,8 @@ const SubscriptionsTab = () => {
                 placeholder="Search organizations..." 
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
               />
-           </div>
-           <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors">
-                 <Filter size={16} />
-                 Filter
-              </button>
            </div>
         </div>
 
@@ -79,42 +100,80 @@ const SubscriptionsTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {DUMMY_SUBSCRIPTIONS.map((sub) => (
-                <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{sub.orgName}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{sub.id}</div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700 font-medium">{sub.plan}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${getStatusColor(sub.status)}`}>
-                      {getStatusIcon(sub.status)}
-                      {sub.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{sub.billing}</td>
-                  <td className="px-6 py-4 text-gray-600">{sub.nextBilling}</td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">{sub.amount}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                       <MoreVertical size={18} />
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-10 text-center text-gray-500 font-medium">
+                    Loading subscriptions...
                   </td>
                 </tr>
-              ))}
+              ) : subscriptions.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-10 text-center text-gray-500 font-medium">
+                    No subscriptions found.
+                  </td>
+                </tr>
+              ) : (
+                subscriptions.map((sub) => (
+                  <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{sub.orgName}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{sub.id}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-700 font-medium">{sub.plan}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${getStatusColor(sub.status)}`}>
+                        {getStatusIcon(sub.status)}
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{sub.billing}</td>
+                    <td className="px-6 py-4 text-gray-600">{sub.nextBilling}</td>
+                    <td className="px-6 py-4 font-semibold text-gray-900">{sub.amount}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+                         <MoreVertical size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
         
-        {/* Pagination Dummy */}
+        {/* Pagination */}
         <div className="p-5 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-           <div>Showing 1 to 5 of 24 results</div>
+           <div>
+             Showing {totalCount > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, totalCount)} of {totalCount} results
+           </div>
            <div className="flex gap-1">
-              <button className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-50">Prev</button>
-              <button className="px-3 py-1 rounded-md border border-gray-200 bg-purple-50 text-purple-600 border-purple-100 font-medium">1</button>
-              <button className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50">2</button>
-              <button className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50">3</button>
-              <button className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50">Next</button>
+              <button 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Prev
+              </button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setPage(i + 1)}
+                  className={`px-3 py-1 rounded-md border ${
+                    page === i + 1 
+                      ? "bg-purple-50 text-purple-600 border-purple-100 font-medium" 
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Next
+              </button>
            </div>
         </div>
       </div>
