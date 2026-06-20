@@ -133,8 +133,10 @@ import CashFlow from "./pages/hrms/FinancialReports/CashFlow";
 
 // Auth components
 import ProtectedRoute from "./components/ProtectedRoute";
+import SuperAdminProtectedRoute from "./components/SuperAdminProtectedRoute";
 import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
+import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 
 
 function App() {
@@ -413,6 +415,16 @@ function App() {
           <Route path="support" element={<EmployeeSupport />} />
           <Route path="settings" element={<EmployeeSettings />} />
         </Route>
+
+        {/* ================= SUPER ADMIN ROUTES ================= */}
+        <Route 
+          path="/super-admin" 
+          element={
+            <SuperAdminProtectedRoute>
+              <SuperAdminDashboard />
+            </SuperAdminProtectedRoute>
+          } 
+        />
 
         {/* ================= DEFAULT ROUTE ================= */}
         <Route path="/" element={<Navigate to="/auth" replace />} />

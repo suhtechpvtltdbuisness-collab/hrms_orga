@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { authService } from "../service";
-import { isLocalAuthEnabled } from "../utils/authMode";
 
-const EmployeeProtectedRoute = ({ children }) => {
+const SuperAdminProtectedRoute = ({ children }) => {
   const [authState, setAuthState] = useState("loading");
 
   useEffect(() => {
@@ -15,7 +14,6 @@ const EmployeeProtectedRoute = ({ children }) => {
         return;
       }
 
-      // Admin detection: check role, type, AND isAdmin fields
       const userData = profile.data?.user || profile.data;
       const role = (userData?.role?.toLowerCase?.()) || "";
       const type = (userData?.type?.toLowerCase?.()) || "";
@@ -32,7 +30,7 @@ const EmployeeProtectedRoute = ({ children }) => {
         return;
       }
 
-      setAuthState("authenticated");
+      setAuthState("employee");
     };
 
     verifySession();
@@ -57,11 +55,11 @@ const EmployeeProtectedRoute = ({ children }) => {
     return <Navigate to="/hrms" replace />;
   }
 
-  if (authState === "superadmin") {
-    return <Navigate to="/super-admin" replace />;
+  if (authState === "employee") {
+    return <Navigate to="/employee" replace />;
   }
 
   return children;
 };
 
-export default EmployeeProtectedRoute;
+export default SuperAdminProtectedRoute;

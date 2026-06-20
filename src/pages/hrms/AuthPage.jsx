@@ -22,13 +22,13 @@ export default function AuthPage() {
         const userData = profile.data?.user || profile.data;
         const role = (userData?.role || "").toLowerCase();
         const type = (userData?.type || "").toLowerCase();
-        const isAdmin =
-          role === "admin" ||
-          role === "superadmin" ||
-          type === "admin" ||
-          type === "superadmin" ||
-          userData?.isAdmin === true;
-        if (isAdmin) {
+        const roleId = userData?.roleId;
+        const isSuperAdmin = roleId == 0 || role === "superadmin" || type === "superadmin";
+        const isAdmin = roleId == 1 || role === "admin" || type === "admin" || userData?.isAdmin === true;
+
+        if (isSuperAdmin) {
+          navigate("/super-admin", { replace: true });
+        } else if (isAdmin) {
           navigate("/hrms", { replace: true });
         } else {
           navigate("/employee", { replace: true });

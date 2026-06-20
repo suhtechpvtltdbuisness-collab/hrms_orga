@@ -19,15 +19,17 @@ const ProtectedRoute = ({ children }) => {
       const userData = profile.data?.user || profile.data;
       const role = (userData?.role || "").toLowerCase();
       const type = (userData?.type || "").toLowerCase();
-      const isAdmin =
-        role === "admin" ||
-        role === "superadmin" ||
-        type === "admin" ||
-        type === "superadmin" ||
-        userData?.isAdmin === true;
+      const roleId = userData?.roleId;
+      const isSuperAdmin = roleId == 0 || role === "superadmin" || type === "superadmin";
+      const isAdmin = roleId == 1 || role === "admin" || type === "admin" || userData?.isAdmin === true;
+
       console.log("🔍 [ProtectedRoute] userData:", userData);
-      console.log("🔍 [ProtectedRoute] role:", role, "| type:", type, "| isAdmin field:", userData?.isAdmin, "→ isAdmin:", isAdmin);
-      if (!isAdmin) {
+      console.log("🔍 [ProtectedRoute] roleId:", roleId, "| role:", role, "| type:", type, "| isAdmin field:", userData?.isAdmin, "→ isSuperAdmin:", isSuperAdmin, "isAdmin:", isAdmin);
+      
+      if (isSuperAdmin) {
+        setAuthState("superadmin");
+        return;
+      } else if (!isAdmin) {
         setAuthState("employee");
         return;
       }
@@ -63,6 +65,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (authState === "employee") {
     return <Navigate to="/employee" replace />;
+  }
+
+  if (authState === "superadmin") {
+    return <Navigate to="/super-admin" replace />;
   }
 
   return children;
