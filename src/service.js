@@ -1640,4 +1640,59 @@ export const getProfilePicUrl = (url) => {
   return url;
 };
 
+export const organizationService = {
+  getOrganizations: async (page = 1, limit = 10, search = "") => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/organizations?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch organizations",
+        };
+      }
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+  getSuperAdminOverview: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/organizations/superadmin/overview`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch superadmin overview",
+        };
+      }
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+};
+
+
 
