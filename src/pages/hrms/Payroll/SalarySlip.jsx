@@ -1,82 +1,194 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
-import CustomDatePicker from '../../../components/ui/CustomDatePicker';
-import FilterDropdown from '../../../components/ui/FilterDropdown';
+import { ChevronRight, Eye, CheckSquare, Download, Search, RotateCcw } from 'lucide-react';
+import { payrollModuleService } from '../../../service';
+import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const SalarySlip = () => {
     const navigate = useNavigate();
 
-    // Initial State
-    const [formData, setFormData] = useState({
-        employeeId: 'EMP-0123',
-        employeeName: 'Alice Smith',
-        department: 'Development',
-        designation: 'Software Engineer',
-        salaryStructure: 'Monthly Salary Structure',
-        grossPay: '₹50,000',
-        totalDeduction: '₹50,000',
-        netPay: '₹50,000',
-        paymentDays: '30',
-        leaveWithoutPay: '1',
-        postingDate: '26/01/2026'
-    });
+    const [slips, setSlips] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSlip, setSelectedSlip] = useState(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isActionLoading, setIsActionLoading] = useState(false);
 
-    const [earnings, setEarnings] = useState([
-        { id: 1, component: 'Basic', amount: '4000' },
-        { id: 2, component: 'House Rent Allowance', amount: '16000' },
-        { id: 3, component: 'Medical Allowance', amount: '10000' },
-    ]);
-
-    const [deductions, setDeductions] = useState([
-        { id: 1, component: 'Provident Fund', amount: '4000' },
-    ]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleDropdownChange = (name, value) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleDateChange = (name, date) => {
-        setFormData(prev => ({ ...prev, [name]: date }));
-    };
-
-    // Earning Handlers
-    const addEarning = () => {
-        const newId = earnings.length > 0 ? Math.max(...earnings.map(e => e.id)) + 1 : 1;
-        setEarnings([...earnings, { id: newId, component: '', amount: '' }]);
-    };
-
-    const removeEarning = (id) => {
-        setEarnings(earnings.filter(e => e.id !== id));
-    };
-
-    const handleEarningChange = (id, field, value) => {
-        if (field === 'component') {
-            // Allow only alphabets and spaces
-            if (/^[a-zA-Z\s]*$/.test(value)) {
-                setEarnings(earnings.map(item => 
-                    item.id === id ? { ...item, [field]: value } : item
-                ));
+    // Fetch Slips
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const res = await payrollModuleService.getSalarySlips();
+            if (res.success && res.data) {
+                setSlips(res.data);
+            } else {
+                toast.error(res.message || 'Failed to fetch salary slips');
             }
-        } else if (field === 'amount') {
-            // Allow only numbers
-            if (/^[0-9]*$/.test(value)) {
-                setEarnings(earnings.map(item => 
-                    item.id === id ? { ...item, [field]: value } : item
-                ));
-            }
+        } catch (err) {
+            toast.error('Failed to load salary slips');
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // Sign off on salary slip
+    const handleSignOff = async (id) => {
+        setIsActionLoading(true);
+        try {
+            const res = await payrollModuleService.signOffSalarySlip(id);
+            if (res.success) {
+                toast.success('Salary slip signed off successfully!');
+                fetchData();
+                if (selectedSlip && selectedSlip.salarySlip.id === id) {
+                    setIsDetailOpen(false);
+                }
+            } else {
+                toast.error(res.message || 'Failed to sign off');
+            }
+        } catch (err) {
+            toast.error('Failed to sign off salary slip');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    // View Details Modal
+    const handleViewDetails = (item) => {
+        setSelectedSlip(item);
+        setIsDetailOpen(true);
+    };
+
+    // Download PDF with jsPDF
+    const handleDownloadPDF = (item) => {
+        const slip = item.salarySlip || item;
+        const entry = item.payrollEntry || {};
+        const employeeName = item.employeeName || slip.employeeSnapshot?.name || 'Employee';
+        const snapshot = slip.employeeSnapshot || {};
+
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(125, 30, 219); // #7D1EDB
+        doc.text('SUH Tech Solutions', 20, 25);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Corporate Payroll Slip', 20, 32);
+        
+        // Slip Info right side
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(50, 50, 50);
+        doc.text(`Payslip ID: ${slip.slipNumber}`, 130, 25);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated: ${new Date(slip.createdAt).toLocaleDateString()}`, 130, 32);
+
+        // Divider Line
+        doc.setDrawColor(220, 220, 220);
+        doc.line(20, 38, 190, 38);
+
+        // Metadata block (Employee snapshot)
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Employee Details', 20, 48);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Name: ${employeeName}`, 20, 55);
+        doc.text(`Department: ${snapshot.department || '—'}`, 20, 61);
+        doc.text(`Salary Structure: ${snapshot.salaryStructure || '—'}`, 20, 67);
+
+        doc.text(`Period Start: ${entry.periodStart ? new Date(entry.periodStart).toLocaleDateString() : '—'}`, 110, 55);
+        doc.text(`Period End: ${entry.periodEnd ? new Date(entry.periodEnd).toLocaleDateString() : '—'}`, 110, 61);
+        doc.text(`Paid Days: ${entry.paidDays || '—'} Days`, 110, 67);
+
+        // Earnings and Deductions tables side-by-side or combined
+        const earningsRows = (slip.earnings || []).map(e => [e.name || e.componentName || 'Earning', `Rs. ${Number(e.amount).toFixed(2)}`]);
+        const deductionsRows = (slip.deductions || []).map(d => [d.name || d.componentName || 'Deduction', `Rs. ${Number(d.amount).toFixed(2)}`]);
+
+        // Draw Earnings Table
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Earnings', 20, 80);
+        
+        doc.autoTable({
+            startY: 85,
+            margin: { left: 20, right: 110 },
+            head: [['Component', 'Amount']],
+            body: earningsRows,
+            theme: 'striped',
+            headStyles: { fillColor: [125, 30, 219] },
+            styles: { fontSize: 9 }
+        });
+
+        // Draw Deductions Table
+        const earningsTableEndY = doc.lastAutoTable.finalY || 85;
+        doc.text('Deductions', 110, 80);
+        
+        doc.autoTable({
+            startY: 85,
+            margin: { left: 110, right: 20 },
+            head: [['Component', 'Amount']],
+            body: deductionsRows,
+            theme: 'striped',
+            headStyles: { fillColor: [220, 53, 69] },
+            styles: { fontSize: 9 }
+        });
+
+        const deductionsTableEndY = doc.lastAutoTable.finalY || 85;
+        const mainTablesEndY = Math.max(earningsTableEndY, deductionsTableEndY);
+
+        // Summary box
+        const summaryY = mainTablesEndY + 15;
+        doc.setDrawColor(125, 30, 219);
+        doc.setFillColor(248, 245, 255);
+        doc.rect(20, summaryY, 170, 30, 'FD');
+
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 50);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Gross Earnings: Rs. ${Number(slip.grossPay).toFixed(2)}`, 25, summaryY + 10);
+        doc.text(`Total Deductions: Rs. ${Number(slip.totalDeductions).toFixed(2)}`, 25, summaryY + 18);
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(125, 30, 219);
+        doc.text(`Net Take-Home Pay: Rs. ${Number(slip.netPay).toFixed(2)}`, 110, summaryY + 15);
+
+        // Signoff status
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Status: ${slip.status.toUpperCase()}`, 20, summaryY + 42);
+        if (slip.signedOffAt) {
+            doc.text(`Signed Off On: ${new Date(slip.signedOffAt).toLocaleString()}`, 20, summaryY + 48);
+        }
+
+        // Save PDF
+        doc.save(`Payslip_${employeeName.replace(/\s+/g, '_')}_${slip.slipNumber}.pdf`);
+        toast.success('Payslip PDF downloaded successfully!');
+    };
+
+    // Filter
+    const filteredSlips = slips.filter(item => {
+        const name = item.employeeName || item.salarySlip?.employeeSnapshot?.name || '';
+        return !searchQuery || name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
     return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
+        <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9]">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0"style={{ fontFamily: '"Mulish", sans-serif' }}>
+            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
                 <img 
                     src="/images/arrow_left_alt.svg" 
                     alt="Back" 
@@ -95,258 +207,218 @@ const SalarySlip = () => {
 
             {/* Header */}
             <div className="flex justify-between items-center mb-4 shrink-0">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Salary Slip</h1>
-                    <span className="px-3 py-1 bg-white border border-[#E0E0E0] rounded-md text-[14px] text-[#1E1E1E]"style={{ fontFamily: '"Roboto", sans-serif' }}>Paid</span>
+                <div>
+                    <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Salary Slips</h1>
+                    <p className="text-sm text-gray-400">View corporate salary slips, download PDFs, and record official sign-offs</p>
                 </div>
-                
-                <button
-                    className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                    onClick={() => {}}
+            </div>
+
+            {/* Search and reload */}
+            <div className="flex gap-4 mb-4 items-center flex-wrap shrink-0">
+                <div className="relative max-w-xs flex-1">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input 
+                        type="text"
+                        placeholder="Search by employee..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#7D1EDB]"
+                    />
+                </div>
+                <button 
+                    onClick={fetchData}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
+                    title="Reload"
                 >
-                    <span className='text-[16px] font-normal text-white font-popins'style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
+                    <RotateCcw size={16} />
                 </button>
             </div>
 
-            {/* Form Content - Scrollable Area */}
-            <div className="flex-1 w-full max-w-full overflow-y-auto pr-2"style={{ fontFamily: '"Inter", sans-serif' }}>
-                
-                {/* Employee Information */}
-                <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
-                    <h2 className="text-[16px] font-semibold text-[#000000] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Employee Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        {/* Employee */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Employee</label>
-                            <FilterDropdown
-                                options={['EMP-0123', 'EMP-0124', 'EMP-0125']}
-                                value={formData.employeeId}
-                                onChange={(val) => handleDropdownChange('employeeId', val)}
-                                className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
-                                showArrow={true}
-                                dropdownWidth="100%"
-                                align='left'
-                                disableAllOption={true}
-                            />
-                        </div>
-                        {/* Employee Name */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Employee Name</label>
-                            <input 
-                                type="text"
-                                name="employeeName"
-                                value={formData.employeeName}
-                                onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
-                            />
-                        </div>
-                         {/* Department */}
-                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Department</label>
-                            <FilterDropdown
-                                options={['Development', 'HR', 'Sales', 'Marketing']}
-                                value={formData.department}
-                                onChange={(val) => handleDropdownChange('department', val)}
-                                className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
-                                showArrow={true}
-                                dropdownWidth="100%"
-                                align='left'
-                                disableAllOption={true}
-                            />
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Designation */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Designation</label>
-                            <FilterDropdown
-                                options={['Software Engineer', 'Senior Developer', 'Manager']}
-                                value={formData.designation}
-                                onChange={(val) => handleDropdownChange('designation', val)}
-                                className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
-                                showArrow={true}
-                                dropdownWidth="100%"
-                                align='left'
-                                disableAllOption={true}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Salary Information */}
-                 <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
-                    <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Salary Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                         {/* Salary Structure */}
-                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Salary Structure</label>
-                            <FilterDropdown
-                                options={['Monthly Salary Structure', 'Weekly Structure', 'Daily Structure']}
-                                value={formData.salaryStructure}
-                                onChange={(val) => handleDropdownChange('salaryStructure', val)}
-                                className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"
-                                showArrow={true}
-                                dropdownWidth="100%"
-                                align='left'
-                                disableAllOption={true}
-                            />
-                        </div>
-                         {/* Gross Pay */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Gross Pay</label>
-                             <div className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] flex items-center justify-between">
-                                {formData.grossPay} <ChevronDown size={20} className="text-[#888888]"/>
-                             </div>
-                        </div>
-                         {/* Total Deduction */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Total Deduction</label>
-                             <div className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] flex items-center justify-between">
-                                {formData.totalDeduction} <ChevronDown size={20} className="text-[#888888]"/>
-                             </div>
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Net Pay */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Net Pay</label>
-                             <div className="w-full h-[40px] px-3 bg-white border border-[#E0E0E0] rounded-lg text-[16px] font-normal font-inter text-[#1E1E1E] flex items-center justify-between">
-                                {formData.netPay} <ChevronDown size={20} className="text-[#888888]"/>
-                             </div>
-                        </div>
-                     </div>
-                </div>
-
-                {/* Components */}
-                <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
-                    <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Components</h2>
-                    
-                    {/* Earnings Table */}
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Earnings Table</h3>
-                         <button 
-                            onClick={addEarning}
-                            className="bg-[#7D1EDB] text-white px-3 py-2 rounded-full text-[16px] font-normal font-poppins hover:bg-purple-700 transition-colors"
-                            style={{ fontFamily: 'Poppins, sans-serif' }}
-                        >
-                            Add Earnings
-                        </button>
-                    </div>
-                    <div className="overflow-x-auto border border-[#CECECE] rounded-lg mb-4">
-                        <table className="w-full">
-                            <thead className="bg-white border-b border-[#CECECE]">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-[14px] font-normal text-[#757575] first:w-20" style={{ fontFamily: '"Poppins", sans-serif' }}>Sr.No.</th>
-                                    <th className="px-6 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Salary Component</th>
-                                    <th className="px-6 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Amount/Formula</th>
-                                    <th className="px-6 py-3 text-right text-[14px] font-normal text-[#757575] w-24" style={{ fontFamily: '"Poppins", sans-serif' }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {earnings.map((item, index) => (
-                                    <tr key={item.id} className="last:border-b-0">
-                                        <td className="px-6 py-3 text-[14px] text-[#1E1E1E] font-inter">{String(index + 1).padStart(2, '0')}</td>
-                                        <td className="px-6 py-3 text-center">
-                                            <input 
-                                                type="text" 
-                                                value={item.component}
-                                                onChange={(e) => handleEarningChange(item.id, 'component', e.target.value)}
-                                                className="w-full text-center text-[14px] text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
-                                                placeholder="Component"
-                                            />
+            {/* List View Table */}
+            <div className="flex-1 w-full overflow-y-auto border border-[#CECECE] rounded-lg">
+                <table className="w-full border-collapse font-inter">
+                    <thead className="bg-white sticky top-0 z-10 border-b border-[#CECECE]">
+                        <tr className="text-left font-poppins">
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Slip Number</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Employee</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Period Start</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Period End</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Gross Pay</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Deductions</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Net Pay</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575]">Status</th>
+                            <th className="px-4 py-3 text-[14px] font-medium text-[#757575] text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={9} className="py-12 text-center text-gray-500">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1EDB] mx-auto mb-2"></div>
+                                    Loading salary slips...
+                                </td>
+                            </tr>
+                        ) : filteredSlips.length === 0 ? (
+                            <tr>
+                                <td colSpan={9} className="py-12 text-center text-gray-400">No salary slips found</td>
+                            </tr>
+                        ) : (
+                            filteredSlips.map((item) => {
+                                const slip = item.salarySlip || item;
+                                const entry = item.payrollEntry || {};
+                                return (
+                                    <tr key={slip.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3 text-sm font-semibold text-[#7D1EDB]">{slip.slipNumber}</td>
+                                        <td className="px-4 py-3 text-sm font-semibold text-[#1E1E1E]">{item.employeeName || slip.employeeSnapshot?.name || '—'}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {entry.periodStart ? new Date(entry.periodStart).toLocaleDateString() : '—'}
                                         </td>
-                                        <td className="px-6 py-3 text-center">
-                                            <input 
-                                                type="text" 
-                                                value={item.amount}
-                                                onChange={(e) => handleEarningChange(item.id, 'amount', e.target.value)}
-                                                className="w-full text-center text-[14px] text-[#1E1E1E] font-inter focus:outline-none bg-transparent"
-                                                placeholder="Amount"
-                                            />
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {entry.periodEnd ? new Date(entry.periodEnd).toLocaleDateString() : '—'}
                                         </td>
-                                        <td className="px-6 py-3 text-right">
-                                            <button 
-                                                onClick={() => removeEarning(item.id)}
-                                                className="text-[#1E1E1E] hover:text-red-500 transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">₹{slip.grossPay}</td>
+                                        <td className="px-4 py-3 text-sm text-red-600">₹{slip.totalDeductions}</td>
+                                        <td className="px-4 py-3 text-sm font-semibold text-green-700">₹{slip.netPay}</td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                                                slip.status === 'signed_off' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {slip.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex gap-2 justify-end">
+                                                <button 
+                                                    onClick={() => handleViewDetails(item)} 
+                                                    className="p-1.5 rounded-lg hover:bg-purple-50 text-[#7D1EDB]"
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={15} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDownloadPDF(item)} 
+                                                    className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600"
+                                                    title="Download PDF"
+                                                >
+                                                    <Download size={15} />
+                                                </button>
+                                                {slip.status !== 'signed_off' && (
+                                                    <button 
+                                                        onClick={() => handleSignOff(slip.id)} 
+                                                        disabled={isActionLoading}
+                                                        className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        title="Sign Off"
+                                                    >
+                                                        <CheckSquare size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Deductions Table */}
-                    <div className="overflow-x-auto border border-[#CECECE] rounded-lg">
-                         <table className="w-full">
-                             <thead className="bg-white border-b border-[#CECECE]">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-[14px] font-normal text-[#757575] first:w-20" style={{ fontFamily: '"Poppins", sans-serif' }}>Sr.No.</th>
-                                    <th className="px-6 py-3 text-center text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Salary Component</th>
-                                    <th className="px-6 py-3 text-right text-[14px] font-normal text-[#757575]" style={{ fontFamily: '"Poppins", sans-serif' }}>Amount/Formula</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                 {deductions.map((item, index) => (
-                                    <tr key={item.id} className="last:border-b-0">
-                                        <td className="px-6 py-3 text-[14px] text-[#1E1E1E] font-inter">{String(index + 1).padStart(2, '0')}</td>
-                                        <td className="px-6 py-3 text-center text-[14px] text-[#1E1E1E] font-inter">{item.component}</td>
-                                        <td className="px-6 py-3 text-right text-[14px] text-[#1E1E1E] font-inter">{item.amount}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Attendance */}
-                <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
-                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Attendance</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Payment Days */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Payment Days</label>
-                            <input 
-                                type="text"
-                                name="paymentDays"
-                                value={formData.paymentDays}
-                                onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
-                            />
-                        </div>
-                        {/* Leave Without Pay */}
-                         <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Leave Without Pay</label>
-                            <input 
-                                type="text"
-                                name="leaveWithoutPay"
-                                value={formData.leaveWithoutPay}
-                                onChange={handleChange}
-                                className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[16px] font-normal font-inter text-[#1E1E1E] focus:outline-none focus:border-[#7D1EDB]"
-                            />
-                        </div>
-                     </div>
-                </div>
-
-                {/* Status */}
-                  <div className="border border-[#D6D6D6] rounded-lg p-4 mb-4">
-                     <h2 className="text-[16px] font-medium text-[#1E1E1E] mb-3" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Status</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Posting Date */}
-                        <div>
-                            <label className="block text-[16px] font-normal font-inter text-[#1E1E1E] mb-1">Posting Date</label>
-                            <CustomDatePicker 
-                                value={formData.postingDate}
-                                onChange={(date) => handleDateChange('postingDate', date)}
-                                className="w-full bg-white"
-                            />
-                        </div>
-                     </div>
-                  </div>
-
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
             </div>
+
+            {/* Modal for Details View */}
+            {isDetailOpen && selectedSlip && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 font-inter">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl flex flex-col max-h-[85vh]">
+                        {/* Header */}
+                        <div className="flex justify-between items-start border-b pb-3 mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Payslip: {selectedSlip.salarySlip?.slipNumber}</h3>
+                                <p className="text-xs text-gray-400">Employee: {selectedSlip.employeeName}</p>
+                            </div>
+                            <button onClick={() => setIsDetailOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="text-xl">×</span>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-[#CECECE] text-sm">
+                                <div>
+                                    <span className="text-xs text-gray-400">Department</span>
+                                    <p className="font-semibold text-gray-900">{selectedSlip.salarySlip?.employeeSnapshot?.department || '—'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-400">Salary Structure</span>
+                                    <p className="font-semibold text-gray-900">{selectedSlip.salarySlip?.employeeSnapshot?.salaryStructure || '—'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-400">Period</span>
+                                    <p className="font-semibold text-gray-900">
+                                        {selectedSlip.payrollEntry?.periodStart ? new Date(selectedSlip.payrollEntry.periodStart).toLocaleDateString() : ''} - {selectedSlip.payrollEntry?.periodEnd ? new Date(selectedSlip.payrollEntry.periodEnd).toLocaleDateString() : ''}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-400">Paid Days</span>
+                                    <p className="font-semibold text-gray-900">{selectedSlip.payrollEntry?.paidDays || '—'} Days</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="border rounded-lg p-3">
+                                    <h4 className="font-semibold text-sm border-b pb-2 mb-2 text-purple-700">Earnings</h4>
+                                    <div className="space-y-2">
+                                        {(selectedSlip.salarySlip?.earnings || []).map((e, idx) => (
+                                            <div key={idx} className="flex justify-between text-sm">
+                                                <span>{e.name || e.componentName}</span>
+                                                <span className="font-semibold">₹{e.amount}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="border rounded-lg p-3">
+                                    <h4 className="font-semibold text-sm border-b pb-2 mb-2 text-red-600">Deductions</h4>
+                                    <div className="space-y-2">
+                                        {(selectedSlip.salarySlip?.deductions || []).map((d, idx) => (
+                                            <div key={idx} className="flex justify-between text-sm">
+                                                <span>{d.name || d.componentName}</span>
+                                                <span className="font-semibold text-red-600">₹{d.amount}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-purple-50 p-4 rounded-lg border border-[#7D1EDB]/20 flex justify-between items-center">
+                                <div>
+                                    <span className="text-xs text-purple-700">Net Take-Home Pay</span>
+                                    <p className="text-xl font-bold text-[#7D1EDB]">₹{selectedSlip.salarySlip?.netPay}</p>
+                                </div>
+                                <div className="text-right text-xs text-gray-500">
+                                    <p>Gross: ₹{selectedSlip.salarySlip?.grossPay}</p>
+                                    <p>Total Deductions: ₹{selectedSlip.salarySlip?.totalDeductions}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex gap-2 justify-end border-t pt-3 mt-4">
+                            <button
+                                onClick={() => handleDownloadPDF(selectedSlip)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm flex items-center gap-1"
+                            >
+                                <Download size={15} /> Download PDF
+                            </button>
+                            {selectedSlip.salarySlip?.status !== 'signed_off' && (
+                                <button
+                                    onClick={() => handleSignOff(selectedSlip.salarySlip.id)}
+                                    disabled={isActionLoading}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <CheckSquare size={15} /> {isActionLoading ? 'Signing Off...' : 'Sign Off'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

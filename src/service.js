@@ -1700,5 +1700,400 @@ export const organizationService = {
   },
 };
 
+// ─── New Payroll Module Service ──────────────────────────────────────────────────
+export const payrollModuleService = {
+  // Salary Component
+  getSalaryComponents: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-components`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch salary components" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createSalaryComponent: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-components`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create salary component" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateSalaryComponent: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-components/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update salary component" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteSalaryComponent: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-components/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete salary component" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Salary Structure
+  getSalaryStructures: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structures`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch salary structures" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createSalaryStructure: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structures`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create salary structure" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateSalaryStructure: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structures/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update salary structure" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteSalaryStructure: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structures/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete salary structure" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Salary Structure Assignment
+  getSalaryStructureAssignments: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structure-assignments`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch assignments" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createSalaryStructureAssignment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structure-assignments`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create assignment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateSalaryStructureAssignment: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structure-assignments/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update assignment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteSalaryStructureAssignment: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-structure-assignments/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete assignment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Additional Salary
+  getAdditionalSalaries: async (filters = {}) => {
+    try {
+      const queryString = Object.keys(filters).length
+        ? '?' + new URLSearchParams(
+          Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null))
+        ).toString()
+        : '';
+      const response = await apiFetch(`${BASE_URL}/payroll/additional-salaries${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch additional salaries" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createAdditionalSalary: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/additional-salaries`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create additional salary" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateAdditionalSalary: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/additional-salaries/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update additional salary" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteAdditionalSalary: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/additional-salaries/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete additional salary" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Payroll Entry
+  getPayrollEntries: async (filters = {}) => {
+    try {
+      const queryString = Object.keys(filters).length
+        ? '?' + new URLSearchParams(
+          Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null))
+        ).toString()
+        : '';
+      const response = await apiFetch(`${BASE_URL}/payroll/entries${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payroll entries" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getPayrollEntry: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/entries/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payroll entry details" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createPayrollEntry: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/entries`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create payroll entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  finalizePayrollEntry: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/entries/${id}/finalize`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to finalize payroll entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Salary Slip
+  getSalarySlips: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-slips`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch salary slips" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  generateSalarySlip: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-slips`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to generate salary slip" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  finalizeSalarySlip: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-slips/${id}/finalize`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to finalize salary slip" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  signOffSalarySlip: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/salary-slips/${id}/sign-off`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to sign off salary slip" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Payroll Accounting
+  getPayrollAccounting: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/accounting`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payroll accounting entries" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getPayrollAccountingEntries: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/accounting`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payroll accounting entries" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  // Bank Integration / Export
+  getBankExport: async (filters = {}) => {
+    try {
+      const queryString = Object.keys(filters).length
+        ? '?' + new URLSearchParams(
+          Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null))
+        ).toString()
+        : '';
+      const response = await apiFetch(`${BASE_URL}/payroll/bank-export${queryString}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch bank export data" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
 
 

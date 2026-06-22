@@ -279,8 +279,8 @@ const CustomDatePicker = ({
                             <>
                                 {/* Days Grid */}
                                 <div className="grid grid-cols-7 gap-y-1 mb-2 text-center justify-items-center">
-                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                                        <div key={d} className="text-[#49454F] text-xs font-medium w-7 h-7 flex items-center justify-center">{d}</div>
+                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
+                                        <div key={idx} className="text-[#49454F] text-xs font-medium w-7 h-7 flex items-center justify-center">{d}</div>
                                     ))}
                                     {renderDays()}
                                 </div>
