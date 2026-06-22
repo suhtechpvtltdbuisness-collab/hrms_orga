@@ -1023,7 +1023,7 @@ export const attendanceUtils = {
     srNo: String(index + 1).padStart(2, "0"),
     name: record.empName || "-",
     empId: record.empId ? `EMP-${String(record.empId).padStart(3, "0")}` : "-",
-    status: ATTENDANCE_STATUS_TO_UI[record.status] || record.status,
+    status: record.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[record.status] || record.status),
     date: attendanceUtils.toDisplayDate(record.attendanceDate),
     leaveType: LEAVE_TYPE_TO_UI[record.leaveType] || "-",
     rawStatus: record.status,
@@ -1045,6 +1045,12 @@ export const attendanceService = {
       }
       if (filters.month) {
         apiFilters.month = filters.month;
+      }
+      if (filters.date) {
+        apiFilters.date = filters.date;
+      }
+      if (filters.status && filters.status !== "All") {
+        apiFilters.status = filters.status;
       }
 
       const queryString = Object.keys(apiFilters).length

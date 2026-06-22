@@ -20,10 +20,19 @@ const AttendanceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const getTodayDateString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [filters, setFilters] = useState({
-    name: '',
-    leaveType: '',
-    status: ''
+    name: 'All',
+    leaveType: 'All',
+    status: 'All',
+    date: getTodayDateString()
   });
 
   const LEAVE_TYPE_OPTIONS = ["All", "Sick Leave", "Personal Leave"];
@@ -65,6 +74,8 @@ const AttendanceList = () => {
       const response = await attendanceService.getAttendances({
         employeeName: filters.name,
         leaveType: filters.leaveType,
+        status: filters.status,
+        date: filters.date,
       });
 
       if (response.success) {
@@ -82,7 +93,7 @@ const AttendanceList = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters.name, filters.leaveType]);
+  }, [filters.name, filters.leaveType, filters.status, filters.date]);
 
   useEffect(() => {
     fetchEmployees();
@@ -204,6 +215,17 @@ const AttendanceList = () => {
       </div>
 
       <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-col gap-1">
+            <span className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: 'Inter, sans-serif' }}>Date</span>
+            <input
+                type="date"
+                value={filters.date}
+                onChange={(e) => { setFilters(prev => ({ ...prev, date: e.target.value })); setCurrentPage(1); }}
+                className="w-[210px] h-[38px] font-normal text-[13px] px-4 py-2 bg-white border border-[#D9D9D9] text-[#1E1E1E] rounded-[12px] outline-none hover:border-[#7D1EDB] transition-colors cursor-pointer"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+            />
+        </div>
+
         <div className="flex flex-col gap-1">
             <span className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: 'Inter, sans-serif' }}>Employee Name</span>
             <FilterDropdown
