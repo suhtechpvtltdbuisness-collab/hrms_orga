@@ -154,32 +154,6 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                         />
                     </div>
 
-                    {/* Password */}
-                    <div>
-                        <label className={labelClasses}>Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password || ''}
-                            onChange={onChange}
-                            placeholder="Enter password"
-                            className={inputClasses}
-                        />
-                    </div>
-
-                    {/* Employee ID */}
-                    <div>
-                        <label className={labelClasses}>Employee ID</label>
-                        <input
-                            type="text"
-                            name="employeeId"
-                            value={formData.employeeId || ''}
-                            onChange={onChange}
-                            placeholder="EMP1023"
-                            className={inputClasses}
-                        />
-                    </div>
-
                     {/* Gender */}
                     <div>
                         <label className={labelClasses}>Gender</label>

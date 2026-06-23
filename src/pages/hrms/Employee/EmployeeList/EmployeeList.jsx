@@ -51,7 +51,7 @@ const EmployeeList = () => {
                         return {
                             srNo: String(index + 1).padStart(2, '0'),
                             name: u.name || '-',
-                            empId: `EMP-${String(u.id || index + 1).padStart(3, '0')}`,
+                            empId: u.employeeId || `EMP${1000 + (u.id || index + 1)}`,
                             department: u.department || '-',
                             designation: u.designation || '-',
                             joiningDate: u.createdAt

@@ -209,7 +209,7 @@ const ViewEmployee = () => {
   const cardData = employeeData ? {
     name: isEditMode ? (formData.name || "-") : (employeeData.name || "-"),
     designation: employeeData.designation || "-",
-    empId: `EMP-${String(employeeData.id).padStart(3, '0')}`,
+    empId: employeeData.employeeId || `EMP${1000 + employeeData.id}`,
     mobile: isEditMode ? (formData.phone || "-") : (employeeData.phone || "-"),
     email: isEditMode ? (formData.email || "-") : (employeeData.email || "-"),
     location: isEditMode ? (formData.address || "-") : (employeeData.address || "-"),

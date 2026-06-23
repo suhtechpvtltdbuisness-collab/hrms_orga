@@ -50,7 +50,8 @@ const EmpPersonalInfo = ({ data, isEditMode = false, formData = {}, onChange }) 
     const labelClasses = `block text-base font-normal mb-1.5 leading-[140%] ${isEditMode ? 'text-[#1E1E1E]' : 'text-[#757575]'}`;
 
     const getEmployeeId = () => {
-        if (data?.id) return `EMP-${String(data.id).padStart(3, '0')}`;
+        if (data?.employeeId) return data.employeeId;
+        if (data?.id) return `EMP${1000 + data.id}`;
         return "-";
     };
 

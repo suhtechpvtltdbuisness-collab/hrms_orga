@@ -388,11 +388,11 @@ const AddEmployee = () => {
         }
 
         // Validate required fields
-        if (!formData.name || !formData.email || !formData.password) {
+        if (!formData.name || !formData.email) {
             setToast({
                 type: 'error',
                 title: 'Validation Error',
-                message: 'Please fill in Name, Email, and Password before saving.'
+                message: 'Please fill in Name and Email before saving.'
             });
             return;
         }
