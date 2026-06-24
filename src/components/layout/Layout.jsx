@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
       >
         <div className="px-4 pt-4 pb-0">
           {/* Topbar */}
-          <div className="sticky top-0 z-30">
+          <div className="sticky top-0 z-30 bg-[#eeeff1] pb-2 -mt-4 pt-4">
             <Topbar />
           </div>
 

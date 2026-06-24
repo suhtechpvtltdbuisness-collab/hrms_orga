@@ -174,71 +174,71 @@ const HRMS = () => {
   };
 
   return (
-      <div className="bg-white px-4 sm:px-6 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] overflow-y-auto border border-[#D9D9D9]">
-        {/* Header */}
-        <div className="mb-4">
-          <h1
-            className="text-xl font-semibold text-gray-800"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            HRMS Dashboard
-          </h1>
+    <div className="bg-white px-4 sm:px-6 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] overflow-y-auto border border-[#D9D9D9]">
+      {/* Header */}
+      <div className="mb-4">
+        <h1
+          className="text-xl font-semibold text-gray-800"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          HRMS Dashboard
+        </h1>
       </div>
 
-        <ActivityHeatmap />
-        
-        {/* Shortcuts */}
-        <div>
-          <h2
-            className="text-xl font-medium text-gray-900 mb-6"
-            style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-          >
-            Your Shortcuts
-          </h2>
+      <ActivityHeatmap />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {shortcutGroups.map((group, index) => (
-              <div
-                key={index}
-                className="border border-[#E4E0E0] rounded-lg p-4 h-full min-h-50"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1">
-                    <FileText className="w-6 h-6 text-[#1E1E1E]" />
-                  </div>
-                  <h3
-                    className="font-medium text-[#1E1E1E] text-[16px]"
-                    style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-                  >
-                    {group.title}
-                  </h3>
-                </div>
+      {/* Shortcuts */}
+      <div>
+        <h2
+          className="text-xl font-medium text-gray-900 mb-6"
+          style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+        >
+          Your Shortcuts
+        </h2>
 
-                <div className="space-y-2">
-                  {group.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-3 cursor-pointer group"
-                      onClick={() => handleNavigation(item.path)}
-                    >
-                      <div className="w-4 h-4 rounded-sm bg-[#7D1EDB] flex items-center justify-center shrink-0">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                      </div>
-                      <span
-                        className="text-[16px] text-[#000000] group-hover:text-[#7D1EDB] transition-colors"
-                        style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-                      >
-                        {item.name}
-                      </span>
-                    </div>
-                  ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {shortcutGroups.map((group, index) => (
+            <div
+              key={index}
+              className="border border-[#E4E0E0] rounded-lg p-4 h-full min-h-50"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1">
+                  <FileText className="w-6 h-6 text-[#1E1E1E]" />
                 </div>
+                <h3
+                  className="font-medium text-[#1E1E1E] text-[16px]"
+                  style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+                >
+                  {group.title}
+                </h3>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-2">
+                {group.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => handleNavigation(item.path)}
+                  >
+                    <div className="w-4 h-4 rounded-sm bg-[#7D1EDB] flex items-center justify-center shrink-0">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    </div>
+                    <span
+                      className="text-[16px] text-[#000000] group-hover:text-[#7D1EDB] transition-colors"
+                      style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+                    >
+                      {item.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      );
+    </div>
+  );
 };
 
 export default HRMS;
