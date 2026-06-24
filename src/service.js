@@ -593,6 +593,33 @@ export const employeeService = {
     }
   },
 
+  // Delete employee by ID
+  deleteEmployee: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to delete employee",
+        };
+      }
+      return {
+        success: true,
+        message: data.message || "Employee deleted successfully",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Network error while deleting employee",
+      };
+    }
+  },
+
   // Upload an image (for profile pictures)
   uploadImage: async (file) => {
     try {
@@ -1019,17 +1046,21 @@ export const attendanceUtils = {
     return `${year}-${String(index + 1).padStart(2, "0")}`;
   },
 
-  mapRecordToRow: (record, index) => ({
-    srNo: String(index + 1).padStart(2, "0"),
-    name: record.empName || "-",
-    empId: record.empId ? `EMP-${String(record.empId).padStart(3, "0")}` : "-",
-    status: record.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[record.status] || record.status),
-    date: attendanceUtils.toDisplayDate(record.attendanceDate),
-    leaveType: LEAVE_TYPE_TO_UI[record.leaveType] || "-",
-    rawStatus: record.status,
-    rawLeaveType: record.leaveType,
-    id: record.id,
-  }),
+  mapRecordToRow: (record, index) => {
+    const att = record.attendance || record;
+    const emp = record.employee || record.user || record;
+    return {
+      srNo: String(index + 1).padStart(2, "0"),
+      name: emp.name || att.empName || emp.firstName || "-",
+      empId: emp.id || emp.employeeId || att.empId ? `EMP-${String(emp.id || emp.employeeId || att.empId).padStart(3, "0")}` : "-",
+      status: att.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[att.status] || att.status),
+      date: attendanceUtils.toDisplayDate(att.attendanceDate || att.date),
+      leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
+      rawStatus: att.status,
+      rawLeaveType: att.leaveType,
+      id: att.id || att._id || record._id || record.id,
+    };
+  },
 };
 
 // ─── Attendance Service ──────────────────────────────────────────────────────────
@@ -1075,9 +1106,24 @@ export const attendanceService = {
         };
       }
 
+      let finalData = [];
+      if (Array.isArray(data)) {
+        finalData = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        finalData = data.data;
+      } else if (data.data && typeof data.data === 'object') {
+        // Try to find the array inside data.data
+        const arrayValues = Object.values(data.data).find(Array.isArray);
+        if (arrayValues) finalData = arrayValues;
+      } else if (data.attendances && Array.isArray(data.attendances)) {
+        finalData = data.attendances;
+      } else if (data.records && Array.isArray(data.records)) {
+        finalData = data.records;
+      }
+
       return {
         success: true,
-        data: Array.isArray(data) ? data : data.data || [],
+        data: finalData,
       };
     } catch {
       return { success: false, message: "Something went wrong" };

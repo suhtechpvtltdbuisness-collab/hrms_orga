@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Calendar, ArrowUp } from "lucide-react";
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
-import { departmentService, designationService } from "../../../../service";
+import { departmentService, designationService, employeeService } from "../../../../service";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -76,6 +76,38 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
         securitySettings: false,
     });
 
+    const [departments, setDepartments] = useState([]);
+    const [managers, setManagers] = useState([]);
+
+    useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                const res = await departmentService.getDepartments();
+                if (res.success && res.data) {
+                    setDepartments(Array.isArray(res.data) ? res.data : (res.data.departments || []));
+                }
+            } catch (err) {
+                console.error("Error fetching departments:", err);
+            }
+        };
+        const fetchManagers = async () => {
+            try {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const adminId = userData?.id || userData?._id;
+                if (adminId) {
+                    const res = await employeeService.getAllEmployeesByAdminId(adminId);
+                    if (res.success && res.data) {
+                        setManagers(Array.isArray(res.data) ? res.data : (res.data.employees || []));
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching managers:", err);
+            }
+        };
+        fetchDepts();
+        fetchManagers();
+    }, []);
+
     const toggleSection = (section) => {
         setSections((prev) => ({
             ...prev,
@@ -108,11 +140,30 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <InputField label="Job Title" name="employmentJobTitle" value={formData.employmentJobTitle} onChange={onChange} placeholder="Enter job title" />
-                    <InputField label="Department" name="employmentDepartment" value={formData.employmentDepartment} onChange={onChange} placeholder="Enter department" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Department</label>
+                        <FilterDropdown
+                            options={departments.map(d => ({ value: d.id || d._id, label: d.name }))}
+                            value={formData.employmentDepartmentId}
+                            onChange={(val) => onChange({ target: { name: 'employmentDepartmentId', value: val } })}
+                            placeholder="Select Department"
+                            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all flex items-center justify-between cursor-pointer"
+                        />
+                    </div>
                     <InputField label="Team/Sub-Department" name="employmentTeamSubDepartment" value={formData.employmentTeamSubDepartment} onChange={onChange} placeholder="Enter team/sub-department" />
-                    <InputField label="Reporting Manager" name="employmentReportingManager" value={formData.employmentReportingManager} onChange={onChange} placeholder="Enter name" />
-
-                    <InputField label="Reporting Manager" name="employmentReportingManagerAlt" value={formData.employmentReportingManagerAlt} onChange={onChange} placeholder="Enter name" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Reporting Manager</label>
+                        <FilterDropdown
+                            options={managers.map(m => {
+                                const u = m.user || m;
+                                return { value: u.id || u._id, label: u.name || (u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : u.email) };
+                            })}
+                            value={formData.employmentReportingManagerId}
+                            onChange={(val) => onChange({ target: { name: 'employmentReportingManagerId', value: val } })}
+                            placeholder="Select Manager"
+                            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all flex items-center justify-between cursor-pointer"
+                        />
+                    </div>
 
                     <div>
                         <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Date of Joining</label>
@@ -127,9 +178,7 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
                     </div>
                     <InputField label="Work Location" name="employmentWorkLocation" value={formData.employmentWorkLocation} onChange={onChange} placeholder="Enter location" />
                     <InputField label="Branch" name="employmentBranch" value={formData.employmentBranch} onChange={onChange} placeholder="Enter Branch name" />
-                    <InputField label="Prohibition Period" name="employmentProbationPeriod" value={formData.employmentProbationPeriod} onChange={onChange} placeholder="Enter Period" />
-
-                    <InputField label="Prohibition Period" name="employmentProbationPeriodAlt" value={formData.employmentProbationPeriodAlt} onChange={onChange} placeholder="Enter Period" />
+                    <InputField label="Probation Period" name="employmentProbationPeriod" value={formData.employmentProbationPeriod} onChange={onChange} placeholder="Enter Period" />
 
                     <div>
                         <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Confirm Date</label>
@@ -143,9 +192,8 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
                         </div>
                     </div>
                     <InputField label="Employment Status" name="employmentStatus" value={formData.employmentStatus} onChange={onChange} placeholder="Active" />
-                    <InputField label="Employment Status" name="employmentStatusAlt" value={formData.employmentStatusAlt} onChange={onChange} placeholder="Active" />
                     <div>
-                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Prohibition End Date</label>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Probation End Date</label>
                         <div className="relative">
                             <CustomDatePicker
                                 value={formData.employmentProbationEndDate}

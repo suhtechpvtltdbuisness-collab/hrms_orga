@@ -8,6 +8,7 @@ import {
     ArrowLeft,
     ArrowRight,
     ChevronRight,
+    Trash2,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -78,6 +79,25 @@ const EmployeeList = () => {
 
         fetchEmployees();
     }, []);
+
+
+    // Handle Delete Employee
+    const handleDeleteEmployee = async (id, e) => {
+        if (e) e.stopPropagation();
+        if (window.confirm("Are you sure you want to delete this employee?")) {
+            try {
+                const response = await employeeService.deleteEmployee(id);
+                if (response.success) {
+                    setEmployees(prev => prev.filter(emp => emp.id !== id));
+                } else {
+                    alert(response.message || 'Failed to delete employee');
+                }
+            } catch (err) {
+                console.error("Delete employee error:", err);
+                alert("Something went wrong while deleting");
+            }
+        }
+    };
 
     // Sorting & Search Logic
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -272,21 +292,21 @@ const EmployeeList = () => {
             {/* Header */}
             <div className="page-header">
                 <h1 className="page-title">Employee List</h1>
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={handleExportPDF} className="btn-ghost">
                         <Download size={15} /> Export PDF
                     </button>
                     {canAddEmployee && (
-                    <Link to="/hrms/employees/add" className="btn-primary" style={{ textDecoration:'none' }}>
-                        <Plus size={15} /> Add Employee
-                    </Link>
+                        <Link to="/hrms/employees/add" className="btn-primary" style={{ textDecoration: 'none' }}>
+                            <Plus size={15} /> Add Employee
+                        </Link>
                     )}
                 </div>
             </div>
 
             {/* Filters */}
-            <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'space-between', alignItems:'center', marginBottom:14, gap:10, flexShrink:0 }}>
-                <div className="search-bar" style={{ flex:'1', minWidth:220, maxWidth:320 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 10, flexShrink: 0 }}>
+                <div className="search-bar" style={{ flex: '1', minWidth: 220, maxWidth: 320 }}>
                     <input
                         type="text"
                         value={searchQuery}
@@ -294,7 +314,7 @@ const EmployeeList = () => {
                         placeholder="Search by name, ID, email…"
                     />
                 </div>
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <FilterDropdown label="Department" options={DEPARTMENT_OPTIONS} value={filters.department} onChange={(val) => setFilters(prev => ({ ...prev, department: val }))} minWidth="148px" className="btn-ghost" />
                     <FilterDropdown label="Designation" options={DESIGNATION_OPTIONS} value={filters.designation} onChange={(val) => setFilters(prev => ({ ...prev, designation: val }))} minWidth="148px" className="btn-ghost" />
                     <FilterDropdown label="Status" options={STATUS_OPTIONS} value={filters.status} onChange={(val) => setFilters(prev => ({ ...prev, status: val }))} minWidth="120px" className="btn-ghost" />
@@ -302,23 +322,23 @@ const EmployeeList = () => {
             </div>
 
             {/* Table */}
-            <div style={{ flex:1, minHeight:0, overflow:'auto', border:'1px solid #E5E7EB', borderRadius:10 }}>
-                <table className="data-table" style={{ minWidth:900 }}>
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid #E5E7EB', borderRadius: 10 }}>
+                <table className="data-table" style={{ minWidth: 900 }}>
                     <thead>
                         <tr>
                             <th style={{ width: 40, padding: '12px 16px', textAlign: 'left' }}>
-                                <input type="checkbox" style={{ accentColor:'#7C3AED' }}
+                                <input type="checkbox" style={{ accentColor: '#7C3AED' }}
                                     checked={employees.length > 0 && selectedEmployees.length === employees.length}
                                     onChange={handleSelectAll} />
                             </th>
-                            <th onClick={() => handleSort('srNo')} style={{ cursor:'pointer' }}>SR NO.</th>
-                            <th onClick={() => handleSort('name')} style={{ cursor:'pointer' }}>EMPLOYEE NAME</th>
-                            <th onClick={() => handleSort('empId')} style={{ cursor:'pointer' }}>EMP ID</th>
-                            <th onClick={() => handleSort('department')} style={{ cursor:'pointer' }}>DEPARTMENT</th>
-                            <th onClick={() => handleSort('designation')} style={{ cursor:'pointer' }}>DESIGNATION</th>
-                            <th onClick={() => handleSort('joiningDate')} style={{ cursor:'pointer' }}>JOINING DATE</th>
-                            <th onClick={() => handleSort('contact')} style={{ cursor:'pointer' }}>CONTACT</th>
-                            <th onClick={() => handleSort('status')} style={{ cursor:'pointer' }}>STATUS</th>
+                            <th onClick={() => handleSort('srNo')} style={{ cursor: 'pointer' }}>SR NO.</th>
+                            <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>EMPLOYEE NAME</th>
+                            <th onClick={() => handleSort('empId')} style={{ cursor: 'pointer' }}>EMP ID</th>
+                            <th onClick={() => handleSort('department')} style={{ cursor: 'pointer' }}>DEPARTMENT</th>
+                            <th onClick={() => handleSort('designation')} style={{ cursor: 'pointer' }}>DESIGNATION</th>
+                            <th onClick={() => handleSort('joiningDate')} style={{ cursor: 'pointer' }}>JOINING DATE</th>
+                            <th onClick={() => handleSort('contact')} style={{ cursor: 'pointer' }}>CONTACT</th>
+                            <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>STATUS</th>
                             <th style={{ textAlign: 'center' }}>ACTION</th>
                         </tr>
                     </thead>
@@ -386,8 +406,24 @@ const EmployeeList = () => {
                                                     navigate(`/hrms/employees-details/${employee.id}/personal-information?mode=edit`);
                                                 }}
                                                 className="focus:outline-none transition-transform hover:scale-110"
+                                                title="Edit Employee"
+
                                             >
                                                 <img src="/images/pencil_Icon.svg" alt="Edit" className="w-4 h-4 cursor-pointer" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteEmployee(employee.id, e)}
+                                                className="focus:outline-none transition-transform hover:scale-110 text-red-500 hover:text-red-700"
+                                                title="Delete Employee"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteEmployee(employee.id, e)}
+                                                className="focus:outline-none transition-transform hover:scale-110 text-red-500 hover:text-red-700"
+                                                title="Delete Employee"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </td>
@@ -401,19 +437,19 @@ const EmployeeList = () => {
                                         <h3 className="text-2xl font-medium text-black mb-2">No Employees found</h3>
                                         <p className="text-[#B3B3B3] text-lg mb-8">Get started by adding employees to the system</p>
                                         {canAddEmployee && (
-                                        <Link
-                                            to="/hrms/employees/add"
-                                            className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                                            style={{
-                                                width: '177px',
-                                                height: '48px',
-                                                padding: '10px 16px',
-                                                borderRadius: '26px'
-                                            }}
-                                        >
-                                            <Plus size={18} />
-                                            <span>Add Employee</span>
-                                        </Link>
+                                            <Link
+                                                to="/hrms/employees/add"
+                                                className="flex items-center justify-center gap-2 text-white font-medium hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
+                                                style={{
+                                                    width: '177px',
+                                                    height: '48px',
+                                                    padding: '10px 16px',
+                                                    borderRadius: '26px'
+                                                }}
+                                            >
+                                                <Plus size={18} />
+                                                <span>Add Employee</span>
+                                            </Link>
                                         )}
                                     </div>
                                 </td>

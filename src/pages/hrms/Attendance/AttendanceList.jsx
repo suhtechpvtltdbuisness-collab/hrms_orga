@@ -71,12 +71,7 @@ const AttendanceList = () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const response = await attendanceService.getAttendances({
-        employeeName: filters.name,
-        leaveType: filters.leaveType,
-        status: filters.status,
-        date: filters.date,
-      });
+      const response = await attendanceService.getAttendances();
 
       if (response.success) {
         const rows = (response.data || []).map((record, index) =>
@@ -93,7 +88,7 @@ const AttendanceList = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters.name, filters.leaveType, filters.status, filters.date]);
+  }, []);
 
   useEffect(() => {
     fetchEmployees();
@@ -116,9 +111,23 @@ const AttendanceList = () => {
     return attendanceData.filter((item) => {
       const matchesStatus =
         !filters.status || filters.status === 'All' || item.status === filters.status;
-      return matchesStatus;
+      const matchesName =
+        !filters.name || filters.name === 'All' || item.name === filters.name;
+      const matchesLeave =
+        !filters.leaveType || filters.leaveType === 'All' || item.leaveType === filters.leaveType;
+      
+      let matchesDate = true;
+      if (filters.date) {
+        const [y, m, d] = filters.date.split('-');
+        if (y && m && d) {
+          const displayDate = `${d}/${m}/${y}`;
+          matchesDate = item.date === displayDate;
+        }
+      }
+
+      return matchesStatus && matchesName && matchesLeave && matchesDate;
     });
-  }, [attendanceData, filters.status]);
+  }, [attendanceData, filters.status, filters.name, filters.leaveType, filters.date]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -325,6 +334,9 @@ const AttendanceList = () => {
                             </h3>
                             <p className="text-[14px] text-[#B0B0B0] mb-2 font-medium" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
                                 There are no records to show at the moment.
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Debug info - Total API records: {attendanceData.length}
                             </p>
                         </div>
                     </td>

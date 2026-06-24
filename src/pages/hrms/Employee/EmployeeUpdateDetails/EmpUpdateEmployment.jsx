@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import { departmentService, employeeService } from "../../../../service";
 
 const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     return (
@@ -72,6 +74,38 @@ const EmpUpdateEmployment = () => {
         securitySettings: false,
     });
 
+    const [departments, setDepartments] = useState([]);
+    const [managers, setManagers] = useState([]);
+
+    useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                const res = await departmentService.getDepartments();
+                if (res.success && res.data) {
+                    setDepartments(Array.isArray(res.data) ? res.data : (res.data.departments || []));
+                }
+            } catch (err) {
+                console.error("Error fetching departments:", err);
+            }
+        };
+        const fetchManagers = async () => {
+            try {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const adminId = userData?.id || userData?._id;
+                if (adminId) {
+                    const res = await employeeService.getAllEmployeesByAdminId(adminId);
+                    if (res.success && res.data) {
+                        setManagers(Array.isArray(res.data) ? res.data : (res.data.employees || []));
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching managers:", err);
+            }
+        };
+        fetchDepts();
+        fetchManagers();
+    }, []);
+
     const [dates, setDates] = useState({});
     const handleDateChange = (field, val) => setDates(prev => ({ ...prev, [field]: val }));
 
@@ -93,11 +127,26 @@ const EmpUpdateEmployment = () => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     <InputField label="Job Title" placeholder="Enter job title" />
-                    <InputField label="Department" placeholder="Enter department" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Department</label>
+                        <FilterDropdown
+                            options={departments.map(d => ({ value: d.id || d._id, label: d.name }))}
+                            placeholder="Select Department"
+                            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all flex items-center justify-between cursor-pointer"
+                        />
+                    </div>
                     <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
-                    <InputField label="Reporting Manager" placeholder="Enter name" />
-
-                    <InputField label="Reporting Manager" placeholder="Enter name" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Reporting Manager</label>
+                        <FilterDropdown
+                            options={managers.map(m => {
+                                const u = m.user || m;
+                                return { value: u.id || u._id, label: u.name || (u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : u.email) };
+                            })}
+                            placeholder="Select Manager"
+                            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all flex items-center justify-between cursor-pointer"
+                        />
+                    </div>
 
                     <div>
                         <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Date of Joining</label>
@@ -112,17 +161,7 @@ const EmpUpdateEmployment = () => {
                     </div>
                     <InputField label="Work Location" placeholder="Enter location" />
                     <InputField label="Branch" placeholder="Enter Branch name" />
-                    <div>
-                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Prohibition Period</label>
-                        <div className="relative">
-                            <CustomDatePicker
-                                value={dates.prohibitionPeriod}
-                                onChange={(val) => handleDateChange('prohibitionPeriod', val)}
-                                placeholder="Select Date"
-                                className="bg-white border-[#D9D9D9]"
-                            />
-                        </div>
-                    </div>
+                    <InputField label="Probation Period" placeholder="Enter Period" />
 
                     <div>
                         <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Confirm Date</label>
@@ -137,7 +176,7 @@ const EmpUpdateEmployment = () => {
                     </div>
                     <InputField label="Employment Status" placeholder="Active" />
                     <div>
-                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Prohibition End Date</label>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Probation End Date</label>
                         <div className="relative">
                             <CustomDatePicker
                                 value={dates.prohibitionEndDate}
