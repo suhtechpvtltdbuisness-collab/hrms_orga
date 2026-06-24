@@ -1400,7 +1400,7 @@ export const attendanceUtils = {
     return {
       srNo: String(index + 1).padStart(2, "0"),
       name: emp.name || att.empName || emp.firstName || "-",
-      empId: emp.id || emp.employeeId || att.empId ? `EMP-${String(emp.id || emp.employeeId || att.empId).padStart(3, "0")}` : "-",
+      empId: (att.empId || emp.employeeId || emp.id) ? `EMP-${String(att.empId || emp.employeeId || emp.id).padStart(3, "0")}` : "-",
       status: att.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[att.status] || att.status),
       date: attendanceUtils.toDisplayDate(att.attendanceDate || att.date),
       leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
@@ -1416,8 +1416,9 @@ export const attendanceService = {
   getAttendances: async (filters = {}) => {
     try {
       const apiFilters = {};
-      if (filters.employeeName && filters.employeeName !== "All") {
-        apiFilters.employeeName = filters.employeeName;
+      const empName = filters.employeeName || filters.name;
+      if (empName && empName !== "All") {
+        apiFilters.employeeName = empName;
       }
       if (filters.leaveType && filters.leaveType !== "All") {
         apiFilters.leaveType = attendanceUtils.leaveTypeToApi(filters.leaveType);

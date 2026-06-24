@@ -198,12 +198,12 @@ export default function EmployeeAttendance() {
   });
 
   const getDayStatus = (dayNum) => {
-    const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-    if (isToday) return 'today';
-
     if (attendanceMap[dayNum]) {
       return attendanceMap[dayNum];
     }
+
+    const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+    if (isToday) return 'today';
 
     const d = new Date(year, month, dayNum);
     const dayOfWeek = d.getDay();
@@ -220,7 +220,7 @@ export default function EmployeeAttendance() {
   };
 
   // Stats calculation
-  const present = records.filter(r => r.status === 'present' && r.period === 'full_time').length;
+  const present = records.filter(r => r.status === 'present').length;
   const absent = records.filter(r => r.status === 'absent').length;
   const halfDay = records.filter(r => r.period === 'half_day').length;
   const leave = records.filter(r => r.status === 'on_leave').length;
@@ -480,17 +480,18 @@ export default function EmployeeAttendance() {
               {Array.from({length: firstDay}).map((_,i) => <div key={i} />)}
               {Array.from({length: daysInMonth}, (_,i) => i+1).map(day => {
                 const status = getDayStatus(day);
-                const isToday = status === 'today';
+                const isToday = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                 const isSelected = day === selectedDay;
+                const showStatusLabel = status && status !== 'weekend' && status !== 'today';
                 return (
                   <div
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     className={`aspect-square rounded-xl flex flex-col items-center justify-center border text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer ${isSelected ? 'ring-2 ring-purple-600 scale-105 z-10 shadow-sm' : ''} ${STATUS_STYLE[status] || 'bg-gray-50 text-gray-400 border-gray-100'}`}
-                    style={isToday ? { background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)', borderColor: 'transparent' } : {}}
+                    style={status === 'today' ? { background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)', borderColor: 'transparent' } : (isToday ? { border: '2px solid #756FCC', boxShadow: '0 0 0 2px rgba(117, 111, 204, 0.2)' } : {})}
                   >
                     <span>{day}</span>
-                    {status && status !== 'weekend' && !isToday && (
+                    {showStatusLabel && (
                       <span className="text-[8px] mt-0.5 font-bold capitalize opacity-85">{STATUS_CALENDAR_NAME[status] || status}</span>
                     )}
                   </div>

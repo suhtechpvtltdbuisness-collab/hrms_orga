@@ -71,7 +71,7 @@ const AttendanceList = () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const response = await attendanceService.getAttendances();
+      const response = await attendanceService.getAttendances(filters);
 
       if (response.success) {
         const rows = (response.data || []).map((record, index) =>
@@ -88,7 +88,7 @@ const AttendanceList = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     fetchEmployees();
