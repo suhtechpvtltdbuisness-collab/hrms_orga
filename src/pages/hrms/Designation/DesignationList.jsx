@@ -11,7 +11,7 @@ import {
 import SuccessModal from "./SuccessModal";
 import ErrorModal from "./ErrorModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
-import { designationService, departmentService } from "../../../service";
+import { designationService, departmentService, employeeService } from "../../../service";
 import DeleteDesignation from "./DesignationViewDetails/DeleteDesignation";
 import EditDesignationModal from "./EditDesignationModal";
 
@@ -21,6 +21,8 @@ const DesignationList = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDesignation, setSelectedDesignation] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [managers, setManagers] = useState([]);
 
   useEffect(() => {
     document.body.style.overflow = showModal ? "hidden" : "auto";
@@ -43,14 +45,39 @@ const DesignationList = () => {
   useEffect(() => {
     fetchDesignations();
     fetchDepartments();
+    fetchManagers();
   }, []);
 
   const [departmentOptions, setDepartmentOptions] = useState([]);
 
   const fetchDepartments = async () => {
-    const result = await departmentService.getDepartments();
+    const result = await departmentService.getDepartmentsDropdown();
     if (result.success && Array.isArray(result.data)) {
       setDepartmentOptions(result.data);
+    }
+  };
+
+  const fetchManagers = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const adminId = userData?.id || userData?._id;
+      if (adminId) {
+        const res = await employeeService.getAllEmployeesByAdminId(adminId);
+        if (res.success && Array.isArray(res.data)) {
+          const mapped = res.data.map((item) => {
+            const u = item.user || item;
+            return {
+              id: u.id,
+              name: u.name,
+              label: u.name,
+              value: u.id,
+            };
+          });
+          setManagers(mapped);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch managers:", err);
     }
   };
 
@@ -58,22 +85,25 @@ const DesignationList = () => {
     setLoading(true);
     const result = await designationService.getDesignations();
     if (result.success) {
-      if (Array.isArray(result.data)) {
-        const formatted = result.data.map((d) => ({
-          id: d.id,
-          name: d.name || "-",
-          departmentId: d.departmentId,
-          level: d.level || "-",
-          employees: d.employees || 0,
-          responsibility: d.responsibility || "",
-          description: d.description || "",
-          reportingTo: d.reportingTo || null,
-          status: d.status,
-        }));
-        setDesignations(formatted);
-      } else {
-        setDesignations([]);
-      }
+      const rawList = Array.isArray(result.data)
+        ? result.data
+        : (result.data?.designations || []);
+
+      const formatted = rawList.map((d) => ({
+        id: d.id,
+        name: d.name || "-",
+        departmentId: d.departmentId,
+        department: d.departmentName || "-",
+        level: d.level ? `L-${d.level}` : "-",
+        employees: d.employeeCount || 0,
+        responsibility: d.responsibility || "",
+        description: d.description || "",
+        reportingTo: d.reportingTo || null,
+        status: d.status,
+      }));
+      setDesignations(formatted);
+    } else {
+      setDesignations([]);
     }
     setLoading(false);
   };
@@ -94,12 +124,7 @@ const DesignationList = () => {
 
   const DEPARTMENT_NAMES = departmentOptions.map((d) => d.name);
   const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
-  const MANAGER_OPTIONS = [
-    "John Smith",
-    "Alice Carol",
-    "Robert Fox",
-    "Sarah Jones",
-  ];
+  const MANAGER_OPTIONS = managers.map((m) => m.name || m.label);
 
   const handleSort = (key) => {
     let direction = "ascending";
@@ -179,6 +204,7 @@ const DesignationList = () => {
 
   const handleSubmit = async () => {
     if (!formData.designationName || !formData.department || !formData.level) {
+      setErrorMessage("Please fill in all required fields.");
       setShowErrorModal(true);
       return;
     }
@@ -196,8 +222,19 @@ const DesignationList = () => {
       "L-3": 3,
       "L-4": 4,
       "L-5": 5,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
     };
     const levelInt = levelMap[formData.level] || 1;
+
+    // Find manager ID
+    const selectedManager = managers.find(
+      (m) => (m.name || m.label) === formData.reportingManager
+    );
+    const reportingTo = selectedManager ? selectedManager.id : null;
 
     const payload = {
       name: formData.designationName,
@@ -205,7 +242,7 @@ const DesignationList = () => {
       departmentId: departmentId,
       level: levelInt,
       responsibility: formData.responsibilities,
-      reportingTo: 1,
+      reportingTo: reportingTo,
       description: formData.description,
       status: formData.status === "Active",
     };
@@ -226,6 +263,7 @@ const DesignationList = () => {
       });
       fetchDesignations();
     } else {
+      setErrorMessage(result.message || "Failed to create designation.");
       setShowErrorModal(true);
     }
   };
@@ -628,7 +666,7 @@ const DesignationList = () => {
                   name="designationName"
                   value={formData.designationName}
                   onChange={handleInputChange}
-                  placeholder="Enter department name"
+                  placeholder="Enter designation name"
                   className="w-full h-10 px-4 py-2 border border-[#D9D9D9] rounded-lg text-[16px] font-base outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all placeholder:text-[#B8B8B8]"
                 />
               </div>
@@ -771,6 +809,8 @@ const DesignationList = () => {
       <ErrorModal
         isOpen={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        message={errorMessage}
+        subMessage=""
       />
 
       {/* Edit Modal */}
@@ -779,14 +819,22 @@ const DesignationList = () => {
         onClose={() => setShowEditModal(false)}
         designation={selectedDesignation}
         departmentOptions={departmentOptions}
+        managers={managers}
+        onSuccess={() => {
+          setShowEditModal(false);
+          fetchDesignations();
+        }}
       />
 
       {/* Delete Modal */}
       {showDeleteModal && (
         <DeleteDesignation
+          designationId={selectedDesignation?.id}
+          designationName={selectedDesignation?.name}
           onCancel={() => setShowDeleteModal(false)}
           onDelete={() => {
             setShowDeleteModal(false);
+            fetchDesignations();
           }}
         />
       )}

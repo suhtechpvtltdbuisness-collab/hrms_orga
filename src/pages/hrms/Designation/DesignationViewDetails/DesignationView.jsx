@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { designationService, departmentService, employeeService } from "../../../../service";
 
 const DesignationView = () => {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ const DesignationView = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [managers, setManagers] = useState([]);
 
   const defaultDesignation = {
     name: "Senior Product Manager",
@@ -30,10 +33,41 @@ const DesignationView = () => {
     location: "Delhi",
   };
 
+  const initialDesignation = location.state?.designation || {};
   const [designationInfo, setDesignationInfo] = useState({
     ...defaultDesignation,
-    ...(location.state?.designation || {}),
+    ...initialDesignation,
+    department: initialDesignation.department || initialDesignation.departmentName || defaultDesignation.department,
+    reportsTo: initialDesignation.reportingToName || initialDesignation.reportsTo || defaultDesignation.reportsTo,
   });
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      const deptRes = await departmentService.getDepartmentsDropdown();
+      if (deptRes.success && Array.isArray(deptRes.data)) {
+        setDepartmentOptions(deptRes.data);
+      }
+
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const adminId = userData?.id || userData?._id;
+      if (adminId) {
+        const empRes = await employeeService.getAllEmployeesByAdminId(adminId);
+        if (empRes.success && Array.isArray(empRes.data)) {
+          const mapped = empRes.data.map((item) => {
+            const u = item.user || item;
+            return {
+              id: u.id,
+              name: u.name,
+              label: u.name,
+              value: u.id,
+            };
+          });
+          setManagers(mapped);
+        }
+      }
+    };
+    loadOptions();
+  }, []);
 
   useEffect(() => {
     if (designationInfo) {
@@ -42,8 +76,7 @@ const DesignationView = () => {
   }, [designationInfo]);
 
   const handleDeleteClick = () => {
-    // setShowDeleteModal(true);
-    console.log("Delete clicked");
+    setShowDeleteModal(true);
   };
 
   const handleEditClick = () => {
@@ -56,11 +89,51 @@ const DesignationView = () => {
     setFormData(designationInfo);
   };
 
-  const handleSaveClick = () => {
-    setIsEditing(false);
-    if (formData) {
-      setDesignationInfo(formData);
-      console.log("Saving data:", formData);
+  const handleSaveClick = async () => {
+    if (!formData) return;
+
+    const selectedDept = departmentOptions.find(
+      (d) => d.name === formData.department
+    );
+    const departmentId = selectedDept ? selectedDept.id : designationInfo.departmentId;
+
+    const levelMap = {
+      "L-1": 1, "L-2": 2, "L-3": 3, "L-4": 4, "L-5": 5,
+      "1": 1, "2": 2, "3": 3, "4": 4, "5": 5
+    };
+    const levelInt = levelMap[formData.level] || 1;
+
+    const selectedManager = managers.find(
+      (m) => (m.name || m.label) === formData.reportsTo
+    );
+    const reportingTo = selectedManager ? selectedManager.id : designationInfo.reportingTo;
+
+    const payload = {
+      name: formData.name,
+      departmentId,
+      level: levelInt,
+      reportingTo,
+      status: formData.status === "Active" || formData.status === true,
+      responsibility: Array.isArray(formData.responsibilities)
+        ? formData.responsibilities.join("\n")
+        : formData.responsibilities,
+      description: formData.description,
+    };
+
+    try {
+      const res = await designationService.updateDesignation(designationInfo.id, payload);
+      if (res.success) {
+        setDesignationInfo({
+          ...designationInfo,
+          ...formData,
+          status: payload.status ? "Active" : "Inactive",
+        });
+        setIsEditing(false);
+      } else {
+        alert(res.message || "Failed to save designation");
+      }
+    } catch (err) {
+      alert("Something went wrong");
     }
   };
 

@@ -1,19 +1,27 @@
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { designationService } from '../../../../service';
 
-const DeleteDesignation = ({ onDelete, onCancel }) => {
+const DeleteDesignation = ({ designationId, designationName, onDelete, onCancel }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(true);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-    const handleConfirmDelete = () => {
-        const isSuccess = true;
-
-        if (isSuccess) {
-            setShowConfirmModal(false);
-            setShowSuccessModal(true);
-        } else {
+    const handleConfirmDelete = async () => {
+        try {
+            const res = await designationService.deleteDesignation(designationId);
+            if (res.success) {
+                setShowConfirmModal(false);
+                setShowSuccessModal(true);
+            } else {
+                setErrorMessage(res.message || "The selected designation was unable to delete.");
+                setShowConfirmModal(false);
+                setShowErrorModal(true);
+            }
+        } catch (error) {
+            setErrorMessage("Something went wrong");
             setShowConfirmModal(false);
             setShowErrorModal(true);
         }
@@ -41,7 +49,9 @@ const DeleteDesignation = ({ onDelete, onCancel }) => {
 
                         <div className="w-full flex flex-col items-center mt-14 mb-8">
                             <h2 className="text-[24px] font-semibold text-[#000000] text-center leading-tight">Deactivate Designation</h2>
-                            <p className="text-[#15192080] text-[14px] font-base mt-3 text-center">Are you sure?</p>
+                            <p className="text-[#15192080] text-[14px] font-base mt-3 text-center">
+                                Are you sure you want to deactivate "{designationName || "this designation"}"?
+                            </p>
                         </div>
 
                         <div className="flex gap-4 w-full h-[252px]">
@@ -123,8 +133,8 @@ const DeleteDesignation = ({ onDelete, onCancel }) => {
                                 <h2 className="text-[20px] font-semibold text-[#000000] mb-4 leading-tight">
                                     Designation could not be Deleted
                                 </h2>
-                                <p className="text-[14px] text-[15192080] font-light">
-                                    The selected designation was unable to delete.
+                                <p className="text-[14px] text-[#15192080] font-light">
+                                    {errorMessage}
                                 </p>
                             </div>
                         </div>

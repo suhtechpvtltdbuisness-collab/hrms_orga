@@ -78,6 +78,7 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
 
     const [departments, setDepartments] = useState([]);
     const [managers, setManagers] = useState([]);
+    const [designations, setDesignations] = useState([]);
 
     useEffect(() => {
         const fetchDepts = async () => {
@@ -104,8 +105,19 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
                 console.error("Error fetching managers:", err);
             }
         };
+        const fetchDesignations = async () => {
+            try {
+                const res = await designationService.getDesignationDropdown();
+                if (res.success && res.data) {
+                    setDesignations(res.data);
+                }
+            } catch (err) {
+                console.error("Error fetching designations:", err);
+            }
+        };
         fetchDepts();
         fetchManagers();
+        fetchDesignations();
     }, []);
 
     const toggleSection = (section) => {
@@ -139,7 +151,16 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
                 onToggle={() => toggleSection("jobDetails")}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <InputField label="Job Title" name="employmentJobTitle" value={formData.employmentJobTitle} onChange={onChange} placeholder="Enter job title" />
+                    <div>
+                        <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Job Title (Designation)</label>
+                        <FilterDropdown
+                            options={designations.map(d => ({ value: d.name, label: d.name }))}
+                            value={formData.employmentJobTitle}
+                            onChange={(val) => onChange({ target: { name: 'employmentJobTitle', value: val } })}
+                            placeholder="Select Job Title"
+                            className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-lg text-[#000000] text-base focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 transition-all flex items-center justify-between cursor-pointer"
+                        />
+                    </div>
                     <div>
                         <label className="block text-base font-normal text-[#1F1F1F] mb-1.5 leading-[140%]">Department</label>
                         <FilterDropdown

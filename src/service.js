@@ -477,9 +477,20 @@ export const designationService = {
       };
     }
   },
-  getDesignations: async () => {
+
+  getDesignations: async (queryParams = {}) => {
     try {
-      const response = await apiFetch(`${BASE_URL}/designation`, {
+      const params = new URLSearchParams();
+      if (queryParams.search) params.append("search", queryParams.search);
+      if (queryParams.departmentId) params.append("departmentId", queryParams.departmentId);
+      if (queryParams.level) params.append("level", queryParams.level);
+      if (queryParams.status) params.append("status", queryParams.status);
+      if (queryParams.sortBy) params.append("sortBy", queryParams.sortBy);
+      if (queryParams.sortOrder) params.append("sortOrder", queryParams.sortOrder);
+      if (queryParams.page) params.append("page", queryParams.page);
+      if (queryParams.limit) params.append("limit", queryParams.limit);
+
+      const response = await apiFetch(`${BASE_URL}/designation?${params.toString()}`, {
         method: "GET",
       });
 
@@ -497,6 +508,218 @@ export const designationService = {
         return {
           success: false,
           message: data.message || "Failed to fetch designations",
+        };
+      }
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  getDesignationById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/${id}`, {
+        method: "GET",
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch designation details",
+        };
+      }
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  updateDesignation: async (id, designationData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(designationData),
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to update designation",
+        };
+      }
+      return {
+        success: true,
+        message: data.message,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  updateStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to update designation status",
+        };
+      }
+      return {
+        success: true,
+        message: data.message,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  deleteDesignation: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to delete designation",
+        };
+      }
+      return {
+        success: true,
+        message: data.message,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  getDesignationStats: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/stats`, {
+        method: "GET",
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch designation statistics",
+        };
+      }
+      return {
+        success: true,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
+
+  getDesignationDropdown: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/designation/dropdown`, {
+        method: "GET",
+      });
+
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+        };
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch designations dropdown",
         };
       }
       return {

@@ -1,11 +1,12 @@
 import React from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
 
 import DeleteDesignation from './DeleteDesignation';
 
 const DesignationOverview = () => {
+  const navigate = useNavigate();
   const { designationInfo, isEditing, formData, handleInputChange } =
     useOutletContext();
 
@@ -267,11 +268,12 @@ const DesignationOverview = () => {
         {/* Delete Modal */}
         {showDeleteModal && (
           <DeleteDesignation
+            designationId={designationInfo.id}
+            designationName={designationInfo.name}
             onCancel={() => setShowDeleteModal(false)}
             onDelete={() => {
-              setTimeout(() => {
-                setShowDeleteModal(false);
-              }, 2000);
+              setShowDeleteModal(false);
+              navigate("/hrms/designations");
             }}
           />
         )}

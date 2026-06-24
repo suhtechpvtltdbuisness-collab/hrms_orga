@@ -3,12 +3,15 @@ import { X } from "lucide-react";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
 import SuccessModal from "./SuccessModal";
 import ErrorModal from "./ErrorModal";
+import { designationService } from "../../../service";
 
 const EditDesignationModal = ({
   isOpen,
   onClose,
   designation,
   departmentOptions,
+  managers = [],
+  onSuccess,
 }) => {
   const [formData, setFormData] = useState({
     designationName: "",
@@ -23,58 +26,88 @@ const EditDesignationModal = ({
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const DEPARTMENT_NAMES = departmentOptions
     ? departmentOptions.map((d) => d.name)
     : [];
   const LEVEL_OPTIONS = ["L-1", "L-2", "L-3", "L-4", "L-5"];
   const STATUS_OPTIONS = ["Active", "Inactive"];
-  const MANAGER_OPTIONS = [
-    "John Smith",
-    "ALice Carol",
-    "Robert Fox",
-    "Sarah Jones",
-  ];
-  const managerMapReverse = {
-    1: "John Smith",
-    2: "Alice Carol",
-    3: "Robert Fox",
-    4: "Sarah Jones",
-  };
+  const MANAGER_OPTIONS = managers.map((m) => m.name || m.label);
+
   useEffect(() => {
     if (designation) {
       const deptName =
         departmentOptions?.find((d) => d.id === designation.departmentId)
           ?.name || "";
 
+      const managerObj = managers.find((m) => m.id === designation.reportingTo);
+      const managerName = managerObj ? (managerObj.name || managerObj.label) : "";
+
       setFormData({
         designationName: designation.name || "",
         department: deptName,
-        level: `L-${designation.level}`,
-        reportingManager: managerMapReverse[designation.reportingTo] || "",
+        level: designation.level ? `L-${designation.level}` : "",
+        reportingManager: managerName,
+        reassignReportingStructure: "",
         responsibilities: designation.responsibility || "",
         description: designation.description || "",
         status: designation.status ? "Active" : "Inactive",
       });
     }
-  }, [designation, departmentOptions]);
+  }, [designation, departmentOptions, managers]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    if (!formData.designationName || !formData.department) {
+  const handleSave = async () => {
+    if (!formData.designationName || !formData.department || !formData.level) {
+      setErrorMessage("Please fill all required fields");
       setShowError(true);
       return;
     }
 
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      onClose();
-    }, 3000);
+    const selectedDept = departmentOptions.find(
+      (d) => d.name === formData.department
+    );
+    const departmentId = selectedDept ? selectedDept.id : null;
+
+    const levelMap = {
+      "L-1": 1, "L-2": 2, "L-3": 3, "L-4": 4, "L-5": 5,
+      "1": 1, "2": 2, "3": 3, "4": 4, "5": 5
+    };
+    const levelInt = levelMap[formData.level] || 1;
+
+    const selectedManager = managers.find(
+      (m) => (m.name || m.label) === formData.reportingManager
+    );
+    const reportingTo = selectedManager ? selectedManager.id : null;
+
+    const payload = {
+      name: formData.designationName,
+      departmentId,
+      level: levelInt,
+      reportingTo,
+      status: formData.status === "Active",
+      responsibility: formData.responsibilities,
+      description: formData.description,
+    };
+
+    try {
+      const res = await designationService.updateDesignation(designation.id, payload);
+      if (res.success) {
+        setShowSuccess(true);
+        if (onSuccess) onSuccess();
+      } else {
+        setErrorMessage(res.message || "Failed to update designation");
+        setShowError(true);
+      }
+    } catch (err) {
+      setErrorMessage("Something went wrong");
+      setShowError(true);
+    }
   };
 
   if (!isOpen) return null;
@@ -261,7 +294,12 @@ const EditDesignationModal = ({
         subMessage="Designation is now saved"
       />
 
-      <ErrorModal isOpen={showError} onClose={() => setShowError(false)} />
+      <ErrorModal
+        isOpen={showError}
+        onClose={() => setShowError(false)}
+        message={errorMessage}
+        subMessage=""
+      />
     </div>
   );
 };
