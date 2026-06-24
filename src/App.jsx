@@ -7,6 +7,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import Layout from "./components/layout/Layout";
 import HRMS from "./pages/hrms";
+import HRMSDashboard from "./pages/hrms/Dashboard";
 import EmployeeList from "./pages/hrms/Employee/EmployeeList/EmployeeList";
 import AddEmployee from "./pages/hrms/Employee/EmployeeTabs/AddEmployee";
 
@@ -160,6 +161,7 @@ function App() {
         >
           {/* Dashboard */}
           <Route index element={<HRMS />} />
+          <Route path="dashboard" element={<HRMSDashboard />} />
 
           {/* Employee */}
           <Route path="employees" element={<EmployeeList />} />

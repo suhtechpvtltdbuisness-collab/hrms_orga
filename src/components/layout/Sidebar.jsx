@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/hrms' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/hrms/dashboard' },
     { name: 'HRMS', icon: Users, path: '/hrms' },
     { name: 'Project Management', icon: Briefcase, path: '' },
     { name: 'Employees', icon: Mail, path: '/hrms/employees' },
@@ -47,21 +47,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const isActive = (item) => {
     if (!item.path) return false;
-    
+
     if (item.name === 'Dashboard') {
-      // Prevent highlighting Dashboard and HRMS at the same time
-      return false;
+      return location.pathname === '/hrms/dashboard';
     }
-    
+
     if (item.name === 'HRMS') {
-      // HRMS is active when we are inside /hrms, except when on specific sub-sections
-      return location.pathname.startsWith('/hrms') &&
-             !location.pathname.startsWith('/hrms/settings') &&
-             !location.pathname.startsWith('/hrms/employees') &&
-             !location.pathname.startsWith('/hrms/attendance') &&
-             !location.pathname.startsWith('/hrms/financial-reports');
+      return location.pathname === '/hrms';
     }
-    
+
     return location.pathname.startsWith(item.path);
   };
 

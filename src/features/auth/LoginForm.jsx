@@ -41,7 +41,7 @@ export const LoginForm = () => {
         userData?.isAdmin === true;
 
       if (isAdmin) {
-        navigate("/hrms", { replace: true });
+        navigate("/hrms/dashboard", { replace: true });
       } else {
         navigate("/employee", { replace: true });
       }
