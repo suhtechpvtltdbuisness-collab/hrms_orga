@@ -138,6 +138,7 @@ import SuperAdminProtectedRoute from "./components/SuperAdminProtectedRoute";
 import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
+import Profile from "./pages/hrms/Profile/Profile";
 
 
 function App() {
@@ -159,9 +160,10 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Dashboard */}
+          {/* Dashboard & Profile */}
           <Route index element={<HRMS />} />
           <Route path="dashboard" element={<HRMSDashboard />} />
+          <Route path="profile" element={<Profile />} />
 
           {/* Employee */}
           <Route path="employees" element={<EmployeeList />} />

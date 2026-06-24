@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Reports', icon: BarChart3, path: '/hrms/financial-reports/profit-and-loss' },
     { name: 'Announcements', icon: Megaphone, path: '' },
     { name: 'Messages', icon: MessageSquare, path: '' },
-    { name: 'My Profile', icon: UserCircle, path: '' },
+    { name: 'My Profile', icon: UserCircle, path: '/hrms/profile' },
     { name: 'Settings', icon: Settings, path: '/hrms/settings' },
     { name: 'Support', icon: HelpCircle, path: '' }
   ];
