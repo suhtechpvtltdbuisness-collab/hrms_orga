@@ -68,7 +68,7 @@ const PersonalInfo = ({ formData = {}, onChange }) => {
                 className="bg-[#F5F5F5]"
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6 ">
-                    
+
                     {/* Profile Picture Upload */}
                     <div className="col-span-1 sm:col-span-2 xl:col-span-4 flex flex-col sm:flex-row items-center gap-6 pb-4 border-b border-gray-100 mb-2">
                         <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-purple-200 bg-purple-50 flex items-center justify-center cursor-pointer shadow-inner">

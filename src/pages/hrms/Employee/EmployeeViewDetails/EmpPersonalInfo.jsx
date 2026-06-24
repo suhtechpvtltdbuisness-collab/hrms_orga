@@ -138,12 +138,6 @@ const EmpPersonalInfo = ({ data, isEditMode = false, formData = {}, onChange }) 
                     {/* Phone */}
                     {renderPhoneField("Phone", "phone")}
 
-                    {/* Employee ID — always read-only */}
-                    <div>
-                        <label className={labelClasses}>Employee ID</label>
-                        <input type="text" value={getEmployeeId()} className={readonlyClasses} disabled />
-                    </div>
-
                     {/* Gender */}
                     {isEditMode ? (
                         <div>
