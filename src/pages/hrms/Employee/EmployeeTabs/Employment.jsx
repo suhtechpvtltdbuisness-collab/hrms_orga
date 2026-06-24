@@ -82,9 +82,9 @@ const Employment = ({ formData = {}, onChange, employeeId, employeeName }) => {
     useEffect(() => {
         const fetchDepts = async () => {
             try {
-                const res = await departmentService.getDepartments();
+                const res = await departmentService.getDepartmentsDropdown();
                 if (res.success && res.data) {
-                    setDepartments(Array.isArray(res.data) ? res.data : (res.data.departments || []));
+                    setDepartments(res.data);
                 }
             } catch (err) {
                 console.error("Error fetching departments:", err);

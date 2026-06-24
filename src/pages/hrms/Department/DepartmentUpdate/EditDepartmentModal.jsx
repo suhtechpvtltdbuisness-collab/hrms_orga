@@ -2,14 +2,12 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 
-const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
+const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData, managers }) => {
   const [formData, setFormData] = useState({
     departmentName: "",
     departmentCode: "",
-    departmentHead: "",
-    location: "",
+    managerId: "",
     description: "",
-    parentDepartment: "",
     status: "",
   });
 
@@ -91,38 +89,10 @@ const EditDepartmentModal = ({ isOpen, onClose, onSave, initialData }) => {
               Department Head
             </label>
             <FilterDropdown
-                options={["John Smith", "Alice Carol"]}
-                value={formData.departmentHead}
-                onChange={(val) => handleInputChange({ target: { name: "departmentHead", value: val } })}
+                options={managers}
+                value={formData.managerId}
+                onChange={(val) => handleInputChange({ target: { name: "managerId", value: val } })}
                 placeholder="Select a department head"
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
-            />
-          </div>
-
-          {/* Location */}
-          <div className="flex flex-col gap-[8px]">
-            <label className="text-[16px] font-base text-[#1E1E1E]">
-              Location
-            </label>
-            <FilterDropdown
-                options={["Mumbai", "Delhi"]}
-                value={formData.location}
-                onChange={(val) => handleInputChange({ target: { name: "location", value: val } })}
-                placeholder="Select a location"
-                className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
-            />
-          </div>
-
-          {/* Parent Department */}
-          <div className="flex flex-col gap-[8px]">
-            <label className="text-[16px] font-base text-[#1E1E1E]">
-              Parent department
-            </label>
-            <FilterDropdown
-                options={["Finance", "Marketing"]}
-                value={formData.parentDepartment}
-                onChange={(val) => handleInputChange({ target: { name: "parentDepartment", value: val } })}
-                placeholder="Select parent department"
                 className="w-full h-[40px] px-4 py-2 border border-[#D9D9D9] rounded-[8px] text-[16px] font-base outline-none transition-all flex items-center justify-between bg-white text-[#1E1E1E]"
             />
           </div>

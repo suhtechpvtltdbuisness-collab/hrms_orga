@@ -281,9 +281,18 @@ export const departmentService = {
       };
     }
   },
-  getDepartments: async () => {
+  getDepartments: async (params = {}) => {
     try {
-      const response = await apiFetch(`${BASE_URL}/departments`, {
+      const query = new URLSearchParams();
+      if (params.search) query.append("search", params.search);
+      if (params.status) query.append("status", params.status);
+      if (params.sortBy) query.append("sortBy", params.sortBy);
+      if (params.sortOrder) query.append("sortOrder", params.sortOrder);
+      if (params.page) query.append("page", params.page);
+      if (params.limit) query.append("limit", params.limit);
+
+      const url = `${BASE_URL}/departments` + (query.toString() ? `?${query.toString()}` : "");
+      const response = await apiFetch(url, {
         method: "GET",
       });
 
@@ -312,6 +321,122 @@ export const departmentService = {
         success: false,
         message: "Something went wrong",
       };
+    }
+  },
+  getDepartmentById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/${id}`, {
+        method: "GET",
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch department" };
+      }
+      return { success: true, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateDepartment: async (id, departmentData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(departmentData),
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to update department" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteDepartment: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/${id}`, {
+        method: "DELETE",
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to delete department" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateDepartmentStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to update status" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getDepartmentStats: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/stats`, {
+        method: "GET",
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch stats" };
+      }
+      return { success: true, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getDepartmentsDropdown: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/departments/dropdown`, {
+        method: "GET",
+      });
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/auth";
+        return { success: false, message: "Session expired. Please login again." };
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch dropdown list" };
+      }
+      return { success: true, data: data.data };
+    } catch (error) {
+      return { success: false, message: "Something went wrong" };
     }
   },
 };

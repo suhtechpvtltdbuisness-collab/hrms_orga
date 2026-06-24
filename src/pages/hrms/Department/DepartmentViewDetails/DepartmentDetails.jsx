@@ -3,6 +3,7 @@ import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useNavigate, useLocation, Outlet, useParams } from 'react-router-dom';
 import DeleteDepartment from './DeleteDepartment';
 import { departmentService } from '../../../../service';
+import toast from 'react-hot-toast';
 
 const DepartmentDetails = () => {
     const navigate = useNavigate();
@@ -71,11 +72,29 @@ const DepartmentDetails = () => {
         setFormData(departmentInfo);
     };
 
-    const handleSaveClick = () => {
-        setIsEditing(false);
-        if (formData) {
-            setDepartmentInfo(formData); 
-            console.log("Saving data:", formData);
+    const handleSaveClick = async () => {
+        if (!formData) return;
+        setLoading(true);
+        try {
+            const payload = {
+                departmentName: formData.departmentName || formData.name,
+                departmentCode: formData.departmentCode || formData.code,
+                description: formData.description || '',
+                managerId: formData.managerId || formData.manager_id || null,
+                status: formData.status || 'Active',
+            };
+            const res = await departmentService.updateDepartment(departmentInfo.id, payload);
+            if (res.success) {
+                toast.success("Department updated successfully");
+                setDepartmentInfo(res.data);
+                setIsEditing(false);
+            } else {
+                toast.error(res.message || "Failed to update department");
+            }
+        } catch (err) {
+            toast.error("Failed to update department");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -196,11 +215,10 @@ const DepartmentDetails = () => {
             {/* Delete Modal */}
             {showDeleteModal && (
                 <DeleteDepartment
+                    departmentId={departmentInfo.id}
                     onCancel={() => setShowDeleteModal(false)}
                     onDelete={() => {
-                        setTimeout(() => {
-                            navigate(-1);
-                        }, 2000);
+                        navigate('/hrms/departments');
                     }}
                 />
             )}

@@ -1,20 +1,26 @@
-
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { departmentService } from '../../../../service';
 
-const DeleteDepartment = ({ onDelete, onCancel }) => {
+const DeleteDepartment = ({ departmentId, onDelete, onCancel }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(true);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-    const handleConfirmDelete = () => {
-
-        const isSuccess = true;
-
-        if (isSuccess) {
-            setShowConfirmModal(false);
-            setShowSuccessModal(true);
-        } else {
+    const handleConfirmDelete = async () => {
+        try {
+            const res = await departmentService.deleteDepartment(departmentId);
+            if (res.success) {
+                setShowConfirmModal(false);
+                setShowSuccessModal(true);
+            } else {
+                setErrorMessage(res.message || "Failed to delete department");
+                setShowConfirmModal(false);
+                setShowErrorModal(true);
+            }
+        } catch (err) {
+            setErrorMessage("Something went wrong while deleting department");
             setShowConfirmModal(false);
             setShowErrorModal(true);
         }
@@ -42,7 +48,7 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
 
                         <div className="w-full flex flex-col items-center mt-14 mb-8">
                             <h2 className="text-[24px] font-semibold text-[#000000] text-center leading-tight">Delete Department</h2>
-                            <p className="text-[#15192080] text-[14px] font-base mt-3 text-center">Are you sure?</p>
+                            <p className="text-[#15192080] text-[14px] font-base mt-3 text-center">Are you sure you want to delete this department?</p>
                         </div>
 
                         <div className="flex gap-4 w-full h-[252px]">
@@ -66,7 +72,7 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
             {/* Success Modal */}
             {showSuccessModal && (
                 <div
-                    className="fixed inset-0 bg-[#3B3A3A82] z-60 flex justify-center items-start pt-20 font-sans"
+                    className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-start pt-20 font-sans"
                     style={{ fontFamily: "Inter, sans-serif" }}
                 >
                     <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[550px] shadow-2xl relative">
@@ -101,7 +107,7 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
             {/* Error Modal */}
             {showErrorModal && (
                 <div
-                    className="fixed inset-0 bg-[#3B3A3A82] z-60 flex justify-center items-start pt-20 font-sans"
+                    className="fixed inset-0 bg-[#3B3A3A82] z-50 flex justify-center items-start pt-20 font-sans"
                     style={{ fontFamily: "Inter, sans-serif" }}
                 >
                     <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[550px] shadow-2xl relative">
@@ -121,11 +127,11 @@ const DeleteDepartment = ({ onDelete, onCancel }) => {
                                 />
                             </div>
                             <div className="text-left">
-                                <h2 className="text-[20px] font-semibold text-[#000000] mb-4 leading-tight">
+                                <h2 className="text-[20px] font-semibold text-[#FF3B30] mb-4 leading-tight">
                                     Failed To Delete Department
                                 </h2>
-                                <p className="text-[14px] text-[#000000] font-light">
-                                    Department deletion failed.
+                                <p className="text-[14px] text-[#000000] font-medium">
+                                    {errorMessage}
                                 </p>
                             </div>
                         </div>
