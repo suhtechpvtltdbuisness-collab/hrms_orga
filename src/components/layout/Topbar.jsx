@@ -1,7 +1,8 @@
-import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Bell, Search, UserCircle, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getProfilePicUrl } from '../../service';
+import { getProfilePicUrl, authService } from '../../service';
+import toast from 'react-hot-toast';
 
 const getRoleLabel = (user) => {
     if (user.isAdmin) return 'Admin';
@@ -25,6 +26,30 @@ const Topbar = () => {
     const userRole = getRoleLabel(userData);
     const userImage = getProfilePicUrl(userData.profilePic || userData.profileImage) || '/EMP_IMG.svg';
     const greeting = getGreeting();
+
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        setIsProfileOpen(false);
+        try {
+            await authService.logout();
+            toast.success('Logged out successfully');
+            navigate('/auth', { replace: true });
+        } catch (error) {
+            toast.error('Logout failed');
+        }
+    };
 
     return (
         <div className="bg-white px-6 py-8 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9] gap-6">
@@ -77,27 +102,61 @@ const Topbar = () => {
                 </div>
 
                 {/* User Profile */}
-                <div className="flex items-center gap-3 cursor-pointer group">
-                    <img
-                        className="h-11 w-11 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
-                        src={userImage}
-                        alt={userName}
-                    />
-                    <div className="hidden md:flex flex-col">
-                        <span className="text-base font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">
-                            {userName}
-                        </span>
-                        <span className="text-sm text-gray-500 font-medium">{userRole}</span>
-                    </div>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="hidden md:block h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                <div className="relative" ref={profileRef}>
+                    <div 
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
                     >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                        <img
+                            className="h-11 w-11 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
+                            src={userImage}
+                            alt={userName}
+                        />
+                        <div className="hidden md:flex flex-col">
+                            <span className="text-base font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">
+                                {userName}
+                            </span>
+                            <span className="text-sm text-gray-500 font-medium">{userRole}</span>
+                        </div>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`hidden md:block h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    {/* Dropdown Menu */}
+                    {isProfileOpen && (
+                        <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 transform opacity-100 scale-100 transition-all origin-top-right">
+                            <div className="px-4 py-3 bg-[#F9FAFB] border-b border-gray-100">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
+                                <p className="text-xs text-gray-500 truncate">{userData.email || 'No email'}</p>
+                            </div>
+                            <div className="p-2 space-y-1">
+                                <button
+                                    onClick={() => {
+                                        setIsProfileOpen(false);
+                                        navigate('/hrms/profile');
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-[#F3ECFF] hover:text-[#7D1EDB] transition-colors"
+                                >
+                                    <UserCircle size={18} />
+                                    <span>My Profile</span>
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                >
+                                    <LogOut size={18} />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
