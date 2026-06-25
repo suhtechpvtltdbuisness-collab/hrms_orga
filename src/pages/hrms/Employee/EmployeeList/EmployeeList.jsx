@@ -30,6 +30,7 @@ const EmployeeList = () => {
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const [employees, setEmployees] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [departmentOptions, setDepartmentOptions] = useState([]);
     const [designationOptions, setDesignationOptions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -51,11 +52,15 @@ const EmployeeList = () => {
                     return;
                 }
 
-                const response = await employeeService.getAllEmployeesByAdminId(adminId);
+                const response = await employeeService.getAllEmployeesByAdminId(adminId, currentPage, itemsPerPage);
 
                 if (response.success && response.data) {
+                    const rawData = response.data.employees || response.data || [];
+                    const total = response.data.total !== undefined ? response.data.total : rawData.length;
+                    setTotalCount(total);
+
                     const employmentMeta = JSON.parse(localStorage.getItem(EMPLOYMENT_META_KEY) || '{}');
-                    const mappedEmployees = response.data.map((item, index) => {
+                    const mappedEmployees = rawData.map((item, index) => {
                         const u = item.user || item;
                         const cachedEmployment =
                             employmentMeta[`user:${u.id}`] ||
@@ -96,7 +101,7 @@ const EmployeeList = () => {
                             u.createdAt;
 
                         return {
-                            srNo: String(index + 1).padStart(2, '0'),
+                            srNo: String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, '0'),
                             name: u.name || '-',
                             empId: u.employeeId || `EMP${1000 + (u.id || index + 1)}`,
                             department,
@@ -113,12 +118,16 @@ const EmployeeList = () => {
                         };
                     });
                     setEmployees(mappedEmployees);
-                    setDepartmentOptions(
-                        [...new Set(mappedEmployees.map((employee) => employee.department).filter((value) => value && value !== '-'))],
-                    );
-                    setDesignationOptions(
-                        [...new Set(mappedEmployees.map((employee) => employee.designation).filter((value) => value && value !== '-'))],
-                    );
+                    if (departmentOptions.length === 0) {
+                        setDepartmentOptions(
+                            [...new Set(mappedEmployees.map((employee) => employee.department).filter((value) => value && value !== '-'))],
+                        );
+                    }
+                    if (designationOptions.length === 0) {
+                        setDesignationOptions(
+                            [...new Set(mappedEmployees.map((employee) => employee.designation).filter((value) => value && value !== '-'))],
+                        );
+                    }
                 } else {
                     setFetchError(response.message || 'Failed to load employee data');
                 }
@@ -130,7 +139,7 @@ const EmployeeList = () => {
         };
 
         fetchEmployees();
-    }, []);
+    }, [currentPage]);
 
 
     // Handle Delete Employee
@@ -287,8 +296,8 @@ const EmployeeList = () => {
     // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = sortedEmployees.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage);
+    const currentItems = sortedEmployees;
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
 
     const handleNext = () => {
         if (currentPage < totalPages) {
@@ -536,7 +545,7 @@ const EmployeeList = () => {
             {/* Pagination Footer */}
             <div className="grid shrink-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center mt-4 pt-3 text-sm text-gray-500 gap-4">
                 <div className="text-center md:text-left">
-                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, employees.length)} Of {employees.length}
+                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, totalCount)} Of {totalCount}
                 </div>
 
                 <div className="flex items-center justify-center md:justify-end lg:justify-center gap-2">

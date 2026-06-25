@@ -762,13 +762,23 @@ export const employeeService = {
   },
 
   // Get all employees by admin ID
-  getAllEmployeesByAdminId: async (adminId) => {
+  getAllEmployeesByAdminId: async (adminId, page, limit, search) => {
     try {
+      let url = `${BASE_URL}/users/employees/admin/${adminId}`;
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append("page", page);
+      if (limit !== undefined) params.append("limit", limit);
+      if (search !== undefined) params.append("search", search);
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
       console.log("Fetching employees for admin ID:", adminId);
-      console.log("API URL:", `${BASE_URL}/users/employees/admin/${adminId}`);
+      console.log("API URL:", url);
       console.log("Auth Token:", localStorage.getItem("authToken"));
 
-      const response = await apiFetch(`${BASE_URL}/users/employees/admin/${adminId}`, {
+      const response = await apiFetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -984,6 +994,24 @@ export const employeeService = {
       return { success: true, url: data.url };
     } catch (error) {
       return { success: false, message: "Network error while uploading image." };
+    }
+  },
+
+  uploadDocuments: async (files) => {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("documents", file));
+      const response = await apiFetch(`${BASE_URL}/upload/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to upload documents" };
+      }
+      return { success: true, files: data.files || [] };
+    } catch (error) {
+      return { success: false, message: "Network error while uploading documents." };
     }
   },
 
@@ -2489,6 +2517,5 @@ export const payrollModuleService = {
     }
   },
 };
-
 
 

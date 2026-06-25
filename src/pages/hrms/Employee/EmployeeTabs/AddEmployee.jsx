@@ -412,7 +412,24 @@ const AddEmployee = () => {
                 profilePicUrl = uploadResponse.url;
             }
 
-            const hasPayrollDetails = ['ctc', 'baseSalary', 'monthlyGross', 'monthlyPay']
+            let uploadedDocuments = [];
+            if (formData.documents.length) {
+                const documentResponse = await employeeService.uploadDocuments(formData.documents);
+                if (!documentResponse.success) {
+                    throw new Error(documentResponse.message || 'Document upload failed.');
+                }
+                uploadedDocuments = documentResponse.files;
+            }
+
+            const hasPayrollDetails = [
+                'ctc',
+                'baseSalary',
+                'monthlyGross',
+                'monthlyPay',
+                'bankName',
+                'accountNumber',
+                'ifscCode',
+            ]
                 .some((field) => formData[field] !== '');
 
             const employeeResponse = await employeeService.addEmployee({
@@ -430,20 +447,16 @@ const AddEmployee = () => {
                 email: formData.email.trim(),
                 phone: formData.phone,
                 address: [formData.address, formData.city, formData.state, formData.postalCode].filter(Boolean).join(', '),
+                addressLine: formData.address.trim(),
+                city: formData.city.trim(),
+                state: formData.state.trim(),
+                postalCode: formData.postalCode,
                 profilePic: profilePicUrl,
-                departmentId: Number(formData.employmentDepartmentId),
-                department: formData.employmentDepartmentName,
-                departmentName: formData.employmentDepartmentName,
-                designationId: Number(formData.employmentDesignationId) || null,
-                designation: formData.employmentJobTitle,
-                jobTitle: formData.employmentJobTitle,
-                dateOfJoining: formData.employmentJoiningDate,
+                sendInvite: formData.sendInvite,
                 employment: {
                     departmentId: Number(formData.employmentDepartmentId),
-                    departmentName: formData.employmentDepartmentName,
                     designationId: Number(formData.employmentDesignationId) || null,
                     jobTitle: formData.employmentJobTitle,
-                    designation: formData.employmentJobTitle,
                     reportingManager: Number(formData.employmentReportingManagerId) || null,
                     dateOfJoining: formData.employmentJoiningDate,
                     workLocation: formData.employmentWorkLocation,
@@ -465,6 +478,13 @@ const AddEmployee = () => {
                     accountNumber: formData.accountNumber,
                     ifscCode: formData.ifscCode,
                 } : null,
+                documents: uploadedDocuments.map((file) => ({
+                    type: file.type,
+                    url: file.url,
+                    fileName: file.name,
+                    mimeType: file.type,
+                    fileSize: file.size,
+                })),
             });
 
             if (!employeeResponse.success) throw new Error(employeeResponse.message || 'Employee could not be created.');
