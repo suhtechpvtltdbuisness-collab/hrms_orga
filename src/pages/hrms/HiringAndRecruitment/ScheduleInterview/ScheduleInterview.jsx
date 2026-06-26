@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X } from 'lucide-react';
@@ -14,11 +14,64 @@ const ScheduleInterview = () => {
     const [isReadMode, setIsReadMode] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
+    const [activeJobs, setActiveJobs] = useState([]);
+    const [selectedJobId, setSelectedJobId] = useState(null);
+    const [candidates, setCandidates] = useState([]);
+    const [loadingJobs, setLoadingJobs] = useState(true);
+    const [loadingCandidates, setLoadingCandidates] = useState(false);
+
     const dateInputRef = useRef(null);
     const timeInputRef = useRef(null);
     const fileInputRef = useRef(null);
 
     const applicationId = searchParams.get('applicationId');
+
+    useEffect(() => {
+        loadActiveJobs();
+    }, []);
+
+    useEffect(() => {
+        if (selectedJobId) {
+            loadCandidates(selectedJobId);
+        }
+    }, [selectedJobId]);
+
+    const loadActiveJobs = async () => {
+        setLoadingJobs(true);
+        const result = await hiringService.getAllJobs();
+        if (result.success) {
+            const active = (result.data || []).filter(j => j.isActive);
+            setActiveJobs(active);
+            if (active.length > 0) setSelectedJobId(active[0].id);
+        }
+        setLoadingJobs(false);
+    };
+
+    const loadCandidates = async (jobId) => {
+        setLoadingCandidates(true);
+        const result = await hiringService.getApplicationsByJobId(jobId);
+        if (result.success) {
+            setCandidates(result.data || []);
+        }
+        setLoadingCandidates(false);
+    };
+
+    const handleCandidateSelect = (e) => {
+        const id = Number(e.target.value);
+        const app = candidates.find(c => c.id === id);
+        if (app) {
+            setFormData(prev => ({
+                ...prev,
+                _appId: id,
+                name: app.applicantName || '',
+                email: app.applicantEmail || '',
+                phone: app.applicantPhone || '',
+                experience: app.applicantExperience || '',
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, _appId: undefined }));
+        }
+    };
 
     /* ── Form State ── */
     const [formData, setFormData] = useState({
@@ -55,8 +108,9 @@ const ScheduleInterview = () => {
             }
         }
 
+        const selectedAppId = formData._appId || (applicationId ? Number(applicationId) : undefined);
         const interviewPayload = {
-            jobApplicationId: applicationId ? Number(applicationId) : undefined,
+            jobApplicationId: selectedAppId,
             interviewerId: panel === 'Tech' ? 1 : 1,
             scheduledAt: new Date(`${date}T${time}`).toISOString(),
             instruction: `${interviewType} - ${interviewMode}`,
@@ -135,16 +189,13 @@ const ScheduleInterview = () => {
             <div className="shrink-0 mb-4">
                 {/* Breadcrumb + Title */}
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
-                        <div
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-                            onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening')}
-                        >
-                            <ArrowLeft size={14} style={{ color: '#111827' }} />
-                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#7D1EDB' }}>ATS Screening</span>
+                    <div className="flex items-center text-sm text-[#7D1EDB] mb-2">
+                        <div className="flex items-center gap-3" onClick={() => navigate('/hrms')}>
+                            <ArrowLeft size={14} className="text-gray-900 cursor-pointer" />
+                            <span className="cursor-pointer hover:text-purple-500">HRMS Dashboard</span>
                         </div>
-                        <ChevronRight size={15} style={{ color: '#9CA3AF' }} />
-                        <span style={{ fontSize: '13px', color: '#667085' }}>Schedule Interview</span>
+                        <ChevronRight size={16} className="mx-1 text-[#9CA3AF]" />
+                        <span className="text-[#667085] text-[14px] font-base">Schedule Interview</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -185,6 +236,65 @@ const ScheduleInterview = () => {
             </div>
 
             <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* ── Card 0: Job Opening & Candidate Selection ── */}
+                <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
+                        Select Job Opening & Candidate
+                    </h3>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1', minWidth: '200px' }}>
+                            <span style={label}>Job Opening</span>
+                            <select
+                                value={selectedJobId || ''}
+                                onChange={(e) => setSelectedJobId(Number(e.target.value))}
+                                disabled={loadingJobs || isReadMode}
+                                style={{
+                                    ...input,
+                                    width: '100%',
+                                    backgroundColor: '#F5F5F5',
+                                    border: '1px solid #D9D9D9',
+                                    borderRadius: '8px',
+                                    padding: '8px 36px 8px 16px',
+                                    appearance: 'none',
+                                    cursor: 'pointer',
+                                    opacity: loadingJobs ? 0.5 : 1,
+                                }}
+                            >
+                                {loadingJobs ? (
+                                    <option>Loading...</option>
+                                ) : (
+                                    activeJobs.map(job => (
+                                        <option key={job.id} value={job.id}>{job.title}</option>
+                                    ))
+                                )}
+                            </select>
+                        </div>
+                        <div style={{ flex: '1', minWidth: '200px' }}>
+                            <span style={label}>Candidate</span>
+                            <select
+                                onChange={handleCandidateSelect}
+                                disabled={loadingCandidates || isReadMode || !selectedJobId}
+                                style={{
+                                    ...input,
+                                    width: '100%',
+                                    backgroundColor: '#F5F5F5',
+                                    border: '1px solid #D9D9D9',
+                                    borderRadius: '8px',
+                                    padding: '8px 36px 8px 16px',
+                                    appearance: 'none',
+                                    cursor: 'pointer',
+                                    opacity: loadingCandidates ? 0.5 : 1,
+                                }}
+                            >
+                                <option value="">Select candidate</option>
+                                {candidates.map(app => (
+                                    <option key={app.id} value={app.id}>{app.applicantName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 {/* ── Card 1: Candidate Information ── */}
                 <style>{`
                     .autofill-grey:-webkit-autofill,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, BarChart2, FileText, CheckCircle2, ThumbsDown, Clock } from 'lucide-react';
 
 const Pill = ({ text, isActive }) => (
@@ -23,7 +23,9 @@ const Pill = ({ text, isActive }) => (
 
 const ATSScreening = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 375);
+    const applicationId = searchParams.get('applicationId');
 
     React.useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 375);
@@ -223,7 +225,7 @@ const ATSScreening = () => {
                             {/* Action Buttons */}
                             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                                 <button
-                                    onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview')}
+                                    onClick={() => navigate(`/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview?applicationId=${applicationId}`)}
                                     style={{
                                         height: '44px',
                                         padding: '0 24px',

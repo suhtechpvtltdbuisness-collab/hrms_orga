@@ -22,7 +22,8 @@ const NewHiring = () => {
     const [updatingStatus, setUpdatingStatus] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showResumeModal, setShowResumeModal] = useState(false);
-    const [resumePreviewUrl, setResumePreviewUrl] = useState('');
+    const [resumeBlobUrl, setResumeBlobUrl] = useState('');
+    const [resumeLoading, setResumeLoading] = useState(false);
 
     // Add candidate modal state
     const [candidateForm, setCandidateForm] = useState({
@@ -183,9 +184,30 @@ const NewHiring = () => {
             toast.error('No resume available for preview');
             return;
         }
-        setResumePreviewUrl(selectedCandidate.resume);
+        const baseUrl = import.meta.env.VITE_BACKEND_BASE_URL || window.location.origin;
+        const proxyUrl = `${baseUrl}/upload/blob?url=${encodeURIComponent(selectedCandidate.resume)}`;
         setShowResumeModal(true);
+        setResumeLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(proxyUrl, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!response.ok) throw new Error('Failed to fetch');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            setResumeBlobUrl(url);
+        } catch {
+            setResumeBlobUrl('');
+        }
+        setResumeLoading(false);
     };
+
+    useEffect(() => {
+        return () => {
+            if (resumeBlobUrl) URL.revokeObjectURL(resumeBlobUrl);
+        };
+    }, [resumeBlobUrl]);
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -533,7 +555,7 @@ const NewHiring = () => {
 
                     <button 
                         className="w-full py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
-                        onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening')}
+                        onClick={() => navigate(`/hrms/hiring-and-recruitment/new-hiring/ats-screening?applicationId=${selectedCandidate.id}`)}
                     >
                         Move to ATS screening
                         <ArrowRight size={16} />
@@ -688,42 +710,35 @@ const NewHiring = () => {
                     <div className="bg-white rounded-xl w-full max-w-4xl mx-4 h-[90vh] flex flex-col">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 shrink-0">
                             <h2 className="text-lg font-semibold text-gray-900">Resume Preview</h2>
-                            <div className="flex items-center gap-2">
-                                <a
-                                    href={resumePreviewUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    Open in new tab
-                                </a>
-                                <button
-                                    onClick={() => setShowResumeModal(false)}
-                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                >
-                                    <X size={20} className="text-gray-500" />
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => { setShowResumeModal(false); if (resumeBlobUrl) URL.revokeObjectURL(resumeBlobUrl); setResumeBlobUrl(''); }}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
                         </div>
                         <div className="flex-1 p-4">
-                            <object
-                                data={resumePreviewUrl}
-                                className="w-full h-full rounded-lg border border-gray-200"
-                                type="application/pdf"
-                            >
+                            {resumeLoading ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <Spinner size={32} color="#7D1EDB" />
+                                </div>
+                            ) : resumeBlobUrl ? (
+                                <object
+                                    data={resumeBlobUrl}
+                                    className="w-full h-full rounded-lg border border-gray-200"
+                                    type="application/pdf"
+                                >
+                                    <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
+                                        <FileText size={48} className="text-gray-300" />
+                                        <p className="text-sm">Preview not available</p>
+                                    </div>
+                                </object>
+                            ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
                                     <FileText size={48} className="text-gray-300" />
-                                    <p className="text-sm">Preview not available</p>
-                                    <a
-                                        href={resumePreviewUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-4 py-2 bg-[#7D1EDB] text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
-                                    >
-                                        Open in new tab
-                                    </a>
+                                    <p className="text-sm">Could not load resume</p>
                                 </div>
-                            </object>
+                            )}
                         </div>
                     </div>
                 </div>
