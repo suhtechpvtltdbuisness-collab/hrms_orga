@@ -21,7 +21,7 @@ import { employeeService, getProfilePicUrl } from "../../../../service";
 const ViewEmployee = () => {
   const navigate = useNavigate();
   const { id, tab } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const tabsRef = useRef(null);
 
   const [employeeData, setEmployeeData] = useState(null);
@@ -36,15 +36,48 @@ const ViewEmployee = () => {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
+    if (isEditMode && id) {
+      navigate(`/hrms/employees/add?mode=edit&id=${id}`, { replace: true });
+    }
+  }, [id, isEditMode, navigate]);
+
+  useEffect(() => {
     const fetchEmployeeData = async () => {
       if (!id) return;
       setIsLoading(true);
       try {
         const response = await employeeService.getUserById(id);
         if (response.success && response.data) {
-          setEmployeeData(response.data);
+          const raw = response.data;
+          const user = raw.user || raw.employee?.user || raw;
+          const employment = raw.employment || raw.employee?.employment || user.employment || {};
+          const payroll = raw.payroll || user.payroll || {};
+          const employmentMeta = JSON.parse(localStorage.getItem("employeeEmploymentMeta") || "{}");
+          const cachedEmployment =
+            employmentMeta[`user:${user.id}`] ||
+            employmentMeta[`employee:${raw.employee?.id}`] ||
+            employmentMeta[`email:${String(user.email || "").trim().toLowerCase()}`] ||
+            {};
+          const department = employment.department?.name || employment.departmentName || cachedEmployment.department || user.department || "-";
+          const designation = employment.jobTitle || employment.designation?.name || cachedEmployment.designation || user.designation || "-";
+          const managerName = employment.reportingManager?.name || cachedEmployment.reportingManagerName || user.reportingManager || "-";
+          const joiningDate = employment.dateOfJoining || employment.joiningDate || cachedEmployment.dateOfJoining || user.createdAt;
+
+          const normalized = {
+            ...raw,
+            ...user,
+            user,
+            employment,
+            payroll,
+            department,
+            designation,
+            manager: managerName,
+            joiningDate,
+            employeeId: user.employeeId || raw.employeeId || raw.employee?.employeeId || (user.id ? `EMP${1000 + user.id}` : "-"),
+          };
+          setEmployeeData(normalized);
           // Pre-fill form with fetched data
-          const d = response.data;
+          const d = normalized;
           setFormData({
             name: d.name || "",
             email: d.email || "",
@@ -74,7 +107,7 @@ const ViewEmployee = () => {
 
   // Switch to edit mode
   const handleEdit = () => {
-    setSearchParams({ mode: "edit" });
+    navigate(`/hrms/employees/add?mode=edit&id=${id}`);
   };
 
   // Cancel edit — revert & go back to view mode
@@ -99,7 +132,6 @@ const ViewEmployee = () => {
         profilePic: d.profilePic || "",
       });
     }
-    setSearchParams({});
   };
 
   // Save — PUT /users/:id
@@ -145,7 +177,6 @@ const ViewEmployee = () => {
         // Update local UI with confirmed data from server
         setEmployeeData(prev => ({ ...prev, ...payload }));
         setFormData(prev => ({ ...prev, profilePicFile: null }));
-        setSearchParams({}); // exit edit mode
         setToast({
           type: "success",
           title: "Updated!",
@@ -158,7 +189,7 @@ const ViewEmployee = () => {
           message: "The backend update API is not available yet. Please contact the backend team to implement PUT /users/:id.",
         });
       }
-    } catch (error) {
+    } catch {
       setToast({
         type: "error",
         title: "Error",

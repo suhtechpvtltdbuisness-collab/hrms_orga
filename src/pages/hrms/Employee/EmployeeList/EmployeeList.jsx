@@ -118,16 +118,16 @@ const EmployeeList = () => {
                         };
                     });
                     setEmployees(mappedEmployees);
-                    if (departmentOptions.length === 0) {
-                        setDepartmentOptions(
-                            [...new Set(mappedEmployees.map((employee) => employee.department).filter((value) => value && value !== '-'))],
-                        );
-                    }
-                    if (designationOptions.length === 0) {
-                        setDesignationOptions(
-                            [...new Set(mappedEmployees.map((employee) => employee.designation).filter((value) => value && value !== '-'))],
-                        );
-                    }
+                    setDepartmentOptions((previous) => (
+                        previous.length === 0
+                            ? [...new Set(mappedEmployees.map((employee) => employee.department).filter((value) => value && value !== '-'))]
+                            : previous
+                    ));
+                    setDesignationOptions((previous) => (
+                        previous.length === 0
+                            ? [...new Set(mappedEmployees.map((employee) => employee.designation).filter((value) => value && value !== '-'))]
+                            : previous
+                    ));
                 } else {
                     setFetchError(response.message || 'Failed to load employee data');
                 }
@@ -493,7 +493,7 @@ const EmployeeList = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/hrms/employees-details/${employee.id}/personal-information?mode=edit`);
+                                                    navigate(`/hrms/employees/add?mode=edit&id=${employee.id}`);
                                                 }}
                                                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-violet-600 transition hover:bg-violet-50"
                                                 title="Edit Employee"

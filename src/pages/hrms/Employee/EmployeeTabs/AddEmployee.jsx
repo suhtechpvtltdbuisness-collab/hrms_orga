@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft,
     ArrowRight,
@@ -37,6 +37,22 @@ const DRAFT_KEY = 'addEmployeeWizardDraft';
 const EMPLOYMENT_META_KEY = 'employeeEmploymentMeta';
 const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024;
 const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
+const splitAddressParts = (address = '') => {
+    const parts = String(address)
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    return {
+        street: parts[0] || '',
+        city: parts[1] || '',
+        state: parts[2] || '',
+        postalCode: parts[3] || '',
+    };
+};
+
+const getStringId = (value) => (value === null || value === undefined ? '' : String(value));
 
 const initialForm = {
     name: '',
@@ -152,6 +168,9 @@ const ReviewGrid = ({ items }) => (
 
 const AddEmployee = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isEditMode = searchParams.get('mode') === 'edit';
+    const editEmployeeId = searchParams.get('id');
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState(initialForm);
     const [errors, setErrors] = useState({});
@@ -163,6 +182,10 @@ const AddEmployee = () => {
     const [designations, setDesignations] = useState([]);
     const [managers, setManagers] = useState([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
+    const [loadingEmployee, setLoadingEmployee] = useState(Boolean(isEditMode && editEmployeeId));
+    const [editEmployee, setEditEmployee] = useState(null);
+    const [originalEmail, setOriginalEmail] = useState('');
+    const draftKey = isEditMode ? `${DRAFT_KEY}:${editEmployeeId || 'current'}` : DRAFT_KEY;
 
     const getCurrentUser = () => {
         try {
@@ -202,7 +225,8 @@ const AddEmployee = () => {
     }, []);
 
     useEffect(() => {
-        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (isEditMode) return;
+        const savedDraft = localStorage.getItem(draftKey);
         if (!savedDraft) return;
         try {
             const parsedDraft = JSON.parse(savedDraft);
@@ -223,13 +247,178 @@ const AddEmployee = () => {
                 });
             }
         } catch {
-            localStorage.removeItem(DRAFT_KEY);
+            localStorage.removeItem(draftKey);
         }
-    }, []);
+    }, [draftKey, isEditMode]);
 
     useEffect(() => {
         loadOptions();
     }, [loadOptions]);
+
+    useEffect(() => {
+        if (!isEditMode) return;
+        if (!editEmployeeId) {
+            setToast({
+                type: 'error',
+                title: 'Missing employee id',
+                message: 'Open edit mode from an employee record so the form can load the existing details.',
+            });
+            navigate('/hrms/employees', { replace: true });
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadEmployee = async () => {
+            setLoadingEmployee(true);
+            try {
+                const response = await employeeService.getUserById(editEmployeeId);
+                if (!isMounted) return;
+
+                if (response.success && response.data) {
+                    setEditEmployee(response.data);
+                    const user = response.data.user || response.data.employee?.user || response.data;
+                    setOriginalEmail(String(user?.email || '').trim().toLowerCase());
+                } else {
+                    setToast({
+                        type: 'error',
+                        title: 'Employee not found',
+                        message: response.message || 'Could not load employee details for editing.',
+                    });
+                    navigate('/hrms/employees', { replace: true });
+                }
+            } catch {
+                if (!isMounted) return;
+                setToast({
+                    type: 'error',
+                    title: 'Load failed',
+                    message: 'Could not load employee details for editing.',
+                });
+                navigate('/hrms/employees', { replace: true });
+            } finally {
+                if (isMounted) setLoadingEmployee(false);
+            }
+        };
+
+        loadEmployee();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [editEmployeeId, isEditMode, navigate]);
+
+    useEffect(() => {
+        if (!isEditMode || !editEmployee || loadingOptions) return;
+
+        const user = editEmployee.user || editEmployee.employee?.user || editEmployee;
+        const employment = editEmployee.employment || editEmployee.employee?.employment || user?.employment || {};
+        const payroll = editEmployee.payroll || user?.payroll || {};
+        const employmentMeta = JSON.parse(localStorage.getItem(EMPLOYMENT_META_KEY) || '{}');
+        const cachedEmployment =
+            employmentMeta[`user:${user?.id}`] ||
+            employmentMeta[`employee:${editEmployee.employee?.id}`] ||
+            employmentMeta[`email:${String(user?.email || '').trim().toLowerCase()}`] ||
+            {};
+        const addressParts = splitAddressParts(user?.address || '');
+
+        setFormData({
+            ...initialForm,
+            name: user?.name || '',
+            email: user?.email || '',
+            phone: user?.phone || '',
+            dob: user?.dob || '',
+            gender: user?.gender || '',
+            bloodGroup: user?.bloodGroup || '',
+            maritalStatus: typeof user?.maritalStatus === 'string'
+                ? user.maritalStatus
+                : user?.maritalStatus
+                    ? 'married'
+                    : 'single',
+            profilePic: user?.profilePic || '',
+            profilePicFile: null,
+            employmentDepartmentId: getStringId(
+                employment.departmentId ||
+                employment.department?.id ||
+                cachedEmployment.departmentId ||
+                '',
+            ),
+            employmentDepartmentName:
+                employment.department?.name ||
+                employment.departmentName ||
+                cachedEmployment.department ||
+                '',
+            employmentDesignationId: getStringId(
+                employment.designationId ||
+                employment.designation?.id ||
+                cachedEmployment.designationId ||
+                '',
+            ),
+            employmentJobTitle:
+                employment.jobTitle ||
+                employment.designation?.name ||
+                cachedEmployment.designation ||
+                '',
+            employmentJoiningDate:
+                String(
+                    employment.dateOfJoining ||
+                    employment.joiningDate ||
+                    cachedEmployment.dateOfJoining ||
+                    user?.createdAt ||
+                    '',
+                ).slice(0, 10),
+            employmentReportingManagerId: getStringId(
+                employment.reportingManagerId ||
+                employment.reportingManager?.id ||
+                cachedEmployment.reportingManagerId ||
+                '',
+            ),
+            employmentReportingManagerName:
+                employment.reportingManager?.name ||
+                cachedEmployment.reportingManagerName ||
+                '',
+            employmentWorkLocation:
+                employment.workLocation ||
+                cachedEmployment.workLocation ||
+                '',
+            employmentBranch:
+                employment.branch ||
+                cachedEmployment.branch ||
+                '',
+            employmentContractType:
+                employment.contractType ||
+                cachedEmployment.contractType ||
+                'Full-time',
+            address: user?.addressLine || addressParts.street || '',
+            city: user?.city || addressParts.city || '',
+            state: user?.state || addressParts.state || '',
+            postalCode: user?.postalCode || addressParts.postalCode || '',
+            contactName: user?.eContactName || '',
+            contactNumber: user?.eContactNumber || '',
+            relation: user?.eRelation || '',
+            ctc: payroll.ctc || '',
+            currency: payroll.currency || 'INR',
+            paymentMode: payroll.paymentMode || 'bank_transfer',
+            baseSalary: payroll.baseSalary || '',
+            monthlyGross: payroll.monthlyGross || '',
+            monthlyPay: payroll.monthlyPay || '',
+            bankName: payroll.bankName || '',
+            accountNumber: payroll.accountNumber || '',
+            ifscCode: payroll.ifscCode || '',
+            documents: Array.isArray(editEmployee.documents)
+                ? editEmployee.documents.map((file) => ({
+                    name: file.name || file.fileName || 'Document',
+                    size: file.size || file.fileSize || 0,
+                    type: file.type || file.mimeType || 'application/octet-stream',
+                    url: file.url || file.fileUrl || '',
+                }))
+                : [],
+            password: '',
+            confirmPassword: '',
+            role: user?.role?.name || user?.role || 'Employee',
+            sendInvite: false,
+            isAdmin: Boolean(user?.isAdmin),
+        });
+    }, [editEmployee, isEditMode, loadingOptions]);
 
     useEffect(() => {
         const warnBeforeUnload = (event) => {
@@ -247,12 +436,14 @@ const AddEmployee = () => {
         setIsDirty(true);
     };
 
-    const hasDuplicateEmail = (employeeList, email) => {
+    const hasDuplicateEmail = (employeeList, email, ignoreEmployeeId = null) => {
         const normalizedEmail = email.trim().toLowerCase();
         if (!normalizedEmail) return false;
 
         return employeeList.some((item) => {
             const user = item.user || item;
+            const userId = user.id || user._id;
+            if (ignoreEmployeeId && String(userId) === String(ignoreEmployeeId)) return false;
             return String(user.email || '').trim().toLowerCase() === normalizedEmail;
         });
     };
@@ -261,12 +452,14 @@ const AddEmployee = () => {
         const nextErrors = {};
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phonePattern = /^\d{10}$/;
+        const normalizedEditEmail = String(formData.email || '').trim().toLowerCase();
+        const normalizedOriginalEmail = String(originalEmail || '').trim().toLowerCase();
 
         if (stepIndex === 0) {
             if (!formData.name.trim()) nextErrors.name = 'Full name is required.';
             if (!formData.email.trim()) nextErrors.email = 'Work email is required.';
             else if (!emailPattern.test(formData.email)) nextErrors.email = 'Enter a valid email address.';
-            else if (hasDuplicateEmail(managers, formData.email)) {
+            else if (!(isEditMode && normalizedEditEmail === normalizedOriginalEmail) && hasDuplicateEmail(managers, formData.email, isEditMode ? editEmployeeId : null)) {
                 nextErrors.email = 'An employee with this email already exists.';
             }
             if (!formData.phone) nextErrors.phone = 'Phone number is required.';
@@ -276,10 +469,12 @@ const AddEmployee = () => {
         }
 
         if (stepIndex === 1) {
-            if (!formData.employmentDepartmentId) nextErrors.employmentDepartmentId = 'Department is required.';
-            if (!formData.employmentJobTitle) nextErrors.employmentJobTitle = 'Designation is required.';
-            if (!formData.employmentJoiningDate) nextErrors.employmentJoiningDate = 'Joining date is required.';
-            if (!formData.employmentWorkLocation.trim()) nextErrors.employmentWorkLocation = 'Work location is required.';
+            if (!isEditMode) {
+                if (!formData.employmentDepartmentId) nextErrors.employmentDepartmentId = 'Department is required.';
+                if (!formData.employmentJobTitle) nextErrors.employmentJobTitle = 'Designation is required.';
+                if (!formData.employmentJoiningDate) nextErrors.employmentJoiningDate = 'Joining date is required.';
+                if (!formData.employmentWorkLocation.trim()) nextErrors.employmentWorkLocation = 'Work location is required.';
+            }
         }
 
         if (stepIndex === 2) {
@@ -302,9 +497,13 @@ const AddEmployee = () => {
         }
 
         if (stepIndex === 5) {
-            if (!formData.password) nextErrors.password = 'Temporary password is required.';
-            else if (formData.password.length < 8) nextErrors.password = 'Use at least 8 characters.';
-            if (formData.confirmPassword !== formData.password) {
+            if (!isEditMode && !formData.password) nextErrors.password = 'Temporary password is required.';
+            else if (formData.password && formData.password.length < 8) nextErrors.password = 'Use at least 8 characters.';
+            if (formData.password || formData.confirmPassword) {
+                if (formData.confirmPassword !== formData.password) {
+                    nextErrors.confirmPassword = 'Passwords do not match.';
+                }
+            } else if (!isEditMode && formData.confirmPassword !== formData.password) {
                 nextErrors.confirmPassword = 'Passwords do not match.';
             }
         }
@@ -327,8 +526,10 @@ const AddEmployee = () => {
         if (isDirty) {
             setToast({
                 type: 'warning',
-                title: 'Discard employee setup?',
-                message: 'Your unsaved information will be lost.',
+                title: isEditMode ? 'Discard changes?' : 'Discard employee setup?',
+                message: isEditMode
+                    ? 'Your unsaved updates will be lost.'
+                    : 'Your unsaved information will be lost.',
                 persistent: true,
                 actions: [
                     {
@@ -336,10 +537,10 @@ const AddEmployee = () => {
                         onClick: () => setToast(null),
                     },
                     {
-                        label: 'Discard',
+                        label: isEditMode ? 'Discard changes' : 'Discard',
                         variant: 'danger',
                         onClick: () => {
-                            localStorage.removeItem(DRAFT_KEY);
+                            localStorage.removeItem(draftKey);
                             setIsDirty(false);
                             setToast(null);
                             navigate('/hrms/employees');
@@ -349,7 +550,7 @@ const AddEmployee = () => {
             });
             return;
         }
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(draftKey);
         navigate('/hrms/employees');
     };
 
@@ -359,7 +560,7 @@ const AddEmployee = () => {
             profilePicFile: null,
             documents: formData.documents.map(({ name, size, type }) => ({ name, size, type })),
         };
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ formData: serializableData, currentStep, savedAt: Date.now() }));
+        localStorage.setItem(draftKey, JSON.stringify({ formData: serializableData, currentStep, savedAt: Date.now() }));
         setToast({
             type: 'success',
             title: 'Draft saved',
@@ -402,8 +603,10 @@ const AddEmployee = () => {
             }
 
             let uploadedDocuments = [];
-            if (formData.documents.length) {
-                const documentResponse = await employeeService.uploadDocuments(formData.documents);
+            const documentsToUpload = formData.documents.filter((file) => typeof File !== 'undefined' && file instanceof File);
+            const existingDocuments = formData.documents.filter((file) => !(typeof File !== 'undefined' && file instanceof File));
+            if (documentsToUpload.length) {
+                const documentResponse = await employeeService.uploadDocuments(documentsToUpload);
                 if (!documentResponse.success) {
                     throw new Error(documentResponse.message || 'Document upload failed.');
                 }
@@ -421,12 +624,11 @@ const AddEmployee = () => {
             ]
                 .some((field) => formData[field] !== '');
 
-            const employeeResponse = await employeeService.addEmployee({
+            const payload = {
                 name: formData.name.trim(),
                 gender: formData.gender,
                 dob: formData.dob,
                 bloodGroup: formData.bloodGroup,
-                password: formData.password,
                 isAdmin: formData.isAdmin,
                 maritalStatus: formData.maritalStatus === 'married',
                 type: 'employee',
@@ -443,7 +645,7 @@ const AddEmployee = () => {
                 profilePic: profilePicUrl,
                 sendInvite: formData.sendInvite,
                 employment: {
-                    departmentId: Number(formData.employmentDepartmentId),
+                    departmentId: Number(formData.employmentDepartmentId) || null,
                     designationId: Number(formData.employmentDesignationId) || null,
                     jobTitle: formData.employmentJobTitle,
                     reportingManager: Number(formData.employmentReportingManagerId) || null,
@@ -466,26 +668,50 @@ const AddEmployee = () => {
                     bankName: formData.bankName,
                     accountNumber: formData.accountNumber,
                     ifscCode: formData.ifscCode,
-                } : null,
-                documents: uploadedDocuments.map((file) => ({
-                    type: file.type,
-                    url: file.url,
-                    fileName: file.name,
-                    mimeType: file.type,
-                    fileSize: file.size,
-                })),
-            });
+                } : undefined,
+                documents: [
+                    ...existingDocuments.map((file) => ({
+                        type: file.type || file.mimeType || 'file',
+                        url: file.url || file.fileUrl || '',
+                        fileName: file.fileName || file.name || 'document',
+                        mimeType: file.mimeType || file.type || '',
+                        fileSize: file.fileSize || file.size || 0,
+                    })),
+                    ...uploadedDocuments.map((file) => ({
+                        type: file.type,
+                        url: file.url,
+                        fileName: file.name,
+                        mimeType: file.type,
+                        fileSize: file.size,
+                    })),
+                ],
+            };
 
-            if (!employeeResponse.success) throw new Error(employeeResponse.message || 'Employee could not be created.');
+            if (formData.password) {
+                payload.password = formData.password;
+            }
+
+            if (!hasPayrollDetails) {
+                delete payload.payroll;
+            }
+
+            const employeeResponse = isEditMode
+                ? await employeeService.updateEmployee(editEmployeeId, payload)
+                : await employeeService.addEmployee(payload);
+
+            if (!employeeResponse.success) {
+                throw new Error(employeeResponse.message || `Employee could not be ${isEditMode ? 'updated' : 'created'}.`);
+            }
 
             const savedUser = employeeResponse.data?.user || employeeResponse.data || {};
             const savedEmployee = employeeResponse.data?.employee || {};
+            const resolvedEmployeeId = savedEmployee.id || editEmployeeId || null;
             const employmentMeta = JSON.parse(localStorage.getItem(EMPLOYMENT_META_KEY) || '{}');
             const meta = {
                 userId: savedUser.id || null,
-                employeeId: savedEmployee.id || null,
+                employeeId: resolvedEmployeeId,
                 email: formData.email.trim().toLowerCase(),
-                departmentId: Number(formData.employmentDepartmentId),
+                departmentId: Number(formData.employmentDepartmentId) || null,
                 department: formData.employmentDepartmentName,
                 designationId: Number(formData.employmentDesignationId) || null,
                 designation: formData.employmentJobTitle,
@@ -498,12 +724,14 @@ const AddEmployee = () => {
             if (meta.employeeId) employmentMeta[`employee:${meta.employeeId}`] = meta;
             localStorage.setItem(EMPLOYMENT_META_KEY, JSON.stringify(employmentMeta));
 
-            localStorage.removeItem(DRAFT_KEY);
+            localStorage.removeItem(draftKey);
             setIsDirty(false);
             setToast({
                 type: 'success',
-                title: 'Employee created',
-                message: `${formData.name} is now part of your organization.`,
+                title: isEditMode ? 'Employee updated' : 'Employee created',
+                message: isEditMode
+                    ? `${formData.name} was updated successfully.`
+                    : `${formData.name} is now part of your organization.`,
             });
             window.setTimeout(() => navigate('/hrms/employees'), 900);
             return true;
@@ -518,9 +746,9 @@ const AddEmployee = () => {
             }
             setToast({
                 type: 'error',
-                title: duplicateEmail ? 'Email already exists' : 'Employee was not created',
+                title: duplicateEmail ? 'Email already exists' : isEditMode ? 'Employee was not updated' : 'Employee was not created',
                 message: duplicateEmail
-                    ? 'Use a different work email to create this employee.'
+                    ? 'Use a different work email to continue.'
                     : error.message || 'Please try again.',
             });
             return false;
@@ -576,7 +804,7 @@ const AddEmployee = () => {
         await createEmployeeRecord();
     };
 
-    const handleCreateEmployee = async () => {
+    const handleSubmitEmployee = async () => {
         for (const stepIndex of [0, 1, 2, 3, 5]) {
             if (!validateStep(stepIndex)) {
                 setCurrentStep(stepIndex);
@@ -587,6 +815,11 @@ const AddEmployee = () => {
                 });
                 return;
             }
+        }
+
+        if (isEditMode) {
+            await createEmployeeRecord();
+            return;
         }
 
         if (subscriptionInfo?.canAddEmployee === false && subscriptionInfo?.hasActivePlan !== false) {
@@ -633,14 +866,29 @@ const AddEmployee = () => {
         [managers],
     );
 
+    const isBusy = loadingOptions || (isEditMode && loadingEmployee && !editEmployee);
+
+    if (isEditMode && loadingEmployee && !editEmployee) {
+        return (
+            <div className="employee-wizard-page bg-slate-100 p-3 sm:p-5">
+                <div className="mx-auto flex h-[calc(100vh-2.5rem)] max-w-[1500px] items-center justify-center rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 size={28} className="animate-spin text-violet-600" />
+                        <p className="text-sm font-medium text-slate-500">Loading employee details…</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const renderStep = () => {
         if (currentStep === 0) {
             return (
                 <div className="animate-[fadeIn_.25s_ease-out]">
                     <SectionIntro
                         eyebrow="Step 1 of 7"
-                        title="Let’s start with the employee"
-                        description="Enter their core identity and contact details. Nothing is submitted until the final confirmation."
+                        title={isEditMode ? 'Update employee basics' : 'Let’s start with the employee'}
+                        description={isEditMode ? 'Update core identity and contact details. Nothing is saved until you confirm the changes.' : 'Enter their core identity and contact details. Nothing is submitted until the final confirmation.'}
                     />
                     <div className="mb-8 flex flex-col gap-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:flex-row sm:items-center">
                         <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-violet-100 text-violet-700">
@@ -716,7 +964,7 @@ const AddEmployee = () => {
                         </div>
                     )}
                     <div className="grid gap-5 md:grid-cols-2">
-                        <Field label={requiredLabel('Department')} error={errors.employmentDepartmentId}>
+                        <Field label={isEditMode ? 'Department' : requiredLabel('Department')} error={errors.employmentDepartmentId}>
                             <select
                                 className={inputClass('employmentDepartmentId')}
                                 value={formData.employmentDepartmentId}
@@ -730,7 +978,7 @@ const AddEmployee = () => {
                                 {departments.map((department) => <option key={department.id || department._id} value={department.id || department._id}>{department.name}</option>)}
                             </select>
                         </Field>
-                        <Field label={requiredLabel('Designation')} error={errors.employmentJobTitle}>
+                        <Field label={isEditMode ? 'Designation' : requiredLabel('Designation')} error={errors.employmentJobTitle}>
                             <select
                                 className={inputClass('employmentJobTitle')}
                                 value={formData.employmentJobTitle}
@@ -744,7 +992,7 @@ const AddEmployee = () => {
                                 {designations.map((designation) => <option key={designation.id || designation._id || designation.name} value={designation.name}>{designation.name}</option>)}
                             </select>
                         </Field>
-                        <Field label={requiredLabel('Date of joining')} error={errors.employmentJoiningDate}>
+                        <Field label={isEditMode ? 'Date of joining' : requiredLabel('Date of joining')} error={errors.employmentJoiningDate}>
                             <input className={inputClass('employmentJoiningDate')} type="date" value={formData.employmentJoiningDate} onChange={(e) => setValue('employmentJoiningDate', e.target.value)} />
                         </Field>
                         <Field label="Reporting manager">
@@ -761,7 +1009,7 @@ const AddEmployee = () => {
                                 {managerOptions.map((manager) => <option key={manager.id} value={manager.id}>{manager.name}</option>)}
                             </select>
                         </Field>
-                        <Field label={requiredLabel('Work location')} error={errors.employmentWorkLocation}>
+                        <Field label={isEditMode ? 'Work location' : requiredLabel('Work location')} error={errors.employmentWorkLocation}>
                             <input className={inputClass('employmentWorkLocation')} value={formData.employmentWorkLocation} onChange={(e) => setValue('employmentWorkLocation', e.target.value)} placeholder="e.g. Mumbai HQ" />
                         </Field>
                         <Field label="Branch">
@@ -896,9 +1144,9 @@ const AddEmployee = () => {
         if (currentStep === 5) {
             return (
                 <div className="animate-[fadeIn_.25s_ease-out]">
-                    <SectionIntro eyebrow="Step 6 of 7" title="Configure account access" description="Create secure sign-in credentials and choose the employee’s initial access level." />
+                    <SectionIntro eyebrow="Step 6 of 7" title="Configure account access" description={isEditMode ? 'Leave the password blank to keep the current login details, or set a new password if needed.' : 'Create secure sign-in credentials and choose the employee’s initial access level.'} />
                     <div className="grid gap-5 md:grid-cols-2">
-                        <Field label={requiredLabel('Temporary password')} error={errors.password} hint="Use at least 8 characters.">
+                        <Field label={requiredLabel(isEditMode ? 'New password' : 'Temporary password')} error={errors.password} hint={isEditMode ? 'Leave blank to keep the current password.' : 'Use at least 8 characters.'}>
                             <input className={inputClass('password')} type="password" value={formData.password} onChange={(e) => setValue('password', e.target.value)} placeholder="Minimum 8 characters" />
                         </Field>
                         <Field label={requiredLabel('Confirm password')} error={errors.confirmPassword}>
@@ -927,10 +1175,10 @@ const AddEmployee = () => {
 
         return (
             <div className="animate-[fadeIn_.25s_ease-out]">
-                <SectionIntro eyebrow="Step 7 of 7" title="Review employee details" description="Check each section carefully. The employee record will only be created after you confirm below." />
+                <SectionIntro eyebrow="Step 7 of 7" title="Review employee details" description={isEditMode ? 'Check each section carefully. The changes will be applied after you confirm below.' : 'Check each section carefully. The employee record will only be created after you confirm below.'} />
                 <div className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                     <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={19} />
-                    <p><strong>Ready for review.</strong> No employee record has been created yet. Click Create Employee when everything looks right.</p>
+                    <p><strong>Ready for review.</strong> {isEditMode ? 'No changes have been saved yet. Click Save changes when everything looks right.' : 'No employee record has been created yet. Click Create employee when everything looks right.'}</p>
                 </div>
                 <div className="grid gap-5">
                     <ReviewSection title="Personal information" icon={UserRound} onEdit={() => setCurrentStep(0)}>
@@ -949,7 +1197,7 @@ const AddEmployee = () => {
                         <ReviewGrid items={[['Files selected', formData.documents.length ? `${formData.documents.length} document${formData.documents.length > 1 ? 's' : ''}` : 'No documents added']]} />
                     </ReviewSection>
                     <ReviewSection title="Account and permissions" icon={KeyRound} onEdit={() => setCurrentStep(5)}>
-                        <ReviewGrid items={[['Role', formData.role], ['Invitation', formData.sendInvite ? 'Send after creation' : 'Do not send'], ['Login email', formData.email]]} />
+                        <ReviewGrid items={[['Role', formData.role], ['Invitation', formData.sendInvite ? (isEditMode ? 'Send after update' : 'Send after creation') : 'Do not send'], ['Login email', formData.email]]} />
                     </ReviewSection>
                 </div>
             </div>
@@ -970,8 +1218,8 @@ const AddEmployee = () => {
                                 <div className="flex items-center gap-3">
                                     <span className="hidden h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-200 sm:flex"><UserRound size={20} /></span>
                                     <div>
-                                        <h1 className="truncate text-xl font-bold tracking-tight text-slate-950">Add new employee</h1>
-                                        <p className="mt-0.5 text-xs text-slate-500">Complete all required details before creating the profile.</p>
+                                        <h1 className="truncate text-xl font-bold tracking-tight text-slate-950">{isEditMode ? 'Edit employee' : 'Add new employee'}</h1>
+                                        <p className="mt-0.5 text-xs text-slate-500">{isEditMode ? 'Update the employee profile using the same step-by-step flow.' : 'Complete all required details before creating the profile.'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1015,7 +1263,7 @@ const AddEmployee = () => {
                         </div>
                     </div>
 
-                    {subscriptionInfo && (
+                    {subscriptionInfo && !isEditMode && (
                         <div className={`mx-5 mt-4 shrink-0 rounded-xl border px-4 py-2.5 text-xs sm:mx-7 ${subscriptionInfo.canAddEmployee ? 'border-violet-100 bg-violet-50 text-violet-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
                             <strong className="capitalize">{subscriptionInfo.planType?.replace('_', ' ') || 'Active'} plan</strong>
                             <span className="mx-2 text-current opacity-40">•</span>
@@ -1047,8 +1295,8 @@ const AddEmployee = () => {
                                         Continue <ArrowRight size={16} />
                                     </button>
                                 ) : (
-                                    <button type="button" onClick={handleCreateEmployee} disabled={isSubmitting} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none">
-                                        {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Creating employee…</> : <>Create employee <ChevronRight size={16} /></>}
+                                    <button type="button" onClick={handleSubmitEmployee} disabled={isSubmitting || (!isEditMode && subscriptionInfo?.canAddEmployee === false) || isBusy} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none">
+                                        {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> {isEditMode ? 'Saving changes…' : 'Creating employee…'}</> : <>{isEditMode ? 'Save changes' : 'Create employee'} <ChevronRight size={16} /></>}
                                     </button>
                                 )}
                             </div>

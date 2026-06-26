@@ -28,8 +28,9 @@ const AccordionItem = ({ title, isOpen, onToggle, children }) => {
     );
 };
 
-const InputField = ({ label, type = "text", placeholder, defaultValue, icon: Icon, tooltipContent }) => {
+const InputField = ({ label, type = "text", placeholder, defaultValue, value, icon: Icon, tooltipContent }) => {
     const [showTooltip, setShowTooltip] = useState(false);
+    const resolvedValue = value !== undefined ? value : defaultValue;
 
     return (
         <div>
@@ -38,7 +39,7 @@ const InputField = ({ label, type = "text", placeholder, defaultValue, icon: Ico
                 <input
                     type={type}
                     placeholder={placeholder || label}
-                    defaultValue={defaultValue}
+                    value={resolvedValue}
                     disabled
                     className="
                         w-full px-4 py-3 bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg
@@ -69,9 +70,16 @@ const InputField = ({ label, type = "text", placeholder, defaultValue, icon: Ico
     );
 };
 
-const EmpEmployment = () => {
+const EmpEmployment = ({ data = {} }) => {
     const location = useLocation();
-    const reportingManager = location.state?.reportingManager || '';
+    const reportingManager = data?.employment?.reportingManager?.name || data?.manager || location.state?.reportingManager || '';
+    const jobTitle = data?.employment?.jobTitle || data?.designation || '';
+    const department = data?.department || data?.employment?.department?.name || data?.employment?.departmentName || '';
+    const team = data?.employment?.branch || data?.employment?.workLocation || '';
+    const joiningDate = data?.joiningDate || data?.employment?.dateOfJoining || data?.employment?.joiningDate || '';
+    const workLocation = data?.employment?.workLocation || '';
+    const branch = data?.employment?.branch || '';
+    const employmentStatus = data?.active ? 'Active' : 'Inactive';
 
     const managerTooltip = (
         <div className="text-left space-y-1.5 min-w-[240px]">
@@ -124,24 +132,25 @@ const EmpEmployment = () => {
                 onToggle={() => toggleSection("jobDetails")}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <InputField label="Job Title" placeholder="Enter job title" />
-                    <InputField label="Department" placeholder="Enter department" />
-                    <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" />
+                    <InputField label="Job Title" placeholder="Enter job title" value={jobTitle} />
+                    <InputField label="Department" placeholder="Enter department" value={department} />
+                    <InputField label="Team/Sub-Department" placeholder="Enter team/sub-department" value={team} />
                     <InputField
                         label="Reporting Manager"
                         placeholder="Enter name"
                         defaultValue={reportingManager || 'Samiksha Umbarje'}
+                        value={reportingManager || 'Samiksha Umbarje'}
                         icon={Info}
                         tooltipContent={managerTooltip}
                     />
 
-                    <InputField label="Date of Joining" type="date" placeholder="Select Date" />
-                    <InputField label="Work Location" placeholder="Enter location" />
-                    <InputField label="Branch" placeholder="Enter Branch name" />
+                    <InputField label="Date of Joining" type="date" placeholder="Select Date" value={joiningDate ? String(joiningDate).slice(0, 10) : ''} />
+                    <InputField label="Work Location" placeholder="Enter location" value={workLocation} />
+                    <InputField label="Branch" placeholder="Enter Branch name" value={branch} />
                     <InputField label="Prohibition Period" placeholder="Select Date" type="date" />
 
                     <InputField label="Confirm Date" type="date" placeholder="Select Date" />
-                    <InputField label="Employment Status" placeholder="Active" />
+                    <InputField label="Employment Status" placeholder="Active" value={employmentStatus} />
                     <InputField label="Prohibition End Date" type="date" placeholder="Select Date" />
                 </div>
             </AccordionItem>
