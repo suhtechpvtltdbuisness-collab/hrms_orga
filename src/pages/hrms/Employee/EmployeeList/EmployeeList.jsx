@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Download,
@@ -8,17 +8,20 @@ import {
     ArrowLeft,
     ArrowRight,
     ChevronRight,
+    Pencil,
     Trash2,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import { Toast } from '../../../../components/common/Toast';
 import AssignReportingManager from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignReportingManager';
 import AssignedModal from '../../OnboardedEmployeeList/ReportingManager/Assign/AssignedModal';
 import SuccessModal from '../../OnboardedEmployeeList/ReportingManager/Assign/SuccessModal';
 import { employeeService } from '../../../../service';
 import { isOrgAdmin } from '../../../../utils/authMode';
 
+const EMPLOYMENT_META_KEY = 'employeeEmploymentMeta';
 
 
 const EmployeeList = () => {
@@ -27,8 +30,12 @@ const EmployeeList = () => {
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const [employees, setEmployees] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [departmentOptions, setDepartmentOptions] = useState([]);
+    const [designationOptions, setDesignationOptions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [fetchError, setFetchError] = useState(null);
+    const [toast, setToast] = useState(null);
 
     // Fetch employees from API
     useEffect(() => {
@@ -45,18 +52,62 @@ const EmployeeList = () => {
                     return;
                 }
 
-                const response = await employeeService.getAllEmployeesByAdminId(adminId);
+                const response = await employeeService.getAllEmployeesByAdminId(adminId, currentPage, itemsPerPage);
+
                 if (response.success && response.data) {
-                    const mappedEmployees = response.data.map((item, index) => {
+                    const rawData = response.data.employees || response.data || [];
+                    const total = response.data.total !== undefined ? response.data.total : rawData.length;
+                    setTotalCount(total);
+
+                    const employmentMeta = JSON.parse(localStorage.getItem(EMPLOYMENT_META_KEY) || '{}');
+                    const mappedEmployees = rawData.map((item, index) => {
                         const u = item.user || item;
+                        const cachedEmployment =
+                            employmentMeta[`user:${u.id}`] ||
+                            employmentMeta[`employee:${item.employee?.id}`] ||
+                            employmentMeta[`email:${String(u.email || '').trim().toLowerCase()}`] ||
+                            {};
+                        const employment = {
+                            ...cachedEmployment,
+                            ...(
+                            item.employment ||
+                            item.employee?.employment ||
+                            u.employment ||
+                            {}
+                            ),
+                        };
+                        const department =
+                            employment?.department?.name ||
+                            employment?.departmentName ||
+                            item.department?.name ||
+                            item.department ||
+                            u.department?.name ||
+                            u.department ||
+                            '-';
+                        const designation =
+                            employment?.designation?.name ||
+                            employment?.jobTitle ||
+                            employment?.designation ||
+                            item.designation?.name ||
+                            item.designation ||
+                            item.jobTitle ||
+                            u.designation?.name ||
+                            u.designation ||
+                            u.jobTitle ||
+                            '-';
+                        const joiningDateValue =
+                            employment?.dateOfJoining ||
+                            employment?.joiningDate ||
+                            u.createdAt;
+
                         return {
-                            srNo: String(index + 1).padStart(2, '0'),
+                            srNo: String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, '0'),
                             name: u.name || '-',
                             empId: u.employeeId || `EMP${1000 + (u.id || index + 1)}`,
-                            department: u.department || '-',
-                            designation: u.designation || '-',
-                            joiningDate: u.createdAt
-                                ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                            department,
+                            designation,
+                            joiningDate: joiningDateValue
+                                ? new Date(joiningDateValue).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                                 : '-',
                             contact: u.email || '-',
                             phone: u.phone || '-',
@@ -67,6 +118,16 @@ const EmployeeList = () => {
                         };
                     });
                     setEmployees(mappedEmployees);
+                    setDepartmentOptions((previous) => (
+                        previous.length === 0
+                            ? [...new Set(mappedEmployees.map((employee) => employee.department).filter((value) => value && value !== '-'))]
+                            : previous
+                    ));
+                    setDesignationOptions((previous) => (
+                        previous.length === 0
+                            ? [...new Set(mappedEmployees.map((employee) => employee.designation).filter((value) => value && value !== '-'))]
+                            : previous
+                    ));
                 } else {
                     setFetchError(response.message || 'Failed to load employee data');
                 }
@@ -78,25 +139,60 @@ const EmployeeList = () => {
         };
 
         fetchEmployees();
-    }, []);
+    }, [currentPage]);
 
 
     // Handle Delete Employee
-    const handleDeleteEmployee = async (id, e) => {
+    const handleDeleteEmployee = (employee, e) => {
         if (e) e.stopPropagation();
-        if (window.confirm("Are you sure you want to delete this employee?")) {
-            try {
-                const response = await employeeService.deleteEmployee(id);
-                if (response.success) {
-                    setEmployees(prev => prev.filter(emp => emp.id !== id));
-                } else {
-                    alert(response.message || 'Failed to delete employee');
-                }
-            } catch (err) {
-                console.error("Delete employee error:", err);
-                alert("Something went wrong while deleting");
-            }
-        }
+        setToast({
+            type: 'warning',
+            title: 'Archive employee?',
+            message: `${employee.name} will be soft deleted and removed from active employee lists.`,
+            persistent: true,
+            actions: [
+                {
+                    label: 'Cancel',
+                    onClick: () => setToast(null),
+                },
+                {
+                    label: 'Archive employee',
+                    variant: 'danger',
+                    onClick: async () => {
+                        setToast(null);
+                        try {
+                            const response = await employeeService.deleteEmployee(employee.id);
+                            if (response.success) {
+                                setEmployees((previous) => previous.filter((item) => item.id !== employee.id));
+                                const employmentMeta = JSON.parse(localStorage.getItem(EMPLOYMENT_META_KEY) || '{}');
+                                delete employmentMeta[`user:${employee.id}`];
+                                delete employmentMeta[`employee:${employee.employeeId}`];
+                                delete employmentMeta[`email:${String(employee.contact || '').trim().toLowerCase()}`];
+                                localStorage.setItem(EMPLOYMENT_META_KEY, JSON.stringify(employmentMeta));
+                                setToast({
+                                    type: 'success',
+                                    title: 'Employee archived',
+                                    message: `${employee.name} was removed from active employee lists successfully.`,
+                                });
+                            } else {
+                                setToast({
+                                    type: 'error',
+                                    title: 'Delete failed',
+                                    message: response.message || 'Failed to delete employee.',
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Delete employee error:', error);
+                            setToast({
+                                type: 'error',
+                                title: 'Delete failed',
+                                message: 'Something went wrong while deleting the employee.',
+                            });
+                        }
+                    },
+                },
+            ],
+        });
     };
 
     // Sorting & Search Logic
@@ -128,13 +224,7 @@ const EmployeeList = () => {
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isAssignedModalOpen, setIsAssignedModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-    const [selectedEmployeeForAssign, setSelectedEmployeeForAssign] = useState(null);
-
-    const handleOpenAssignModal = (employee) => {
-        setSelectedEmployeeForAssign(employee);
-        setIsAssignModalOpen(true);
-        setActiveActionMenu(null);
-    };
+    const [selectedEmployeeForAssign] = useState(null);
 
     const handleAssignSubmit = () => {
         setIsAssignModalOpen(false);
@@ -147,9 +237,6 @@ const EmployeeList = () => {
     };
 
     const STATUS_OPTIONS = ["Active", "Inactive", "Probation",];
-    const DEPARTMENT_OPTIONS = ["Technical ", "Product", "Business", "Operations", "Finance", "Security"];
-    const DESIGNATION_OPTIONS = ["Frontend Developer", "Backend Developer", "DevOps", "UI/UX Designer", "Product Management", "Business Analysis", "Sales", "Customer Support", "HR", "Finance", "Legal"];
-
     const handleSort = (key) => {
         let direction = 'ascending';
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -209,8 +296,8 @@ const EmployeeList = () => {
     // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = sortedEmployees.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage);
+    const currentItems = sortedEmployees;
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
 
     const handleNext = () => {
         if (currentPage < totalPages) {
@@ -280,7 +367,9 @@ const EmployeeList = () => {
     };
 
     return (
-        <div className="page-wrapper">
+        <>
+        <Toast toast={toast} onClose={() => setToast(null)} />
+        <div className="page-wrapper employee-list-page">
 
             {/* Breadcrumb */}
             <div className="breadcrumb">
@@ -315,14 +404,14 @@ const EmployeeList = () => {
                     />
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <FilterDropdown label="Department" options={DEPARTMENT_OPTIONS} value={filters.department} onChange={(val) => setFilters(prev => ({ ...prev, department: val }))} minWidth="148px" className="btn-ghost" />
-                    <FilterDropdown label="Designation" options={DESIGNATION_OPTIONS} value={filters.designation} onChange={(val) => setFilters(prev => ({ ...prev, designation: val }))} minWidth="148px" className="btn-ghost" />
+                    <FilterDropdown label="Department" options={departmentOptions} value={filters.department} onChange={(val) => setFilters(prev => ({ ...prev, department: val }))} minWidth="148px" className="btn-ghost" />
+                    <FilterDropdown label="Designation" options={designationOptions} value={filters.designation} onChange={(val) => setFilters(prev => ({ ...prev, designation: val }))} minWidth="148px" className="btn-ghost" />
                     <FilterDropdown label="Status" options={STATUS_OPTIONS} value={filters.status} onChange={(val) => setFilters(prev => ({ ...prev, status: val }))} minWidth="120px" className="btn-ghost" />
                 </div>
             </div>
 
             {/* Table */}
-            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid #E5E7EB', borderRadius: 10 }}>
+            <div className="employee-list-table-scroll" style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid #E5E7EB', borderRadius: 10 }}>
                 <table className="data-table" style={{ minWidth: 900 }}>
                     <thead>
                         <tr>
@@ -339,7 +428,7 @@ const EmployeeList = () => {
                             <th onClick={() => handleSort('joiningDate')} style={{ cursor: 'pointer' }}>JOINING DATE</th>
                             <th onClick={() => handleSort('contact')} style={{ cursor: 'pointer' }}>CONTACT</th>
                             <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>STATUS</th>
-                            <th style={{ textAlign: 'center' }}>ACTION</th>
+                            <th className="employee-list-action-column" style={{ textAlign: 'center' }}>ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -389,38 +478,32 @@ const EmployeeList = () => {
                                             {employee.status}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <div className="flex items-center justify-center gap-3">
+                                    <td className="employee-list-action-column" style={{ textAlign: 'center' }}>
+                                        <div className="flex min-w-[116px] items-center justify-center gap-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     navigate(`/hrms/employees-details/${employee.id}/personal-information`);
                                                 }}
-                                                className="focus:outline-none transition-transform hover:scale-110"
+                                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-violet-600 transition hover:bg-violet-50"
+                                                title="View Employee"
                                             >
-                                                <img src="/images/view.svg" alt="View" className="w-5 h-5 cursor-pointer" />
+                                                <Eye size={19} />
                                             </button>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/hrms/employees-details/${employee.id}/personal-information?mode=edit`);
+                                                    navigate(`/hrms/employees/add?mode=edit&id=${employee.id}`);
                                                 }}
-                                                className="focus:outline-none transition-transform hover:scale-110"
+                                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-violet-600 transition hover:bg-violet-50"
                                                 title="Edit Employee"
 
                                             >
-                                                <img src="/images/pencil_Icon.svg" alt="Edit" className="w-4 h-4 cursor-pointer" />
+                                                <Pencil size={18} />
                                             </button>
                                             <button
-                                                onClick={(e) => handleDeleteEmployee(employee.id, e)}
-                                                className="focus:outline-none transition-transform hover:scale-110 text-red-500 hover:text-red-700"
-                                                title="Delete Employee"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteEmployee(employee.id, e)}
-                                                className="focus:outline-none transition-transform hover:scale-110 text-red-500 hover:text-red-700"
+                                                onClick={(e) => handleDeleteEmployee(employee, e)}
+                                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50 hover:text-red-700"
                                                 title="Delete Employee"
                                             >
                                                 <Trash2 size={16} />
@@ -460,9 +543,9 @@ const EmployeeList = () => {
             </div>
 
             {/* Pagination Footer */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center mt-6 pt-4 text-sm text-gray-500 gap-4">
+            <div className="grid shrink-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center mt-4 pt-3 text-sm text-gray-500 gap-4">
                 <div className="text-center md:text-left">
-                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, employees.length)} Of {employees.length}
+                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, totalCount)} Of {totalCount}
                 </div>
 
                 <div className="flex items-center justify-center md:justify-end lg:justify-center gap-2">
@@ -523,6 +606,7 @@ const EmployeeList = () => {
                 message="Assigned reporting manager Successfully"
             />
         </div>
+        </>
     );
 };
 

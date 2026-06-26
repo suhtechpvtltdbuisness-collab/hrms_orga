@@ -3,20 +3,22 @@ import { useEffect } from "react";
 export const Toast = ({ toast, onClose }) => {
   useEffect(() => {
     if (!toast) return;
+    if (toast.persistent) return;
     const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);
-  }, [toast]);
+  }, [toast, onClose]);
 
   if (!toast) return null;
 
   const isSuccess = toast.type === "success";
+  const isWarning = toast.type === "warning";
 
   return (
     <div
       style={{
         position: "fixed",
         top: "20px",
-        left: "38%",
+        left: "50%",
         transform: "translateX(-50%)",
         zIndex: 9999,
         animation: "toastSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
@@ -32,7 +34,7 @@ export const Toast = ({ toast, onClose }) => {
       {/* Card */}
       <div
         style={{
-          width: "420px",
+          width: "min(420px, calc(100vw - 32px))",
           background: "#ffffff",
           borderRadius: "14px",
           border: "1px solid rgba(0,0,0,0.07)",
@@ -56,6 +58,25 @@ export const Toast = ({ toast, onClose }) => {
               <path d="M27.1 39.1335L41.2335 25L38.7665 22.5665L27.1 34.2335L21.2 28.3335L18.7665 30.7665L27.1 39.1335ZM30 50C27.2557 50 24.6668 49.475 22.2335 48.425C19.8002 47.375 17.6778 45.9445 15.8665 44.1335C14.0555 42.3222 12.625 40.1998 11.575 37.7665C10.525 35.3332 10 32.7443 10 30C10 27.2333 10.525 24.6333 11.575 22.2C12.625 19.7667 14.0555 17.65 15.8665 15.85C17.6778 14.05 19.8002 12.625 22.2335 11.575C24.6668 10.525 27.2557 10 30 10C32.7667 10 35.3667 10.525 37.8 11.575C40.2333 12.625 42.35 14.05 44.15 15.85C45.95 17.65 47.375 19.7667 48.425 22.2C49.475 24.6333 50 27.2333 50 30C50 32.7443 49.475 35.3332 48.425 37.7665C47.375 40.1998 45.95 42.3222 44.15 44.1335C42.35 45.9445 40.2333 47.375 37.8 48.425C35.3667 49.475 32.7667 50 30 50ZM30 46.6665C34.6443 46.6665 38.5832 45.0443 41.8165 41.8C45.0498 38.5557 46.6665 34.6223 46.6665 30C46.6665 25.3557 45.0498 21.4168 41.8165 18.1835C38.5832 14.9502 34.6443 13.3335 30 13.3335C25.3777 13.3335 21.4443 14.9502 18.2 18.1835C14.9557 21.4168 13.3335 25.3557 13.3335 30C13.3335 34.6223 14.9557 38.5557 18.2 41.8C21.4443 45.0443 25.3777 46.6665 30 46.6665Z" fill="#00B600"/>
             </g>
           </svg>
+        ) : isWarning ? (
+          <div
+            style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "8px",
+              background: "#FFF7E6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 8V13" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M12 16.5V16.51" stroke="#D97706" strokeWidth="2.4" strokeLinecap="round"/>
+              <path d="M10.28 3.82L2.82 16.25C2.04 17.55 2.98 19.2 4.5 19.2H19.5C21.02 19.2 21.96 17.55 21.18 16.25L13.72 3.82C12.96 2.55 11.04 2.55 10.28 3.82Z" stroke="#D97706" strokeWidth="1.8" strokeLinejoin="round"/>
+            </svg>
+          </div>
         ) : (
           /* cancel.svg — red X circle, no background box */
           <div
@@ -89,6 +110,29 @@ export const Toast = ({ toast, onClose }) => {
           <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#9CA3AF", lineHeight: 1.4 }}>
             {toast.message}
           </p>
+          {toast.actions?.length > 0 && (
+            <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+              {toast.actions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  style={{
+                    border: action.variant === "danger" ? "1px solid #DC2626" : "1px solid #D1D5DB",
+                    background: action.variant === "danger" ? "#DC2626" : "#FFFFFF",
+                    color: action.variant === "danger" ? "#FFFFFF" : "#374151",
+                    borderRadius: "8px",
+                    padding: "7px 12px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* X close button — gray box, top right */}

@@ -154,7 +154,7 @@ const OverviewTab = () => {
                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${
                                  item.plan === 'Enterprise' 
                                    ? 'bg-purple-50 text-purple-700 ring-purple-600/20' 
-                                   : item.plan === 'Business' || item.plan === 'Growth'
+                                   : item.plan === 'Starter' || item.plan === 'Growth'
                                    ? 'bg-blue-50 text-blue-700 ring-blue-600/20' 
                                    : 'bg-gray-50 text-gray-600 ring-gray-500/10'
                                }`}>

@@ -127,6 +127,61 @@ body {
   height: calc(100vh - 155px);
 }
 
+.employee-list-page {
+  height: calc(100dvh - 172px);
+  max-height: calc(100dvh - 172px);
+  min-height: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.employee-list-table-scroll {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.employee-list-table-scroll .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #F9FAFB;
+}
+
+.employee-list-table-scroll .employee-list-action-column {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  min-width: 132px;
+  width: 132px;
+  background: #FFFFFF;
+  box-shadow: -8px 0 12px -12px rgba(15, 23, 42, 0.45);
+}
+
+.employee-list-table-scroll thead .employee-list-action-column {
+  z-index: 4;
+  background: #F9FAFB;
+}
+
+.employee-list-table-scroll tbody tr:hover .employee-list-action-column {
+  background: #FAFAFA;
+}
+
+.employee-wizard-page {
+  height: calc(100dvh - 148px);
+  max-height: calc(100dvh - 148px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.employee-wizard-card {
+  min-height: 0;
+}
+
+.employee-wizard-content {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 /* ─── Card ───────────────────────────────────────────────────────────────────── */
 .card {
   background: #fff;
@@ -572,6 +627,17 @@ body {
     margin: 8px;
     padding: 14px 12px;
     height: calc(100vh - 90px);
+  }
+
+  .employee-list-page {
+    height: calc(100dvh - 150px);
+    max-height: calc(100dvh - 150px);
+    margin-bottom: 0;
+  }
+
+  .employee-wizard-page {
+    height: calc(100dvh - 86px);
+    max-height: calc(100dvh - 86px);
   }
 
   .hide-mobile {

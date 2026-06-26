@@ -762,13 +762,23 @@ export const employeeService = {
   },
 
   // Get all employees by admin ID
-  getAllEmployeesByAdminId: async (adminId) => {
+  getAllEmployeesByAdminId: async (adminId, page, limit, search) => {
     try {
+      let url = `${BASE_URL}/users/employees/admin/${adminId}`;
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append("page", page);
+      if (limit !== undefined) params.append("limit", limit);
+      if (search !== undefined) params.append("search", search);
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
       console.log("Fetching employees for admin ID:", adminId);
-      console.log("API URL:", `${BASE_URL}/users/employees/admin/${adminId}`);
+      console.log("API URL:", url);
       console.log("Auth Token:", localStorage.getItem("authToken"));
 
-      const response = await apiFetch(`${BASE_URL}/users/employees/admin/${adminId}`, {
+      const response = await apiFetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -941,19 +951,19 @@ export const employeeService = {
     }
   },
 
-  // Delete employee by ID
+  // Soft delete employee by user ID
   deleteEmployee: async (id) => {
     try {
       const response = await apiFetch(`${BASE_URL}/users/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
-      const data = await response.json();
+      const data = response.status === 204 ? {} : await response.json();
 
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || "Failed to delete employee",
+          message: data.message || data.error || "Failed to delete employee",
         };
       }
       return {
@@ -984,6 +994,24 @@ export const employeeService = {
       return { success: true, url: data.url };
     } catch (error) {
       return { success: false, message: "Network error while uploading image." };
+    }
+  },
+
+  uploadDocuments: async (files) => {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("documents", file));
+      const response = await apiFetch(`${BASE_URL}/upload/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to upload documents" };
+      }
+      return { success: true, files: data.files || [] };
+    } catch (error) {
+      return { success: false, message: "Network error while uploading documents." };
     }
   },
 
@@ -1983,6 +2011,49 @@ export const subscriptionService = {
     }
   },
 
+  createAddonOrder: async (itemType, quantity = 1) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/create-addon-order`, {
+        method: "POST",
+        body: JSON.stringify({ itemType, quantity }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create add-on order" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  verifyAddonPayment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/verify-addon-payment`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Add-on payment verification failed" };
+      }
+      if (data.data?.plan) {
+        const existing = JSON.parse(localStorage.getItem("subscription") || "{}");
+        localStorage.setItem(
+          "subscription",
+          JSON.stringify({
+            ...existing,
+            isSubscribed: true,
+            plan: data.data.plan,
+          }),
+        );
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getAllSubscriptions: async (page = 1, limit = 10, search = "") => {
     try {
       const response = await apiFetch(`${BASE_URL}/subscriptions/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
@@ -2010,6 +2081,42 @@ export const subscriptionService = {
         handler: async (response) => {
           const result = await subscriptionService.verifyPayment({
             planType: orderData.planType,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+          resolve(result);
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#756FCC" },
+        modal: {
+          ondismiss: () => resolve({ success: false, message: "Payment cancelled" }),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  },
+
+  openAddonCheckout: async (orderData, user) => {
+    await loadRazorpayScript();
+
+    return new Promise((resolve) => {
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Suhtech ORGA",
+        description: orderData.planName,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          const result = await subscriptionService.verifyAddonPayment({
+            itemType: orderData.itemType,
+            quantity: orderData.quantity,
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,
@@ -2489,6 +2596,3 @@ export const payrollModuleService = {
     }
   },
 };
-
-
-

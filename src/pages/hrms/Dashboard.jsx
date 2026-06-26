@@ -227,7 +227,7 @@ const HRMSDashboard = () => {
 
       // Pending leave requests
       let pendingLeave = 0;
-      const leaveRes = await leaveRequestService.getLeaveRequests({ status: "pending" });
+      const leaveRes = await leaveRequestService.getLeaveRequests({ status: "submitted" });
       if (leaveRes.success && leaveRes.data) {
         const leaveData = Array.isArray(leaveRes.data) ? leaveRes.data : [];
         pendingLeave = leaveData.length;
