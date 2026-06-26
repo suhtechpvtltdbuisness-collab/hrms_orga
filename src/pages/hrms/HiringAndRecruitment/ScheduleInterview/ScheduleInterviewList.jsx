@@ -1,36 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Eye, Trash2, Square } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Eye, Trash2, Square, List } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Spinner from '../../../../components/ui/Spinner';
+import { hiringService } from '../../../../service';
 
 const ScheduleInterviewList = () => {
     const navigate = useNavigate();
 
-    const [interviews, setInterviews] = useState([
-        { id: 1, srNo: '01', name: 'Olivia Rhye', dateTime: '8 Jan, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 2, srNo: '02', name: 'Olivia Rhye', dateTime: '15 Jan, 10:00 AM', round: 'Technical', status: 'Scheduled' },
-        { id: 3, srNo: '03', name: 'Olivia Rhye', dateTime: '20 Jan, 10:00 AM', round: 'HR', status: 'Result Pending' },
-        { id: 4, srNo: '04', name: 'Olivia Rhye', dateTime: '24 Jan, 10:00 AM', round: 'Managerial', status: 'Send Offer Letter' },
-        { id: 5, srNo: '05', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 6, srNo: '06', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 7, srNo: '07', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 8, srNo: '08', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 9, srNo: '09', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-        { id: 10, srNo: '10', name: 'Olivia Rhye', dateTime: '8 Feb, 10:00 AM', round: 'HR', status: 'Completed' },
-    ]);
-
+    const [interviews, setInterviews] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
+
+    useEffect(() => {
+        loadInterviews();
+    }, []);
+
+    const loadInterviews = async () => {
+        setLoading(true);
+        const result = await hiringService.getAllInterviews();
+        if (result.success) {
+            const mapped = (result.data || []).map((item, idx) => ({
+                id: item.id,
+                srNo: String(idx + 1).padStart(2, '0'),
+                name: item.candidateName || 'N/A',
+                dateTime: item.scheduledAt ? new Date(item.scheduledAt).toLocaleString() : 'N/A',
+                round: item.jobTitle || 'N/A',
+                status: item.status?.charAt(0).toUpperCase() + item.status?.slice(1) || 'Scheduled',
+            }));
+            setInterviews(mapped);
+        }
+        setLoading(false);
+    };
 
     const handleDelete = (id) => {
         setDeleteId(id);
         setShowDeleteModal(true);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         const interviewToDelete = interviews.find(item => item.id === deleteId);
-        setInterviews(prev => prev.filter(item => item.id !== deleteId));
-        toast.success(`Interview for ${interviewToDelete.name} deleted successfully!`);
+        const result = await hiringService.deleteInterview(deleteId);
+        if (result.success) {
+            setInterviews(prev => prev.filter(item => item.id !== deleteId));
+            toast.success(`Interview for ${interviewToDelete?.name} deleted successfully!`);
+        } else {
+            toast.error(result.message);
+        }
         setShowDeleteModal(false);
         setDeleteId(null);
     };
@@ -127,7 +144,27 @@ const ScheduleInterviewList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {interviews.map((interview) => (
+                        {loading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <tr key={i} className="border-b border-gray-50">
+                                    {Array.from({ length: 7 }).map((_, j) => (
+                                        <td key={j} className="px-4 py-4">
+                                            <div className="h-4 bg-gray-100 rounded animate-pulse" style={{ width: j === 0 ? '20px' : j === 1 ? '40px' : j === 2 ? '120px' : j === 5 ? '80px' : '100px' }} />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
+                        ) : interviews.length === 0 ? (
+                            <tr>
+                                <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <List size={32} className="text-gray-300" />
+                                        <p className="text-sm">No interviews scheduled yet</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            interviews.map((interview) => (
                             <tr key={interview.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                                 <td className="px-4 py-4"><Square size={16} className="text-[#7D1EDB]" /></td>
                                 <td className="px-4 py-4 text-gray-700">{interview.srNo}</td>
@@ -164,7 +201,7 @@ const ScheduleInterviewList = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        )))}
                     </tbody>
                 </table>
             </div>

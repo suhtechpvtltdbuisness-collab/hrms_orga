@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import Spinner from '../../../../components/ui/Spinner';
+import { hiringService } from '../../../../service';
 
 const InterviewResult = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [outcome, setOutcome] = useState('Selected');
     const [showOutcomeModal, setShowOutcomeModal] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     // Section styles
     const cardStyle = {
@@ -221,6 +225,11 @@ const InterviewResult = () => {
                         </button>
                         <button 
                             style={{ width: '180px', height: '44px', borderRadius: '22px', border: 'none', backgroundColor: '#7D1EDB', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+                            onClick={() => {
+                                setShowOutcomeModal(false);
+                                toast.success(isSelected ? 'Offer letter sending...' : 'Email template sent');
+                                navigate('/hrms/hiring-and-recruitment/offer-letter-accepted-list');
+                            }}
                         >
                             {isSelected ? 'Send offer letter' : 'Email Template'}
                         </button>
@@ -255,15 +264,38 @@ const InterviewResult = () => {
                         </h1>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                             <button 
-                                className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white"
-                        style={{ borderRadius: '30px' }}
+                                className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white disabled:opacity-50 flex items-center gap-2"
+                                style={{ borderRadius: '30px' }}
+                                onClick={async () => {
+                                    const loadingToast = toast.loading('Saving draft...');
+                                    const result = await hiringService.updateInterview(Number(id), { status: 'result_pending' });
+                                    toast.dismiss(loadingToast);
+                                    if (result.success) toast.success('Draft saved!');
+                                    else toast.error(result.message);
+                                }}
+                                disabled={submitting}
                             >
+                                {submitting ? <Spinner size={16} color="#7D1EDB" /> : null}
                                 Save Draft
                             </button>
                             <button 
-                                className="px-4 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors border-none cursor-pointer"
+                                className="px-4 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors border-none cursor-pointer disabled:opacity-50 flex items-center gap-2"
                                 style={{ fontSize: '14px', fontFamily: 'Poppins, sans-serif' }}
+                                onClick={async () => {
+                                    setSubmitting(true);
+                                    const loadingToast = toast.loading('Submitting result...');
+                                    const status = outcome === 'Selected' ? 'selected' : outcome === 'On Hold' ? 'on_hold' : 'rejected';
+                                    const result = await hiringService.submitFeedback(Number(id), { status, feedback: outcome });
+                                    toast.dismiss(loadingToast);
+                                    if (result.success) {
+                                        toast.success('Result submitted successfully!');
+                                        setShowOutcomeModal(true);
+                                    } else toast.error(result.message);
+                                    setSubmitting(false);
+                                }}
+                                disabled={submitting}
                             >
+                                {submitting ? <Spinner size={16} color="#fff" /> : null}
                                 Submit Result
                             </button>
                         </div>

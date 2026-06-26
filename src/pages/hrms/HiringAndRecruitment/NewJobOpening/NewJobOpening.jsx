@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Upload, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import Spinner from '../../../../components/ui/Spinner';
+import { hiringService, departmentService, designationService } from '../../../../service';
 
 const NewJobOpening = () => {
     const navigate = useNavigate();
@@ -25,11 +27,39 @@ const NewJobOpening = () => {
         applicationSource: 'Company Website',
         jobVisibility: 'Public'
     });
+    const [jdFile, setJdFile] = useState(null);
+    const [jdUploading, setJdUploading] = useState(false);
+    const [departments, setDepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
 
-    const DEPARTMENT_OPTIONS = ["Engineering", "Product Design", "Marketing", "Sales", "HR"];
     const EMPLOYMENT_TYPE_OPTIONS = ["Full-time", "Part-time", "Contract", "Internship"];
     const EXPERIENCE_OPTIONS = ["0-1 years", "1-3 years", "3-5 years", "5-7 years", "7+ years"];
     const SOURCE_OPTIONS = ["Company Website", "LinkedIn", "Indeed", "Naukri", "Other"];
+
+    useEffect(() => {
+        loadDepartments();
+    }, []);
+
+    useEffect(() => {
+        loadDesignations(formData.department);
+    }, [formData.department]);
+
+    const loadDepartments = async () => {
+        const result = await departmentService.getDepartmentsDropdown();
+        if (result.success) {
+            setDepartments(result.data || []);
+        }
+    };
+
+    const loadDesignations = async (departmentName) => {
+        const deptObj = departments.find(d => d.name === departmentName);
+        const departmentId = deptObj?.id || undefined;
+        const result = await designationService.getDesignationDropdown(departmentId);
+        if (result.success) {
+            setDesignations(result.data || []);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -39,31 +69,83 @@ const NewJobOpening = () => {
         }));
     };
 
-    const handleSaveDraft = () => {
-        const loadingToast = toast.loading('Saving draft...');
-        
-        // Simulate API call
-        setTimeout(() => {
-            toast.dismiss(loadingToast);
-            toast.success('Job opening saved as draft!');
-            navigate('/hrms');
-        }, 1500);
+    const handleJdUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setJdUploading(true);
+        const result = await hiringService.uploadFile(file);
+        if (result.success && result.files?.length > 0) {
+            setJdFile({ name: file.name, url: result.files[0].url });
+            toast.success('JD uploaded successfully');
+        } else {
+            toast.error(result.message || 'Failed to upload JD');
+        }
+        setJdUploading(false);
     };
 
-    const handlePublishJob = () => {
+    const handleSaveDraft = async () => {
+        setSubmitting(true);
+        const loadingToast = toast.loading('Saving draft...');
+        const payload = buildPayload(false);
+        const result = await hiringService.createJob(payload);
+        toast.dismiss(loadingToast);
+        if (result.success) {
+            toast.success('Job opening saved as draft!');
+            navigate('/hrms');
+        } else {
+            toast.error(result.message);
+        }
+        setSubmitting(false);
+    };
+
+    const handlePublishJob = async () => {
         if (!formData.jobTitle.trim()) {
             toast.error('Please enter a job title before publishing.');
             return;
         }
-
+        setSubmitting(true);
         const loadingToast = toast.loading('Publishing job...');
-        
-        // Simulate API call
-        setTimeout(() => {
-            toast.dismiss(loadingToast);
+        const payload = buildPayload(true);
+        const result = await hiringService.createJob(payload);
+        toast.dismiss(loadingToast);
+        if (result.success) {
             toast.success('Job opening published successfully!');
             navigate('/hrms');
-        }, 2000);
+        } else {
+            toast.error(result.message);
+        }
+        setSubmitting(false);
+    };
+
+    const buildPayload = (isActive) => {
+        const deptObj = departments.find(d => d.name === formData.department);
+        const salaryRange = formData.currentSalary && formData.expectedSalary
+            ? `${formData.currentSalary} - ${formData.expectedSalary}`
+            : formData.currentSalary || formData.expectedSalary || '';
+        return {
+            title: formData.jobTitle,
+            departmentId: deptObj?.id || null,
+            employeeType: formData.employmentType?.toLowerCase().replace(/\s+/g, '_') || null,
+            designation: formData.designation,
+            numberOfOpenings: formData.numberOfOpenings ? Number(formData.numberOfOpenings) : 1,
+            location: formData.jobLocation,
+            jobSummary: formData.jobSummary,
+            keyResponsibilities: formData.keyResponsibilities,
+            requiredSkills: formData.requiredSkills,
+            experience: formData.experience,
+            salaryRange,
+            applicationDeadline: formData.applicationDeadline
+                ? (() => {
+                    const parts = formData.applicationDeadline.split('/');
+                    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    return formData.applicationDeadline;
+                  })()
+                : null,
+            applicationSource: formData.applicationSource,
+            jobVisibility: formData.jobVisibility,
+            jdFileUrl: jdFile?.url || null,
+            isActive,
+        };
     };
 
     return (
@@ -85,16 +167,20 @@ const NewJobOpening = () => {
                 <div className="flex gap-4 w-full sm:w-auto">
                     <button
                         onClick={handleSaveDraft}
-                        className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white"
+                        disabled={submitting}
+                        className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white disabled:opacity-50 flex items-center gap-2"
                         style={{ borderRadius: '30px' }}
                     >
+                        {submitting ? <Spinner size={16} color="#7D1EDB" /> : null}
                         Save Draft
                     </button>
                     <button
                         onClick={handlePublishJob}
-                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto"
+                        disabled={submitting}
+                        className="px-6 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors shadow-sm w-full sm:w-auto disabled:opacity-50 flex items-center gap-2 justify-center"
                         style={{ borderRadius: '30px' }}
                     >
+                        {submitting ? <Spinner size={16} color="#fff" /> : null}
                         Publish Job
                     </button>
                 </div>
@@ -135,7 +221,7 @@ const NewJobOpening = () => {
                                 </label>
                                 <div className="relative">
                                     <FilterDropdown
-                                        options={DEPARTMENT_OPTIONS}
+                                        options={departments.map(d => d.name)}
                                         value={formData.department}
                                         onChange={(val) => setFormData(prev => ({ ...prev, department: val }))}
                                         placeholder="Select department"
@@ -165,15 +251,15 @@ const NewJobOpening = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                     Designation
                                 </label>
-                                <input
-                                    type="text"
-                                    name="designation"
-                                    value={formData.designation}
-                                    onChange={handleInputChange}
-                                    placeholder="Enter designation"
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                                    style={{ fontFamily: 'Poppins, sans-serif' }}
-                                />
+                                <div className="relative">
+                                    <FilterDropdown
+                                        options={designations.map(d => d.name)}
+                                        value={formData.designation}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, designation: val }))}
+                                        placeholder="Select designation"
+                                        className="w-full h-[42px] flex items-center justify-between px-4 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                             </div>
 
                             {/* Number of Openings */}
@@ -264,6 +350,42 @@ const NewJobOpening = () => {
                                     style={{ fontFamily: 'Poppins, sans-serif' }}
                                 />
                             </div>
+
+                            {/* JD Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                    Job Description Document (PDF)
+                                </label>
+                                {!jdFile ? (
+                                    <div
+                                        onClick={() => document.getElementById('jd-upload-input').click()}
+                                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-500 transition-colors"
+                                    >
+                                        <Upload size={24} className="mx-auto text-gray-400 mb-1" />
+                                        <p className="text-sm text-gray-500">Click to upload JD document</p>
+                                        <input
+                                            id="jd-upload-input"
+                                            type="file"
+                                            className="hidden"
+                                            accept=".pdf,.doc,.docx"
+                                            onChange={handleJdUpload}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                        <div className="flex items-center gap-2">
+                                            <Upload size={16} className="text-purple-600" />
+                                            <span className="text-sm text-purple-700 font-medium truncate max-w-[200px]">{jdFile.name}</span>
+                                        </div>
+                                        <X
+                                            size={16}
+                                            className="text-gray-400 cursor-pointer hover:text-red-500"
+                                            onClick={() => setJdFile(null)}
+                                        />
+                                    </div>
+                                )}
+                                {jdUploading && <p className="text-xs text-purple-600 mt-1">Uploading...</p>}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -344,6 +466,7 @@ const NewJobOpening = () => {
                                         value={formData.applicationDeadline}
                                         onChange={(val) => setFormData(prev => ({ ...prev, applicationDeadline: val }))}
                                         placeholder="Select Date"
+                                        allowFuture={true}
                                         className="bg-white border-gray-300 w-full px-4 py-2.5 rounded-lg text-sm"
                                     />
                                 </div>
@@ -397,6 +520,19 @@ const NewJobOpening = () => {
                                         />
                                         <span className="ml-2 text-sm text-gray-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                             Internal only
+                                        </span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="jobVisibility"
+                                            value="All Employees"
+                                            checked={formData.jobVisibility === 'All Employees'}
+                                            onChange={handleInputChange}
+                                            className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                            All Employees
                                         </span>
                                     </label>
                                 </div>

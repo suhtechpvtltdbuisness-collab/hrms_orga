@@ -13,6 +13,7 @@ import {
   Activity,
   Calendar,
   FileText,
+  Briefcase,
 } from "lucide-react";
 import {
   BarChart,
@@ -27,6 +28,7 @@ import {
   employeeService,
   attendanceService,
   leaveRequestService,
+  hiringService,
 } from "../../service";
 // ─── HRMS Dashboard ──────────────────────────────────────────────────────────── ─────────────────────────────────────────────────────────────────
 const StatCard = ({ icon, label, value, sub, trend, highlighted, loading, onMouseEnter, onMouseLeave }) => (
@@ -156,6 +158,8 @@ const HRMSDashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [weeklyAttendance, setWeeklyAttendance] = useState([]);
   const [timeTracker, setTimeTracker] = useState([]);
+  const [activeJobs, setActiveJobs] = useState(0);
+  const [recentJobs, setRecentJobs] = useState([]);
 
   // Static onboarding tasks
   const tasks = [
@@ -260,6 +264,25 @@ const HRMSDashboard = () => {
         }))
       );
 
+      // Job openings
+      if (adminId) {
+        try {
+          const jobRes = await hiringService.getJobsByAdminId(adminId);
+          if (jobRes.success && jobRes.data) {
+            const jobs = Array.isArray(jobRes.data) ? jobRes.data : [];
+            setActiveJobs(jobs.filter((j) => j.status === "active").length);
+            setRecentJobs(jobs.slice(0, 4).map((j) => ({
+              id: j.id,
+              title: j.jobTitle,
+              department: j.department,
+              location: j.location,
+              status: j.status,
+              openings: j.numberOfOpenings,
+            })));
+          }
+        } catch (_) {}
+      }
+
       setStats({ totalEmployees, presentToday, absentToday, pendingLeave });
       setRecentActivity(activityItems);
     } catch (err) {
@@ -282,7 +305,7 @@ const HRMSDashboard = () => {
 
 
       {/* ── STAT CARDS ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 h-[20%] min-h-[110px]">
+      <div className="grid grid-cols-2 xl:grid-cols-6 gap-3 h-[20%] min-h-[110px]">
         <StatCard
           loading={loading}
           icon={<Users />}
@@ -323,6 +346,15 @@ const HRMSDashboard = () => {
           sub={35}
           highlighted={hoveredCard === 'tasks'}
           onMouseEnter={() => setHoveredCard('tasks')}
+          onMouseLeave={() => setHoveredCard(null)}
+        />
+        <StatCard
+          loading={loading}
+          icon={<Briefcase />}
+          label="Active Job Openings"
+          value={activeJobs}
+          highlighted={hoveredCard === 'jobs'}
+          onMouseEnter={() => setHoveredCard('jobs')}
           onMouseLeave={() => setHoveredCard(null)}
         />
         <StatCard
@@ -415,7 +447,7 @@ const HRMSDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
 
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
           <div className="flex items-center justify-between mb-2 shrink-0">
             <h2 className="text-base font-semibold text-[#1E1E1E]">Recent Activity</h2>
             <button
@@ -444,6 +476,56 @@ const HRMSDashboard = () => {
               <div className="flex flex-col items-center justify-center py-6 text-[#C0C0C0] h-full">
                 <Activity size={30} className="mb-2" />
                 <p className="text-sm">No recent activity yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Job Openings */}
+        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <h2 className="text-base font-semibold text-[#1E1E1E]">Job Openings</h2>
+            <button
+              onClick={() => navigate("/hrms/hiring")}
+              className="text-xs text-[#7D1EDB] hover:underline font-medium"
+            >
+              View all
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-1">
+            {loading ? (
+              <div className="space-y-3 mt-1">
+                {[1, 2, 3].map((k) => (
+                  <Skeleton key={k} className="h-10 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : recentJobs.length > 0 ? (
+              recentJobs.map((job) => (
+                <div
+                  key={job.id}
+                  onClick={() => navigate(`/hrms/hiring?jobId=${job.id}`)}
+                  className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-[#F7F4FF] cursor-pointer transition-colors border-b border-[#F5F5F5] last:border-0"
+                >
+                  <div className="min-w-0 flex-1 pr-2">
+                    <p className="text-sm font-medium text-[#1E1E1E] truncate">{job.title}</p>
+                    <p className="text-[11px] text-[#9B9B9B]">{job.department} · {job.location}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      job.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}>
+                      {job.status}
+                    </span>
+                    <span className="text-xs text-[#9B9B9B]">{job.openings} open</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-[#C0C0C0] h-full">
+                <Briefcase size={28} className="mb-2" />
+                <p className="text-sm">No job openings yet</p>
               </div>
             )}
           </div>

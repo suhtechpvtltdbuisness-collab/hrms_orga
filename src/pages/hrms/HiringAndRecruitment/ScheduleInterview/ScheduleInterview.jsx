@@ -1,18 +1,24 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X } from 'lucide-react';
+import Spinner from '../../../../components/ui/Spinner';
+import { hiringService } from '../../../../service';
 
 const ScheduleInterview = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     const [interviewType, setInterviewType] = useState('HR Round');
     const [interviewMode, setInterviewMode] = useState('Online');
     const [isReadMode, setIsReadMode] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const dateInputRef = useRef(null);
     const timeInputRef = useRef(null);
     const fileInputRef = useRef(null);
+
+    const applicationId = searchParams.get('applicationId');
 
     /* ── Form State ── */
     const [formData, setFormData] = useState({
@@ -32,14 +38,41 @@ const ScheduleInterview = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const { name, email, phone, experience, date, time, panel } = formData;
         if (!name || !email || !phone || !experience || !date || !time || !panel) {
             toast.error('Please fill in all candidate and interview details.');
             return;
         }
-        setIsReadMode(true);
-        toast.success('Interview scheduled successfully!');
+        setSubmitting(true);
+        const loadingToast = toast.loading('Scheduling interview...');
+        
+        let resumeUrl = null;
+        if (resumeFile) {
+            const uploadResult = await hiringService.uploadFile(resumeFile);
+            if (uploadResult.success && uploadResult.files?.length > 0) {
+                resumeUrl = uploadResult.files[0].url;
+            }
+        }
+
+        const interviewPayload = {
+            jobApplicationId: applicationId ? Number(applicationId) : undefined,
+            interviewerId: panel === 'Tech' ? 1 : 1,
+            scheduledAt: new Date(`${date}T${time}`).toISOString(),
+            instruction: `${interviewType} - ${interviewMode}`,
+            meetingLink: '',
+            status: 'scheduled',
+        };
+
+        const result = await hiringService.createInterview(interviewPayload);
+        toast.dismiss(loadingToast);
+        if (result.success) {
+            setIsReadMode(true);
+            toast.success('Interview scheduled successfully!');
+        } else {
+            toast.error(result.message);
+        }
+        setSubmitting(false);
     };
 
     /* ── shared card style ── */
@@ -133,15 +166,19 @@ const ScheduleInterview = () => {
                                 padding: '8px 32px',
                                 borderRadius: '999px',
                                 border: 'none',
-                                cursor: isReadMode ? 'default' : 'pointer',
+                                cursor: submitting || isReadMode ? 'default' : 'pointer',
                                 fontSize: '16px',
                                 fontFamily: 'Poppins, sans-serif',
-                                opacity: isReadMode ? 0.8 : 1
+                                opacity: submitting || isReadMode ? 0.7 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
                             }}
                             onClick={handleSave}
-                            disabled={isReadMode}
+                            disabled={submitting || isReadMode}
                         >
-                            Save
+                            {submitting && <Spinner size={16} color="#FFF" />}
+                            {submitting ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

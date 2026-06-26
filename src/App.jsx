@@ -60,6 +60,7 @@ import ScheduledInterviewDetails from "./pages/hrms/HiringAndRecruitment/Schedul
 import InterviewResult from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/InterviewResult";
 import OfferLetterAcceptedList from "./pages/hrms/HiringAndRecruitment/NewHiring/OfferLetterAcceptedList";
 import NewOnboarding from "./pages/hrms/HiringAndRecruitment/NewHiring/NewOnboarding";
+import EmployeeReferral from "./pages/hrms/HiringAndRecruitment/EmployeeReferral/EmployeeReferral";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
 import AddAttendance from "./pages/hrms/Attendance/AddAttendance";
 import EmployeeAttendanceTool from "./pages/hrms/Attendance/EmployeeAttendanceTool";
@@ -221,6 +222,7 @@ function App() {
             <Route path="offer-letter-accepted-list/:id" element={<OfferLetterAcceptedList />} />
             <Route path="offer-letter-accepted-list/:id/onboarding" element={<OfferLetterAcceptedList />} />
             <Route path="new-onboarding" element={<NewOnboarding />} />
+            <Route path="employee-referral" element={<EmployeeReferral />} />
           </Route>
 
           {/* Onboarding Employee */}
