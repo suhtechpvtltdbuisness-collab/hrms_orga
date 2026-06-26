@@ -147,8 +147,8 @@ const EmployeeList = () => {
         if (e) e.stopPropagation();
         setToast({
             type: 'warning',
-            title: 'Delete employee?',
-            message: `${employee.name} will be permanently removed from the employee list.`,
+            title: 'Archive employee?',
+            message: `${employee.name} will be soft deleted and removed from active employee lists.`,
             persistent: true,
             actions: [
                 {
@@ -156,7 +156,7 @@ const EmployeeList = () => {
                     onClick: () => setToast(null),
                 },
                 {
-                    label: 'Delete employee',
+                    label: 'Archive employee',
                     variant: 'danger',
                     onClick: async () => {
                         setToast(null);
@@ -171,8 +171,8 @@ const EmployeeList = () => {
                                 localStorage.setItem(EMPLOYMENT_META_KEY, JSON.stringify(employmentMeta));
                                 setToast({
                                     type: 'success',
-                                    title: 'Employee deleted',
-                                    message: `${employee.name} was removed successfully.`,
+                                    title: 'Employee archived',
+                                    message: `${employee.name} was removed from active employee lists successfully.`,
                                 });
                             } else {
                                 setToast({

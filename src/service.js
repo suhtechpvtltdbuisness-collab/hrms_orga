@@ -951,19 +951,19 @@ export const employeeService = {
     }
   },
 
-  // Delete employee by ID
+  // Soft delete employee by user ID
   deleteEmployee: async (id) => {
     try {
       const response = await apiFetch(`${BASE_URL}/users/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
-      const data = await response.json();
+      const data = response.status === 204 ? {} : await response.json();
 
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || "Failed to delete employee",
+          message: data.message || data.error || "Failed to delete employee",
         };
       }
       return {
@@ -2596,4 +2596,3 @@ export const payrollModuleService = {
     }
   },
 };
-
