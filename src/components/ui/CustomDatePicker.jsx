@@ -239,6 +239,7 @@ const CustomDatePicker = ({
                         <div className="flex items-center justify-between px-1 mb-2">
                             <div className="flex items-center gap-1.5">
                                 <button
+                                    type="button"
                                     onClick={() => setCurrentView(currentView === 'months' ? 'calendar' : 'months')}
                                     className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
                                         currentView === 'months'
@@ -250,6 +251,7 @@ const CustomDatePicker = ({
                                     <ChevronDown size={14} className={`transform transition-transform ${currentView === 'months' ? 'rotate-180' : ''}`} />
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setCurrentView(currentView === 'years' ? 'calendar' : 'years')}
                                     className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
                                         currentView === 'years'
@@ -264,10 +266,10 @@ const CustomDatePicker = ({
                             
                             {currentView === 'calendar' && (
                                 <div className="flex gap-1">
-                                    <button onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
+                                    <button type="button" onClick={() => changeMonth(-1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
                                         <ChevronLeft size={18} />
                                     </button>
-                                    <button onClick={() => changeMonth(1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
+                                    <button type="button" onClick={() => changeMonth(1)} className="text-[#49454F] hover:bg-[#F5F5F5] rounded-full p-1">
                                         <ChevronRight size={18} />
                                     </button>
                                 </div>
@@ -287,14 +289,14 @@ const CustomDatePicker = ({
 
                                 {/* Footer Buttons */}
                                 <div className="flex justify-between items-center px-1 mt-1 border-t border-gray-100 pt-2">
-                                    <button onClick={handleClear} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                    <button type="button" onClick={handleClear} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
                                         Clear
                                     </button>
                                     <div className="flex gap-1">
-                                        <button onClick={handleCancel} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                        <button type="button" onClick={handleCancel} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
                                             Cancel
                                         </button>
-                                        <button onClick={handleOk} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
+                                        <button type="button" onClick={handleOk} className="text-[#6750A4] text-xs font-medium hover:bg-[#F5F5F5] px-3 py-1 rounded-full transition-colors">
                                             OK
                                         </button>
                                     </div>
@@ -307,6 +309,7 @@ const CustomDatePicker = ({
                                 {months.map((m, idx) => (
                                     <button
                                         key={m}
+                                        type="button"
                                         onClick={() => {
                                             setViewDate(new Date(viewDate.getFullYear(), idx, 1));
                                             setCurrentView('calendar');
@@ -330,6 +333,7 @@ const CustomDatePicker = ({
                                         <button
                                             key={y}
                                             data-active={viewDate.getFullYear() === y}
+                                            type="button"
                                             onClick={() => {
                                                 setViewDate(new Date(y, viewDate.getMonth(), 1));
                                                 setCurrentView('calendar');
