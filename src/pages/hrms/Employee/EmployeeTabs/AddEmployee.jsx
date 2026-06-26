@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -29,6 +29,7 @@ import {
     departmentService,
     designationService,
     employeeService,
+    subscriptionService,
 } from '../../../../service';
 import { isOrgAdmin } from '../../../../utils/authMode';
 
@@ -163,6 +164,14 @@ const AddEmployee = () => {
     const [managers, setManagers] = useState([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
 
+    const getCurrentUser = () => {
+        try {
+            return JSON.parse(localStorage.getItem('userData') || '{}');
+        } catch {
+            return {};
+        }
+    };
+
     const inputClass = (name) =>
         `h-11 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-4 ${
             errors[name]
@@ -173,6 +182,24 @@ const AddEmployee = () => {
     useEffect(() => {
         if (!isOrgAdmin()) navigate('/hrms/employees', { replace: true });
     }, [navigate]);
+
+    const loadOptions = useCallback(async () => {
+        setLoadingOptions(true);
+        const userData = getCurrentUser();
+        const adminId = userData?.id || userData?._id;
+        const [profileRes, departmentRes, designationRes, managerRes] = await Promise.all([
+            authService.getProfile(),
+            departmentService.getDepartmentsDropdown(),
+            designationService.getDesignationDropdown(),
+            adminId ? employeeService.getAllEmployeesByAdminId(adminId) : Promise.resolve({ success: true, data: [] }),
+        ]);
+
+        if (profileRes.success && profileRes.data?.plan) setSubscriptionInfo(profileRes.data.plan);
+        if (departmentRes.success) setDepartments(departmentRes.data || []);
+        if (designationRes.success) setDesignations(designationRes.data || []);
+        if (managerRes.success) setManagers(Array.isArray(managerRes.data) ? managerRes.data : []);
+        setLoadingOptions(false);
+    }, []);
 
     useEffect(() => {
         const savedDraft = localStorage.getItem(DRAFT_KEY);
@@ -201,25 +228,8 @@ const AddEmployee = () => {
     }, []);
 
     useEffect(() => {
-        const loadOptions = async () => {
-            setLoadingOptions(true);
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            const adminId = userData?.id || userData?._id;
-            const [profileRes, departmentRes, designationRes, managerRes] = await Promise.all([
-                authService.getProfile(),
-                departmentService.getDepartmentsDropdown(),
-                designationService.getDesignationDropdown(),
-                adminId ? employeeService.getAllEmployeesByAdminId(adminId) : Promise.resolve({ success: true, data: [] }),
-            ]);
-
-            if (profileRes.success && profileRes.data?.plan) setSubscriptionInfo(profileRes.data.plan);
-            if (departmentRes.success) setDepartments(departmentRes.data || []);
-            if (designationRes.success) setDesignations(designationRes.data || []);
-            if (managerRes.success) setManagers(Array.isArray(managerRes.data) ? managerRes.data : []);
-            setLoadingOptions(false);
-        };
         loadOptions();
-    }, []);
+    }, [loadOptions]);
 
     useEffect(() => {
         const warnBeforeUnload = (event) => {
@@ -381,28 +391,7 @@ const AddEmployee = () => {
         setValue('documents', [...formData.documents, ...files]);
     };
 
-    const handleCreateEmployee = async () => {
-        for (const stepIndex of [0, 1, 2, 3, 5]) {
-            if (!validateStep(stepIndex)) {
-                setCurrentStep(stepIndex);
-                setToast({
-                    type: 'error',
-                    title: 'Details need attention',
-                    message: `Please complete the required fields in ${steps[stepIndex].title}.`,
-                });
-                return;
-            }
-        }
-
-        if (subscriptionInfo?.canAddEmployee === false) {
-            setToast({
-                type: 'error',
-                title: 'Employee limit reached',
-                message: `Your plan allows up to ${subscriptionInfo.maxEmployees} employees.`,
-            });
-            return;
-        }
-
+    const createEmployeeRecord = async () => {
         setIsSubmitting(true);
         try {
             let profilePicUrl = '';
@@ -517,6 +506,7 @@ const AddEmployee = () => {
                 message: `${formData.name} is now part of your organization.`,
             });
             window.setTimeout(() => navigate('/hrms/employees'), 900);
+            return true;
         } catch (error) {
             const duplicateEmail = /email|already exists|duplicate/i.test(error.message || '');
             if (duplicateEmail) {
@@ -533,9 +523,105 @@ const AddEmployee = () => {
                     ? 'Use a different work email to create this employee.'
                     : error.message || 'Please try again.',
             });
+            return false;
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleSeatUpgradeAndCreate = async () => {
+        if (subscriptionInfo?.hasActivePlan === false) {
+            setToast({
+                type: 'error',
+                title: 'Subscription required',
+                message: 'Your subscription is inactive or expired. Please upgrade your plan first.',
+            });
+            return;
+        }
+
+        setToast(null);
+        setIsSubmitting(true);
+
+        try {
+            const user = getCurrentUser();
+            const seatOrder = await subscriptionService.createAddonOrder('extra_employee', 1);
+
+            if (!seatOrder.success) {
+                throw new Error(seatOrder.message || 'Failed to create extra employee seat order.');
+            }
+
+            const paymentResult = await subscriptionService.openAddonCheckout(seatOrder.data, user);
+
+            if (!paymentResult.success) {
+                throw new Error(paymentResult.message || 'Seat payment was not completed.');
+            }
+
+            await loadOptions();
+            setToast({
+                type: 'success',
+                title: 'Extra seat added',
+                message: `One additional employee seat has been added to your plan for ₹${subscriptionInfo?.extraEmployeePriceInr || 51}.`,
+            });
+        } catch (error) {
+            setToast({
+                type: 'error',
+                title: 'Extra seat not added',
+                message: error.message || 'Please try again.',
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        setIsSubmitting(false);
+        await createEmployeeRecord();
+    };
+
+    const handleCreateEmployee = async () => {
+        for (const stepIndex of [0, 1, 2, 3, 5]) {
+            if (!validateStep(stepIndex)) {
+                setCurrentStep(stepIndex);
+                setToast({
+                    type: 'error',
+                    title: 'Details need attention',
+                    message: `Please complete the required fields in ${steps[stepIndex].title}.`,
+                });
+                return;
+            }
+        }
+
+        if (subscriptionInfo?.canAddEmployee === false && subscriptionInfo?.hasActivePlan !== false) {
+            const maxEmployees = subscriptionInfo?.maxEmployees ?? 0;
+            const price = subscriptionInfo?.extraEmployeePriceInr ?? 51;
+            setToast({
+                type: 'warning',
+                title: 'Employee limit reached',
+                message: `You have reached your plan limit. You can only have ${maxEmployees} users. If you want to add more users you have to pay ₹${price} per person.`,
+                persistent: true,
+                actions: [
+                    {
+                        label: 'Cancel',
+                        onClick: () => setToast(null),
+                    },
+                    {
+                        label: 'Proceed to pay',
+                        variant: 'danger',
+                        onClick: handleSeatUpgradeAndCreate,
+                    },
+                ],
+            });
+            return;
+        }
+
+        if (subscriptionInfo?.hasActivePlan === false) {
+            setToast({
+                type: 'error',
+                title: 'Subscription required',
+                message: 'Your subscription is inactive or expired. Please upgrade your plan first.',
+            });
+            return;
+        }
+
+        await createEmployeeRecord();
     };
 
     const managerOptions = useMemo(
@@ -934,6 +1020,12 @@ const AddEmployee = () => {
                             <strong className="capitalize">{subscriptionInfo.planType?.replace('_', ' ') || 'Active'} plan</strong>
                             <span className="mx-2 text-current opacity-40">•</span>
                             {subscriptionInfo.employeeCount ?? 0} of {subscriptionInfo.maxEmployees ?? 0} employee seats used
+                            {!subscriptionInfo.canAddEmployee && subscriptionInfo.hasActivePlan !== false ? (
+                                <>
+                                    <span className="mx-2 text-current opacity-40">•</span>
+                                    Extra seats available at ₹{subscriptionInfo.extraEmployeePriceInr ?? 51} per employee
+                                </>
+                            ) : null}
                         </div>
                     )}
 
@@ -955,7 +1047,7 @@ const AddEmployee = () => {
                                         Continue <ArrowRight size={16} />
                                     </button>
                                 ) : (
-                                    <button type="button" onClick={handleCreateEmployee} disabled={isSubmitting || subscriptionInfo?.canAddEmployee === false} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none">
+                                    <button type="button" onClick={handleCreateEmployee} disabled={isSubmitting} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none">
                                         {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Creating employee…</> : <>Create employee <ChevronRight size={16} /></>}
                                     </button>
                                 )}

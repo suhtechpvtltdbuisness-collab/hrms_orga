@@ -2011,6 +2011,49 @@ export const subscriptionService = {
     }
   },
 
+  createAddonOrder: async (itemType, quantity = 1) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/create-addon-order`, {
+        method: "POST",
+        body: JSON.stringify({ itemType, quantity }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create add-on order" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  verifyAddonPayment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/verify-addon-payment`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Add-on payment verification failed" };
+      }
+      if (data.data?.plan) {
+        const existing = JSON.parse(localStorage.getItem("subscription") || "{}");
+        localStorage.setItem(
+          "subscription",
+          JSON.stringify({
+            ...existing,
+            isSubscribed: true,
+            plan: data.data.plan,
+          }),
+        );
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getAllSubscriptions: async (page = 1, limit = 10, search = "") => {
     try {
       const response = await apiFetch(`${BASE_URL}/subscriptions/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
@@ -2038,6 +2081,42 @@ export const subscriptionService = {
         handler: async (response) => {
           const result = await subscriptionService.verifyPayment({
             planType: orderData.planType,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+          resolve(result);
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#756FCC" },
+        modal: {
+          ondismiss: () => resolve({ success: false, message: "Payment cancelled" }),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  },
+
+  openAddonCheckout: async (orderData, user) => {
+    await loadRazorpayScript();
+
+    return new Promise((resolve) => {
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Suhtech ORGA",
+        description: orderData.planName,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          const result = await subscriptionService.verifyAddonPayment({
+            itemType: orderData.itemType,
+            quantity: orderData.quantity,
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,
@@ -2517,5 +2596,4 @@ export const payrollModuleService = {
     }
   },
 };
-
 
