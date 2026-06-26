@@ -6,6 +6,73 @@ import FilterDropdown from '../../../components/ui/FilterDropdown';
 import { payrollModuleService, employeeService } from '../../../service';
 import toast from 'react-hot-toast';
 
+const pad2 = (value) => String(value).padStart(2, '0');
+
+const formatLocalDate = (date) => {
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
+
+const formatApiDate = (date) => {
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+
+const parseDateInput = (value) => {
+    if (!value) return null;
+
+    if (typeof value === 'string' && value.includes('/')) {
+        const [day, month, year] = value.split('/');
+        const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [year, month, day] = value.split('-');
+        const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getInclusiveDays = (startValue, endValue) => {
+    const start = parseDateInput(startValue);
+    const end = parseDateInput(endValue);
+    if (!start || !end) return '';
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    if (end < start) return '';
+
+    const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return String(diff + 1);
+};
+
+const getDefaultPayrollForm = () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const totalDays = getInclusiveDays(start, end) || '30';
+
+    return {
+        empId: '',
+        periodStart: formatLocalDate(start),
+        periodEnd: formatLocalDate(end),
+        totalWorkingDays: totalDays,
+        paidDays: totalDays,
+        baseSalary: '',
+        pfRate: '0.12',
+        esicRate: '0.0075',
+        ptAmount: '200',
+        tdsAmount: '0'
+    };
+};
+
 const PayrollEntry = () => {
     const navigate = useNavigate();
 
@@ -17,18 +84,7 @@ const PayrollEntry = () => {
     const [searchQuery, setSearchQuery] = useState('');
     
     // Form state
-    const [formData, setFormData] = useState({
-        empId: '',
-        periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        periodEnd: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
-        totalWorkingDays: '30',
-        paidDays: '30',
-        baseSalary: '',
-        pfRate: '0.12',
-        esicRate: '0.0075',
-        ptAmount: '200',
-        tdsAmount: '0'
-    });
+    const [formData, setFormData] = useState(getDefaultPayrollForm);
 
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -62,7 +118,7 @@ const PayrollEntry = () => {
             } else {
                 toast.error(empRes.message || 'Failed to fetch employees');
             }
-        } catch (err) {
+        } catch {
             toast.error('Failed to load payroll details');
         } finally {
             setIsLoading(false);
@@ -79,7 +135,20 @@ const PayrollEntry = () => {
     };
 
     const handleDateChange = (name, dateStr) => {
-        setFormData(prev => ({ ...prev, [name]: dateStr }));
+        setFormData(prev => {
+            const next = { ...prev, [name]: dateStr };
+            if (name === 'periodStart' || name === 'periodEnd') {
+                const totalDays = getInclusiveDays(
+                    name === 'periodStart' ? dateStr : prev.periodStart,
+                    name === 'periodEnd' ? dateStr : prev.periodEnd
+                );
+                next.totalWorkingDays = totalDays || '';
+                if (totalDays && (!prev.paidDays || prev.paidDays === prev.totalWorkingDays)) {
+                    next.paidDays = totalDays;
+                }
+            }
+            return next;
+        });
     };
 
     // Calculate & Create
@@ -90,10 +159,23 @@ const PayrollEntry = () => {
             return;
         }
 
+        const periodStartDate = parseDateInput(formData.periodStart);
+        const periodEndDate = parseDateInput(formData.periodEnd);
+
+        if (!periodStartDate || !periodEndDate) {
+            toast.error('Please select a valid payroll period');
+            return;
+        }
+
+        if (periodEndDate < periodStartDate) {
+            toast.error('Period End must be on or after Period Start');
+            return;
+        }
+
         const payload = {
             empId: Number(formData.empId),
-            periodStart: formData.periodStart,
-            periodEnd: formData.periodEnd,
+            periodStart: formatApiDate(periodStartDate),
+            periodEnd: formatApiDate(periodEndDate),
             totalWorkingDays: Number(formData.totalWorkingDays),
             paidDays: Number(formData.paidDays),
             baseSalary: formData.baseSalary ? Number(formData.baseSalary) : undefined,
@@ -115,7 +197,7 @@ const PayrollEntry = () => {
             } else {
                 toast.error(res.message || 'Failed to calculate payroll');
             }
-        } catch (err) {
+        } catch {
             toast.error('No salary structure assignment exists for this employee/period');
         } finally {
             setIsActionLoading(false);
@@ -136,7 +218,7 @@ const PayrollEntry = () => {
             } else {
                 toast.error(res.message || 'Failed to finalize');
             }
-        } catch (err) {
+        } catch {
             toast.error('Failed to finalize payroll entry');
         } finally {
             setIsActionLoading(false);
@@ -149,18 +231,7 @@ const PayrollEntry = () => {
     };
 
     const handleAddNew = () => {
-        setFormData({
-            empId: '',
-            periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-            periodEnd: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
-            totalWorkingDays: '30',
-            paidDays: '30',
-            baseSalary: '',
-            pfRate: '0.12',
-            esicRate: '0.0075',
-            ptAmount: '200',
-            tdsAmount: '0'
-        });
+        setFormData(getDefaultPayrollForm());
         setViewMode('form');
     };
 
@@ -399,10 +470,10 @@ const PayrollEntry = () => {
                                         type="number"
                                         name="totalWorkingDays"
                                         value={formData.totalWorkingDays}
-                                        onChange={handleChange}
-                                        required
+                                        readOnly
                                         className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[#7D1EDB]"
                                     />
+                                    <p className="mt-1 text-xs text-gray-400">Auto-calculated from the selected period.</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-[#1E1E1E] mb-1">Paid Days *</label>
