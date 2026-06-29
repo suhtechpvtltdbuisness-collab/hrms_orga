@@ -2268,6 +2268,39 @@ export const hiringService = {
     } catch { return { success: false, message: "Something went wrong" }; }
   },
 
+  updateApplicationNotes: async (id, hrNotes) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/notes`, {
+        method: "PATCH",
+        body: JSON.stringify({ hrNotes }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update notes" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateApplicationAtsScore: async (id, atsData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/ats-score`, {
+        method: "PATCH",
+        body: JSON.stringify({ atsData }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update ATS score" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  analyzeApplication: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/ats-analyze`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to analyze application" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
   // ─── Interviews ───────────────────────────────────────────────
   createInterview: async (interviewData) => {
     try {
