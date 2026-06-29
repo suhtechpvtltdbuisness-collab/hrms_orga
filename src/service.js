@@ -700,9 +700,12 @@ export const designationService = {
     }
   },
 
-  getDesignationDropdown: async () => {
+  getDesignationDropdown: async (departmentId) => {
     try {
-      const response = await apiFetch(`${BASE_URL}/designation/dropdown`, {
+      const url = departmentId
+        ? `${BASE_URL}/designation/dropdown?departmentId=${departmentId}`
+        : `${BASE_URL}/designation/dropdown`;
+      const response = await apiFetch(url, {
         method: "GET",
       });
 
@@ -2136,6 +2139,316 @@ export const subscriptionService = {
       const rzp = new window.Razorpay(options);
       rzp.open();
     });
+  },
+};
+
+export const hiringService = {
+  // ─── Job Openings ─────────────────────────────────────────────
+  createJob: async (jobData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs`, {
+        method: "POST",
+        body: JSON.stringify(jobData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create job" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getAllJobs: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch jobs" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getAllVisibleJobs: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/visible`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch jobs" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getJobById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch job" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateJob: async (id, jobData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(jobData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update job" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  deleteJob: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete job" };
+      return { success: true, message: data.message };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  toggleJobStatus: async (id, isActive) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to toggle status" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  // ─── Job Applications ─────────────────────────────────────────
+  createApplication: async (jobId, applicationData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${jobId}/applications`, {
+        method: "POST",
+        body: JSON.stringify(applicationData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to submit application" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getApplicationsByJobId: async (jobId) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/jobs/${jobId}/applications`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch applications" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getApplicationById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch application" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateApplicationStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update status" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  deleteApplication: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete application" };
+      return { success: true, message: data.message };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateApplicationNotes: async (id, hrNotes) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/notes`, {
+        method: "PATCH",
+        body: JSON.stringify({ hrNotes }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update notes" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateApplicationAtsScore: async (id, atsData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/ats-score`, {
+        method: "PATCH",
+        body: JSON.stringify({ atsData }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update ATS score" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  analyzeApplication: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${id}/ats-analyze`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to analyze application" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  // ─── Interviews ───────────────────────────────────────────────
+  createInterview: async (interviewData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews`, {
+        method: "POST",
+        body: JSON.stringify(interviewData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to schedule interview" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getAllInterviews: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch interviews" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getInterviewById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch interview" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateInterview: async (id, interviewData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(interviewData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update interview" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  deleteInterview: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete interview" };
+      return { success: true, message: data.message };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  submitFeedback: async (id, feedbackData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/interviews/${id}/feedback`, {
+        method: "PATCH",
+        body: JSON.stringify(feedbackData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to submit feedback" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  // ─── Referrals ────────────────────────────────────────────────
+  generateReferralCode: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals/generate-code`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to generate code" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  createReferral: async (referralData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals`, {
+        method: "POST",
+        body: JSON.stringify(referralData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create referral" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getAllReferrals: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch referrals" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getMyReferrals: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals/my`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch referrals" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getReferralById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch referral" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateReferral: async (id, referralData) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/referrals/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(referralData),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update referral" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  // ─── Dashboard Stats ──────────────────────────────────────────
+  getDashboardStats: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/dashboard/stats`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch stats" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  // ─── File Upload ──────────────────────────────────────────────
+  uploadFile: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("documents", file);
+      const response = await apiFetch(`${BASE_URL}/upload/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to upload file" };
+      return { success: true, files: data.files };
+    } catch { return { success: false, message: "Something went wrong" }; }
   },
 };
 
