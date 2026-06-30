@@ -1181,6 +1181,22 @@ export const leaveRequestService = {
     }
   },
 
+  getAvailableLeaveTypes: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/leave-requests/types`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch leave types" };
+      }
+      return { success: true, data: data.data || [] };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   approveLeaveRequest: async (id) => {
     try {
       const response = await apiFetch(`${BASE_URL}/leave-requests/${id}/approve`, {
@@ -1236,6 +1252,177 @@ export const leaveRequestService = {
     };
     return map[type] || type;
   },
+};
+
+const leaveAdminRequest = async (path, options = {}) => {
+  try {
+    const response = await apiFetch(`${BASE_URL}/leave-admin${path}`, {
+      headers: getAuthHeaders(),
+      ...options,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, message: data.message || "Request failed" };
+    }
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch {
+    return { success: false, message: "Something went wrong" };
+  }
+};
+
+export const leaveManagementService = {
+  getOptions: async () => leaveAdminRequest("/options"),
+
+  getHolidays: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/holidays${query ? `?${query}` : ""}`);
+  },
+  createHoliday: async (payload) =>
+    leaveAdminRequest("/holidays", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateHoliday: async (id, payload) =>
+    leaveAdminRequest(`/holidays/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteHoliday: async (id) =>
+    leaveAdminRequest(`/holidays/${id}`, { method: "DELETE" }),
+
+  getPeriods: async () => leaveAdminRequest("/periods"),
+  createPeriod: async (payload) =>
+    leaveAdminRequest("/periods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updatePeriod: async (id, payload) =>
+    leaveAdminRequest(`/periods/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deletePeriod: async (id) =>
+    leaveAdminRequest(`/periods/${id}`, { method: "DELETE" }),
+
+  getBlocks: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/blocks${query ? `?${query}` : ""}`);
+  },
+  createBlock: async (payload) =>
+    leaveAdminRequest("/blocks", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateBlock: async (id, payload) =>
+    leaveAdminRequest(`/blocks/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteBlock: async (id) =>
+    leaveAdminRequest(`/blocks/${id}`, { method: "DELETE" }),
+
+  getLeaveTypes: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/types${query ? `?${query}` : ""}`);
+  },
+  createLeaveType: async (payload) =>
+    leaveAdminRequest("/types", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateLeaveType: async (id, payload) =>
+    leaveAdminRequest(`/types/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteLeaveType: async (id) =>
+    leaveAdminRequest(`/types/${id}`, { method: "DELETE" }),
+
+  getPolicies: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/policies${query ? `?${query}` : ""}`);
+  },
+  createPolicy: async (payload) =>
+    leaveAdminRequest("/policies", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updatePolicy: async (id, payload) =>
+    leaveAdminRequest(`/policies/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deletePolicy: async (id) =>
+    leaveAdminRequest(`/policies/${id}`, { method: "DELETE" }),
+
+  getAssignments: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/assignments${query ? `?${query}` : ""}`);
+  },
+  createAssignment: async (payload) =>
+    leaveAdminRequest("/assignments", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateAssignment: async (id, payload) =>
+    leaveAdminRequest(`/assignments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteAssignment: async (id) =>
+    leaveAdminRequest(`/assignments/${id}`, { method: "DELETE" }),
+
+  getCompOffRequests: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/comp-off-requests${query ? `?${query}` : ""}`);
+  },
+  createCompOffRequest: async (payload) =>
+    leaveAdminRequest("/comp-off-requests", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  approveCompOffRequest: async (id) =>
+    leaveAdminRequest(`/comp-off-requests/${id}/approve`, { method: "PATCH" }),
+  rejectCompOffRequest: async (id, rejectionReason = "") =>
+    leaveAdminRequest(`/comp-off-requests/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ rejectionReason }),
+    }),
+
+  getEncashmentRequests: async (filters = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v != null && v !== "")),
+    ).toString();
+    return leaveAdminRequest(`/encashment-requests${query ? `?${query}` : ""}`);
+  },
+  createEncashmentRequest: async (payload) =>
+    leaveAdminRequest("/encashment-requests", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  approveEncashmentRequest: async (id) =>
+    leaveAdminRequest(`/encashment-requests/${id}/approve`, { method: "PATCH" }),
+  rejectEncashmentRequest: async (id, rejectionReason = "") =>
+    leaveAdminRequest(`/encashment-requests/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ rejectionReason }),
+    }),
 };
 
 // ─── Performance Service ───────────────────────────────────────────────────────

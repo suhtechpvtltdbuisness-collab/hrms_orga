@@ -1,50 +1,113 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Plus, Pencil, Trash2, X, Search, Users } from "lucide-react";
+import { ChevronRight, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { leaveManagementService } from "../../../service";
+import useAsyncAction from "../../../hooks/useAsyncAction";
 
-const POLICIES = ["Standard Policy", "Senior Staff Policy", "Probation Policy", "Contract Policy"];
-const DEPARTMENTS = ["All", "Engineering", "Product Design", "Marketing", "Sales", "HR", "Finance"];
-
-const INITIAL_ASSIGNMENTS = [
-  { id: 1, employee: "Ravi Sharma", empId: "EMP001", department: "Engineering", policy: "Standard Policy", effectiveDate: "2026-01-01", assignedBy: "HR Admin" },
-  { id: 2, employee: "Priya Mehta", empId: "EMP002", department: "HR", policy: "Senior Staff Policy", effectiveDate: "2026-01-01", assignedBy: "HR Admin" },
-  { id: 3, employee: "Amit Verma", empId: "EMP003", department: "Marketing", policy: "Standard Policy", effectiveDate: "2026-01-01", assignedBy: "HR Admin" },
-  { id: 4, employee: "Sneha Roy", empId: "EMP004", department: "Engineering", policy: "Probation Policy", effectiveDate: "2026-03-01", assignedBy: "HR Admin" },
-];
-
-const EMPTY_FORM = { employee: "", empId: "", department: "", policy: "", effectiveDate: "", assignedBy: "HR Admin" };
+const EMPTY_FORM = { empId: "", policyId: "", effectiveDate: "" };
 
 const LeavePolicyAssignment = () => {
   const navigate = useNavigate();
-  const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
+  const [assignments, setAssignments] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [policies, setPolicies] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState("All");
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState(null);
+  const [error, setError] = useState("");
+  const { activeKey, isLoading, run } = useAsyncAction();
 
-  const filtered = assignments.filter(a => {
-    const matchDept = filterDept === "All" || a.department === filterDept;
-    const matchSearch = !search || a.employee.toLowerCase().includes(search.toLowerCase()) || a.empId.toLowerCase().includes(search.toLowerCase());
-    return matchDept && matchSearch;
-  });
-
-  const openAdd = () => { setForm(EMPTY_FORM); setEditItem(null); setShowModal(true); };
-  const openEdit = (a) => {
-    setForm({ employee: a.employee, empId: a.empId, department: a.department, policy: a.policy, effectiveDate: a.effectiveDate, assignedBy: a.assignedBy });
-    setEditItem(a.id); setShowModal(true);
+  const loadData = async () => {
+    const [assignmentsRes, optionsRes] = await Promise.all([
+      leaveManagementService.getAssignments(),
+      leaveManagementService.getOptions(),
+    ]);
+    if (assignmentsRes.success) setAssignments(assignmentsRes.data || []);
+    else setError(assignmentsRes.message || "Failed to load assignments");
+    if (optionsRes.success) {
+      setEmployees(optionsRes.data?.employees || []);
+      setPolicies(optionsRes.data?.policies || []);
+      setDepartments(optionsRes.data?.departments || []);
+    }
   };
 
-  const handleSave = () => {
-    if (!form.employee || !form.policy) return;
-    if (editItem) setAssignments(assignments.map(a => a.id === editItem ? { ...a, ...form } : a));
-    else setAssignments([...assignments, { id: Date.now(), ...form }]);
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return assignments.filter((item) => {
+      const matchDept = filterDept === "All" || String(item.departmentId) === filterDept;
+      const matchSearch =
+        !q ||
+        item.employee?.toLowerCase().includes(q) ||
+        item.policy?.toLowerCase().includes(q);
+      return matchDept && matchSearch;
+    });
+  }, [assignments, filterDept, search]);
+
+  const openAdd = () => {
+    setEditItem(null);
+    setForm(EMPTY_FORM);
+    setShowModal(true);
+  };
+
+  const openEdit = (item) => {
+    setEditItem(item.id);
+    setForm({
+      empId: String(item.empId),
+      policyId: String(item.policyId),
+      effectiveDate: item.effectiveDate || "",
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    const payload = {
+      empId: Number(form.empId),
+      policyId: Number(form.policyId),
+      effectiveDate: form.effectiveDate,
+    };
+    const actionKey = editItem ? `save-${editItem}` : "save-new";
+    const res = await run(
+      () =>
+        editItem
+          ? leaveManagementService.updateAssignment(editItem, payload)
+          : leaveManagementService.createAssignment(payload),
+      actionKey,
+    );
+    if (!res) return;
+    if (!res.success) {
+      setError(res.message || "Failed to save assignment");
+      return;
+    }
     setShowModal(false);
+    loadData();
   };
 
-  const handleDelete = () => { setAssignments(assignments.filter(a => a.id !== deleteId)); setDeleteId(null); };
-  const fmt = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  const handleDelete = async () => {
+    const res = await run(
+      () => leaveManagementService.deleteAssignment(deleteId),
+      `delete-${deleteId}`,
+    );
+    if (!res) return;
+    if (!res.success) {
+      setError(res.message || "Failed to remove assignment");
+      return;
+    }
+    setDeleteId(null);
+    loadData();
+  };
+
+  const fmt = (date) =>
+    date
+      ? new Date(date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+      : "—";
 
   return (
     <div className="bg-white px-4 sm:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl min-h-[calc(100vh-10rem)] flex flex-col" style={{ fontFamily: "Poppins, sans-serif" }}>
@@ -56,38 +119,26 @@ const LeavePolicyAssignment = () => {
 
       <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
         <div>
-          <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Leave Policy Assignment</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Assign leave policies to employees or departments</p>
+          <h1 className="text-[20px] font-semibold text-[#494949]">Leave Policy Assignment</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Assign leave policies to employees</p>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 px-5 py-2.5 rounded-full text-sm">
           <Plus size={16} /> Assign Policy
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        {POLICIES.map(p => {
-          const count = assignments.filter(a => a.policy === p).length;
-          return (
-            <div key={p} className="rounded-xl border border-gray-100 p-3">
-              <p className="text-xs text-gray-400 mb-1 truncate">{p}</p>
-              <p className="text-2xl font-bold text-[#494949]">{count}</p>
-              <p className="text-xs text-gray-400">employees</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[180px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee..." className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#7D1EDB]" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search employee..." className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#7D1EDB]" />
         </div>
-        <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#7D1EDB]">
-          {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
+        <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#7D1EDB]">
+          <option value="All">All Departments</option>
+          {departments.map((dept) => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
         </select>
       </div>
+
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
 
       <div className="flex-1 overflow-auto border border-[#CECECE] rounded-lg">
         <table className="w-full border-collapse">
@@ -97,31 +148,27 @@ const LeavePolicyAssignment = () => {
               <th className="py-3 px-5 text-sm font-normal text-[#757575]">Department</th>
               <th className="py-3 px-5 text-sm font-normal text-[#757575]">Policy Assigned</th>
               <th className="py-3 px-5 text-sm font-normal text-[#757575]">Effective Date</th>
-              <th className="py-3 px-5 text-sm font-normal text-[#757575]">Assigned By</th>
+              <th className="py-3 px-5 text-sm font-normal text-[#757575]">Status</th>
               <th className="py-3 px-5 text-sm font-normal text-[#757575]">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={6} className="py-12 text-center text-gray-400 text-sm">No assignments found</td></tr>
-            ) : filtered.map(a => (
-              <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+            ) : filtered.map((item) => (
+              <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                 <td className="py-3 px-5">
-                  <p className="text-sm font-medium text-[#1E1E1E]">{a.employee}</p>
-                  <p className="text-xs text-gray-400">{a.empId}</p>
+                  <p className="text-sm font-medium text-[#1E1E1E]">{item.employee}</p>
+                  <p className="text-xs text-gray-400">{item.empEmail}</p>
                 </td>
-                <td className="py-3 px-5">
-                  <span className="px-2.5 py-1 bg-purple-50 text-purple-700 text-xs rounded-full">{a.department}</span>
-                </td>
-                <td className="py-3 px-5">
-                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">{a.policy}</span>
-                </td>
-                <td className="py-3 px-5 text-sm text-gray-600">{fmt(a.effectiveDate)}</td>
-                <td className="py-3 px-5 text-sm text-gray-500">{a.assignedBy}</td>
+                <td className="py-3 px-5">{item.department || "—"}</td>
+                <td className="py-3 px-5">{item.policy}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{fmt(item.effectiveDate)}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.isActive ? "Active" : "Inactive"}</td>
                 <td className="py-3 px-5">
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(a)} className="p-1.5 rounded-lg hover:bg-purple-50 text-[#7D1EDB]"><Pencil size={15} /></button>
-                    <button onClick={() => setDeleteId(a.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={15} /></button>
+                    <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-purple-50 text-[#7D1EDB]"><Pencil size={15} /></button>
+                    <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={15} /></button>
                   </div>
                 </td>
               </tr>
@@ -138,38 +185,28 @@ const LeavePolicyAssignment = () => {
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name *</label>
-                  <input value={form.employee} onChange={e => setForm({ ...form, employee: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-                  <input value={form.empId} onChange={e => setForm({ ...form, empId: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]">
-                  <option value="">Select department</option>
-                  {DEPARTMENTS.filter(d => d !== "All").map(d => <option key={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Leave Policy *</label>
-                <select value={form.policy} onChange={e => setForm({ ...form, policy: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]">
-                  <option value="">Select policy</option>
-                  {POLICIES.map(p => <option key={p}>{p}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
-                <input type="date" value={form.effectiveDate} onChange={e => setForm({ ...form, effectiveDate: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
-              </div>
+              <select value={form.empId} onChange={(e) => setForm((prev) => ({ ...prev, empId: e.target.value }))} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]">
+                <option value="">Select employee</option>
+                {employees.map((emp) => <option key={emp.empId} value={emp.empId}>{emp.empName}</option>)}
+              </select>
+              <select value={form.policyId} onChange={(e) => setForm((prev) => ({ ...prev, policyId: e.target.value }))} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]">
+                <option value="">Select policy</option>
+                {policies.map((policy) => <option key={policy.id} value={policy.id}>{policy.name}</option>)}
+              </select>
+              <input type="date" value={form.effectiveDate} onChange={(e) => setForm((prev) => ({ ...prev, effectiveDate: e.target.value }))} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setShowModal(false)} className="px-5 py-2 text-sm border border-gray-200 rounded-full hover:bg-gray-50">Cancel</button>
-              <button onClick={handleSave} disabled={!form.employee || !form.policy} className="px-5 py-2 text-sm bg-[#7D1EDB] text-white rounded-full hover:bg-purple-700 disabled:opacity-50">Save</button>
+              <button
+                onClick={handleSave}
+                disabled={isLoading || !form.empId || !form.policyId || !form.effectiveDate}
+                className="px-5 py-2 text-sm bg-[#7D1EDB] text-white rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {activeKey?.startsWith("save-") && <Loader2 size={14} className="animate-spin" />}
+                  {activeKey?.startsWith("save-") ? "Saving..." : "Save"}
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -183,7 +220,16 @@ const LeavePolicyAssignment = () => {
             <p className="text-sm text-gray-400 mb-5">The employee will lose their current policy assignment.</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => setDeleteId(null)} className="px-5 py-2 text-sm border border-gray-200 rounded-full">Cancel</button>
-              <button onClick={handleDelete} className="px-5 py-2 text-sm bg-red-500 text-white rounded-full">Remove</button>
+              <button
+                onClick={handleDelete}
+                disabled={isLoading}
+                className="px-5 py-2 text-sm bg-red-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {activeKey === `delete-${deleteId}` && <Loader2 size={14} className="animate-spin" />}
+                  {activeKey === `delete-${deleteId}` ? "Removing..." : "Remove"}
+                </span>
+              </button>
             </div>
           </div>
         </div>

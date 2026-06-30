@@ -1,51 +1,111 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Plus, Pencil, Trash2, X, Search, ToggleLeft, ToggleRight } from "lucide-react";
+import { ChevronRight, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { leaveManagementService } from "../../../service";
+import useAsyncAction from "../../../hooks/useAsyncAction";
 
-const INITIAL_TYPES = [
-  { id: 1, name: "Sick Leave", maxDays: 10, carryForward: false, encashable: false, isPaid: true, allowHalfDay: true, description: "For medical emergencies" },
-  { id: 2, name: "Casual Leave", maxDays: 12, carryForward: false, encashable: false, isPaid: true, allowHalfDay: true, description: "For personal work" },
-  { id: 3, name: "Earned Leave", maxDays: 15, carryForward: true, encashable: true, isPaid: true, allowHalfDay: true, description: "Accumulated leave" },
-  { id: 4, name: "Maternity Leave", maxDays: 180, carryForward: false, encashable: false, isPaid: true, allowHalfDay: false, description: "As per Maternity Benefit Act" },
-  { id: 5, name: "Paternity Leave", maxDays: 15, carryForward: false, encashable: false, isPaid: true, allowHalfDay: false, description: "For new fathers" },
-  { id: 6, name: "Loss of Pay", maxDays: 0, carryForward: false, encashable: false, isPaid: false, allowHalfDay: true, description: "Unpaid leave when balance is zero" },
-];
+const EMPTY_FORM = {
+  name: "",
+  maxDays: "",
+  carryForward: false,
+  encashable: false,
+  isPaid: true,
+  allowHalfDay: true,
+  description: "",
+};
 
-const EMPTY_FORM = { name: "", maxDays: "", carryForward: false, encashable: false, isPaid: true, allowHalfDay: true, description: "" };
-
-const Toggle = ({ value, onChange, id }) => (
-  <button id={id} type="button" onClick={() => onChange(!value)}
-    className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${value ? "bg-[#7D1EDB]" : "bg-gray-200"}`}>
-    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${value ? "translate-x-5" : "translate-x-0"}`} />
+const Toggle = ({ value, onChange }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!value)}
+    className={`relative w-10 h-5 rounded-full ${value ? "bg-[#7D1EDB]" : "bg-gray-200"}`}
+  >
+    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${value ? "translate-x-5" : ""}`} />
   </button>
 );
 
 const LeaveType = () => {
   const navigate = useNavigate();
-  const [types, setTypes] = useState(INITIAL_TYPES);
+  const [types, setTypes] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState(null);
+  const [error, setError] = useState("");
+  const { activeKey, isLoading, run } = useAsyncAction();
 
-  const filtered = types.filter(t => !search || t.name.toLowerCase().includes(search.toLowerCase()));
-
-  const openAdd = () => { setForm(EMPTY_FORM); setEditItem(null); setShowModal(true); };
-  const openEdit = (t) => {
-    setForm({ name: t.name, maxDays: t.maxDays, carryForward: t.carryForward, encashable: t.encashable, isPaid: t.isPaid, allowHalfDay: t.allowHalfDay, description: t.description });
-    setEditItem(t.id); setShowModal(true);
+  const loadTypes = async () => {
+    const res = await leaveManagementService.getLeaveTypes();
+    if (res.success) {
+      setTypes(res.data || []);
+      setError("");
+    } else {
+      setError(res.message || "Failed to load leave types");
+    }
   };
 
-  const handleSave = () => {
-    if (!form.name) return;
-    const data = { ...form, maxDays: Number(form.maxDays) || 0 };
-    if (editItem) setTypes(types.map(t => t.id === editItem ? { ...t, ...data } : t));
-    else setTypes([...types, { id: Date.now(), ...data }]);
+  useEffect(() => {
+    loadTypes();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return types.filter((item) => !q || item.name?.toLowerCase().includes(q));
+  }, [types, search]);
+
+  const openAdd = () => {
+    setEditItem(null);
+    setForm(EMPTY_FORM);
+    setShowModal(true);
+  };
+
+  const openEdit = (item) => {
+    setEditItem(item.id);
+    setForm({
+      name: item.name || "",
+      maxDays: item.maxDays ?? "",
+      carryForward: item.carryForward ?? false,
+      encashable: item.encashable ?? false,
+      isPaid: item.isPaid ?? true,
+      allowHalfDay: item.allowHalfDay ?? true,
+      description: item.description || "",
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    const payload = { ...form, maxDays: Number(form.maxDays) || 0 };
+    const actionKey = editItem ? `save-${editItem}` : "save-new";
+    const res = await run(
+      () =>
+        editItem
+          ? leaveManagementService.updateLeaveType(editItem, payload)
+          : leaveManagementService.createLeaveType(payload),
+      actionKey,
+    );
+    if (!res) return;
+    if (!res.success) {
+      setError(res.message || "Failed to save leave type");
+      return;
+    }
     setShowModal(false);
+    loadTypes();
   };
 
-  const handleDelete = () => { setTypes(types.filter(t => t.id !== deleteId)); setDeleteId(null); };
+  const handleDelete = async () => {
+    const res = await run(
+      () => leaveManagementService.deleteLeaveType(deleteId),
+      `delete-${deleteId}`,
+    );
+    if (!res) return;
+    if (!res.success) {
+      setError(res.message || "Failed to delete leave type");
+      return;
+    }
+    setDeleteId(null);
+    loadTypes();
+  };
 
   return (
     <div className="bg-white px-4 sm:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl min-h-[calc(100vh-10rem)] flex flex-col" style={{ fontFamily: "Poppins, sans-serif" }}>
@@ -57,8 +117,8 @@ const LeaveType = () => {
 
       <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
         <div>
-          <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Leave Types</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Configure all leave types for your organization</p>
+          <h1 className="text-[20px] font-semibold text-[#494949]">Leave Types</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Configure leave types for your organization</p>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 px-5 py-2.5 rounded-full text-sm">
           <Plus size={16} /> Add Leave Type
@@ -67,8 +127,10 @@ const LeaveType = () => {
 
       <div className="relative mb-4 max-w-xs">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leave type..." className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#7D1EDB]" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search leave type..." className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#7D1EDB]" />
       </div>
+
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
 
       <div className="flex-1 overflow-auto border border-[#CECECE] rounded-lg">
         <table className="w-full border-collapse">
@@ -87,37 +149,19 @@ const LeaveType = () => {
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={8} className="py-12 text-center text-gray-400 text-sm">No leave types found</td></tr>
-            ) : filtered.map(t => (
-              <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="py-3 px-5">
-                  <span className="text-sm font-semibold text-[#1E1E1E]">{t.name}</span>
-                </td>
-                <td className="py-3 px-5 text-sm text-gray-600">{t.maxDays === 0 ? "Unlimited" : `${t.maxDays} days`}</td>
-                <td className="py-3 px-5">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.carryForward ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                    {t.carryForward ? "Yes" : "No"}
-                  </span>
-                </td>
-                <td className="py-3 px-5">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.encashable ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                    {t.encashable ? "Yes" : "No"}
-                  </span>
-                </td>
-                <td className="py-3 px-5">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.isPaid ? "bg-purple-100 text-purple-700" : "bg-red-100 text-red-600"}`}>
-                    {t.isPaid ? "Paid" : "Unpaid"}
-                  </span>
-                </td>
-                <td className="py-3 px-5">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.allowHalfDay ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                    {t.allowHalfDay ? "Allowed" : "No"}
-                  </span>
-                </td>
-                <td className="py-3 px-5 text-sm text-gray-400 max-w-[180px] truncate">{t.description || "—"}</td>
+            ) : filtered.map((item) => (
+              <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50">
+                <td className="py-3 px-5 text-sm font-semibold text-[#1E1E1E]">{item.name}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.maxDays === 0 ? "Unlimited" : `${item.maxDays} days`}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.carryForward ? "Yes" : "No"}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.encashable ? "Yes" : "No"}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.isPaid ? "Paid" : "Unpaid"}</td>
+                <td className="py-3 px-5 text-sm text-gray-600">{item.allowHalfDay ? "Allowed" : "No"}</td>
+                <td className="py-3 px-5 text-sm text-gray-400 max-w-[180px] truncate">{item.description || "—"}</td>
                 <td className="py-3 px-5">
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg hover:bg-purple-50 text-[#7D1EDB]"><Pencil size={15} /></button>
-                    <button onClick={() => setDeleteId(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={15} /></button>
+                    <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-purple-50 text-[#7D1EDB]"><Pencil size={15} /></button>
+                    <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={15} /></button>
                   </div>
                 </td>
               </tr>
@@ -126,7 +170,6 @@ const LeaveType = () => {
         </table>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
@@ -135,35 +178,35 @@ const LeaveType = () => {
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Leave Type Name *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Sick Leave" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Days per Year <span className="text-gray-400">(0 = unlimited)</span></label>
-                <input type="number" min="0" value={form.maxDays} onChange={e => setForm({ ...form, maxDays: e.target.value })} className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
-              </div>
+              <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Leave Type Name" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
+              <input type="number" min="0" value={form.maxDays} onChange={(e) => setForm((prev) => ({ ...prev, maxDays: e.target.value }))} placeholder="Max Days per Year" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB]" />
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: "Carry Forward", key: "carryForward" },
-                  { label: "Encashable", key: "encashable" },
-                  { label: "Paid Leave", key: "isPaid" },
-                  { label: "Allow Half Day", key: "allowHalfDay" },
-                ].map(({ label, key }) => (
+                  ["Carry Forward", "carryForward"],
+                  ["Encashable", "encashable"],
+                  ["Paid Leave", "isPaid"],
+                  ["Allow Half Day", "allowHalfDay"],
+                ].map(([label, key]) => (
                   <div key={key} className="flex items-center justify-between border border-gray-100 rounded-xl p-3">
                     <span className="text-sm text-gray-700">{label}</span>
-                    <Toggle value={form[key]} onChange={v => setForm({ ...form, [key]: v })} />
+                    <Toggle value={form[key]} onChange={(value) => setForm((prev) => ({ ...prev, [key]: value }))} />
                   </div>
                 ))}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB] resize-none" />
-              </div>
+              <textarea value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} rows={2} placeholder="Description" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#7D1EDB] resize-none" />
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setShowModal(false)} className="px-5 py-2 text-sm border border-gray-200 rounded-full hover:bg-gray-50">Cancel</button>
-              <button onClick={handleSave} disabled={!form.name} className="px-5 py-2 text-sm bg-[#7D1EDB] text-white rounded-full hover:bg-purple-700 disabled:opacity-50">Save</button>
+              <button
+                onClick={handleSave}
+                disabled={isLoading || !form.name}
+                className="px-5 py-2 text-sm bg-[#7D1EDB] text-white rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {activeKey?.startsWith("save-") && <Loader2 size={14} className="animate-spin" />}
+                  {activeKey?.startsWith("save-") ? "Saving..." : "Save"}
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -174,10 +217,19 @@ const LeaveType = () => {
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4"><Trash2 size={22} className="text-red-500" /></div>
             <h3 className="text-base font-semibold mb-2">Delete Leave Type?</h3>
-            <p className="text-sm text-gray-400 mb-5">Employees using this type may be affected.</p>
+            <p className="text-sm text-gray-400 mb-5">Policies using this type must be updated first.</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => setDeleteId(null)} className="px-5 py-2 text-sm border border-gray-200 rounded-full">Cancel</button>
-              <button onClick={handleDelete} className="px-5 py-2 text-sm bg-red-500 text-white rounded-full">Delete</button>
+              <button
+                onClick={handleDelete}
+                disabled={isLoading}
+                className="px-5 py-2 text-sm bg-red-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {activeKey === `delete-${deleteId}` && <Loader2 size={14} className="animate-spin" />}
+                  {activeKey === `delete-${deleteId}` ? "Deleting..." : "Delete"}
+                </span>
+              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Check, X, Search } from "lucide-react";
+import { ChevronRight, Check, Loader2, X, Search } from "lucide-react";
 import { leaveRequestService } from "../../../service";
+import useAsyncAction from "../../../hooks/useAsyncAction";
 
 const formatStatus = (status) => {
   if (!status) return "Submitted";
@@ -18,6 +19,7 @@ const LeaveApplication = () => {
   const [search, setSearch] = useState("");
   const [rejectId, setRejectId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const { activeKey, isLoading, run } = useAsyncAction();
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -39,8 +41,12 @@ const LeaveApplication = () => {
 
   const handleApprove = async (id) => {
     setActionId(id);
-    const res = await leaveRequestService.approveLeaveRequest(id);
+    const res = await run(
+      () => leaveRequestService.approveLeaveRequest(id),
+      `approve-${id}`,
+    );
     setActionId(null);
+    if (!res) return;
     if (res.success) fetchRequests();
     else setError(res.message);
   };
@@ -48,8 +54,12 @@ const LeaveApplication = () => {
   const handleReject = async () => {
     if (!rejectId) return;
     setActionId(rejectId);
-    const res = await leaveRequestService.rejectLeaveRequest(rejectId, rejectReason);
+    const res = await run(
+      () => leaveRequestService.rejectLeaveRequest(rejectId, rejectReason),
+      `reject-${rejectId}`,
+    );
     setActionId(null);
+    if (!res) return;
     setRejectId(null);
     setRejectReason("");
     if (res.success) fetchRequests();
@@ -147,15 +157,15 @@ const LeaveApplication = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(req.id)}
-                          disabled={actionId === req.id}
+                          disabled={isLoading || actionId === req.id}
                           className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50"
                           title="Approve"
                         >
-                          <Check size={16} />
+                          {activeKey === `approve-${req.id}` ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                         </button>
                         <button
                           onClick={() => setRejectId(req.id)}
-                          disabled={actionId === req.id}
+                          disabled={isLoading || actionId === req.id}
                           className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
                           title="Reject"
                         >
@@ -182,8 +192,13 @@ const LeaveApplication = () => {
               className="w-full border border-gray-200 rounded-lg p-3 text-sm min-h-[100px] mb-4"
             />
             <div className="flex gap-3 justify-end">
-              <button onClick={() => { setRejectId(null); setRejectReason(""); }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
-              <button onClick={handleReject} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg">Reject</button>
+              <button onClick={() => { setRejectId(null); setRejectReason(""); }} disabled={isLoading} className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+              <button onClick={handleReject} disabled={isLoading} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                <span className="inline-flex items-center gap-2">
+                  {activeKey === `reject-${rejectId}` && <Loader2 size={14} className="animate-spin" />}
+                  {activeKey === `reject-${rejectId}` ? "Rejecting..." : "Reject"}
+                </span>
+              </button>
             </div>
           </div>
         </div>
