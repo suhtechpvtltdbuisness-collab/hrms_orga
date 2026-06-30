@@ -4,7 +4,7 @@ import {
   ChevronRight, Search, CheckCircle2, AlertCircle, User,
   TrendingUp, RefreshCw, ChevronDown, Loader2, Users, CalendarDays
 } from "lucide-react";
-import { employeeService, leaveService } from "../../../service";
+import { employeeService, leaveManagementService, leaveService } from "../../../service";
 
 /* ─── Mock allocation history (shown after an employee is selected) ─── */
 const MOCK_HISTORY = [
@@ -13,42 +13,82 @@ const MOCK_HISTORY = [
   { id: 3, date: "2025-01-10", allocatedBy: "HR Admin", sick: 10, casual: 12, paid: 15, note: "Annual allocation" },
 ];
 
-/* ─── Leave type config ─── */
-const LEAVE_TYPES = [
+const LEAVE_TYPE_STYLES = [
   {
-    key: "sickLeave",
-    remainingKey: "sickRemaining",
-    label: "Sick Leave",
     icon: "🤒",
-    color: "from-red-400 to-rose-500",
     bgLight: "bg-red-50",
     border: "border-red-100",
     textColor: "text-red-600",
     ringColor: "#f87171",
   },
   {
-    key: "casualLeave",
-    remainingKey: "casualRemaining",
-    label: "Casual Leave",
     icon: "☀️",
-    color: "from-amber-400 to-orange-500",
     bgLight: "bg-amber-50",
     border: "border-amber-100",
     textColor: "text-amber-600",
     ringColor: "#fbbf24",
   },
   {
-    key: "paidLeave",
-    remainingKey: "paidRemaining",
-    label: "Earned / Paid Leave",
     icon: "🏖️",
-    color: "from-violet-500 to-purple-600",
     bgLight: "bg-purple-50",
     border: "border-purple-100",
     textColor: "text-purple-600",
     ringColor: "#8b5cf6",
   },
+  {
+    icon: "🩺",
+    bgLight: "bg-emerald-50",
+    border: "border-emerald-100",
+    textColor: "text-emerald-600",
+    ringColor: "#10b981",
+  },
+  {
+    icon: "🌿",
+    bgLight: "bg-sky-50",
+    border: "border-sky-100",
+    textColor: "text-sky-600",
+    ringColor: "#0ea5e9",
+  },
+  {
+    icon: "📅",
+    bgLight: "bg-fuchsia-50",
+    border: "border-fuchsia-100",
+    textColor: "text-fuchsia-600",
+    ringColor: "#d946ef",
+  },
 ];
+
+const detectBalanceField = (type) => {
+  const value = `${type?.name || ""} ${type?.code || ""}`.toLowerCase();
+  if (/(^|[\s_-])(sick|sl)([\s_-]|$)/.test(value)) {
+    return { key: "sickLeave", remainingKey: "sickRemaining" };
+  }
+  if (/(^|[\s_-])(casual|cl)([\s_-]|$)/.test(value)) {
+    return { key: "casualLeave", remainingKey: "casualRemaining" };
+  }
+  if (/(^|[\s_-])(paid|earned|privilege|annual|pl|el)([\s_-]|$)/.test(value)) {
+    return { key: "paidLeave", remainingKey: "paidRemaining" };
+  }
+  return null;
+};
+
+const createLeaveTypeCard = (type, index) => {
+  const style = LEAVE_TYPE_STYLES[index % LEAVE_TYPE_STYLES.length];
+  const mapped = detectBalanceField(type);
+  return {
+    id: type.id,
+    label: type.name,
+    icon: style.icon,
+    bgLight: style.bgLight,
+    border: style.border,
+    textColor: style.textColor,
+    ringColor: style.ringColor,
+    fieldKey: mapped?.key || `custom_${type.id}`,
+    balanceKey: mapped?.key || null,
+    remainingKey: mapped?.remainingKey || null,
+    supportsAllocation: Boolean(mapped),
+  };
+};
 
 /* ─── Circular progress ring ─── */
 const CircleRing = ({ used, total, color }) => {
@@ -75,9 +115,9 @@ const CircleRing = ({ used, total, color }) => {
 
 /* ─── Balance Card ─── */
 const BalanceCard = ({ lt, balance, formValue, onChange }) => {
-  const total = balance ? (balance[lt.key] ?? 0) : 0;
-  const used = balance ? (total - (balance[lt.remainingKey] ?? total)) : 0;
-  const remaining = balance ? (balance[lt.remainingKey] ?? total) : 0;
+  const total = balance && lt.balanceKey ? (balance[lt.balanceKey] ?? 0) : 0;
+  const used = balance && lt.balanceKey && lt.remainingKey ? (total - (balance[lt.remainingKey] ?? total)) : 0;
+  const remaining = balance && lt.remainingKey ? (balance[lt.remainingKey] ?? total) : 0;
 
   return (
     <div className={`rounded-2xl border ${lt.border} ${lt.bgLight} p-4 flex flex-col gap-3`}>
@@ -86,14 +126,17 @@ const BalanceCard = ({ lt, balance, formValue, onChange }) => {
         <span className="text-xl">{lt.icon}</span>
         <div>
           <p className="text-sm font-semibold text-[#1E1E1E]">{lt.label}</p>
-          {balance && (
+          {lt.supportsAllocation && balance && (
             <p className="text-xs text-gray-400">{remaining} of {total} days remaining</p>
+          )}
+          {!lt.supportsAllocation && (
+            <p className="text-xs text-gray-400">Configured leave type</p>
           )}
         </div>
       </div>
 
       {/* Ring + Stats */}
-      {balance ? (
+      {lt.supportsAllocation && balance ? (
         <div className="flex items-center gap-4">
           <CircleRing used={used} total={total} color={lt.ringColor} />
           <div className="flex-1 space-y-1.5">
@@ -112,7 +155,9 @@ const BalanceCard = ({ lt, balance, formValue, onChange }) => {
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-16 text-gray-300 text-sm">No data</div>
+        <div className="flex items-center justify-center h-16 text-gray-300 text-sm">
+          {lt.supportsAllocation ? "No data" : "Not linked to balance table"}
+        </div>
       )}
 
       {/* Allocation Input */}
@@ -124,9 +169,13 @@ const BalanceCard = ({ lt, balance, formValue, onChange }) => {
           max="365"
           value={formValue}
           onChange={e => onChange(e.target.value)}
-          className={`w-full border ${lt.border} rounded-xl px-3 py-2 text-sm font-semibold text-center text-[#1E1E1E] outline-none focus:ring-2 focus:ring-[#7D1EDB]/20 focus:border-[#7D1EDB] bg-white transition-all`}
+          disabled={!lt.supportsAllocation}
+          className={`w-full border ${lt.border} rounded-xl px-3 py-2 text-sm font-semibold text-center text-[#1E1E1E] outline-none focus:ring-2 focus:ring-[#7D1EDB]/20 focus:border-[#7D1EDB] bg-white transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
           placeholder="0"
         />
+        {!lt.supportsAllocation && (
+          <p className="mt-1 text-[11px] text-gray-400">Balance mapping is available for Sick, Casual, and Paid/Earned leave types.</p>
+        )}
       </div>
     </div>
   );
@@ -144,9 +193,10 @@ const LeaveAllocation = () => {
   const [search, setSearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
+  const [leaveTypes, setLeaveTypes] = useState([]);
 
   // Form state
-  const [form, setForm] = useState({ sickLeave: "", casualLeave: "", paidLeave: "" });
+  const [form, setForm] = useState({});
 
   // Balance + action state
   const [currentBalance, setCurrentBalance] = useState(null);
@@ -174,6 +224,10 @@ const LeaveAllocation = () => {
           designation: item.designation?.name || "—",
         })));
       }
+      const leaveTypeRes = await leaveManagementService.getLeaveTypes();
+      if (leaveTypeRes.success) {
+        setLeaveTypes((leaveTypeRes.data || []).map(createLeaveTypeCard));
+      }
       setEmpLoading(false);
     };
     load();
@@ -181,25 +235,31 @@ const LeaveAllocation = () => {
 
   /* ── Load balance when employee selected ── */
   useEffect(() => {
-    if (!selectedEmp) { setCurrentBalance(null); setForm({ sickLeave: "", casualLeave: "", paidLeave: "" }); return; }
+    if (!selectedEmp) { setCurrentBalance(null); setForm({}); return; }
     const loadBalance = async () => {
       setBalanceLoading(true);
       const res = await leaveService.getBalance(selectedEmp.id);
       if (res.success && res.data) {
         setCurrentBalance(res.data);
-        setForm({
-          sickLeave: res.data.sickLeave ?? "",
-          casualLeave: res.data.casualLeave ?? "",
-          paidLeave: res.data.paidLeave ?? "",
-        });
+        setForm(
+          leaveTypes.reduce((acc, type) => {
+            acc[type.fieldKey] = type.balanceKey ? (res.data[type.balanceKey] ?? "") : "";
+            return acc;
+          }, {}),
+        );
       } else {
         setCurrentBalance(null);
-        setForm({ sickLeave: "", casualLeave: "", paidLeave: "" });
+        setForm(
+          leaveTypes.reduce((acc, type) => {
+            acc[type.fieldKey] = "";
+            return acc;
+          }, {}),
+        );
       }
       setBalanceLoading(false);
     };
     loadBalance();
-  }, [selectedEmp]);
+  }, [selectedEmp, leaveTypes]);
 
   /* ── Auto-dismiss toast ── */
   useEffect(() => {
@@ -213,11 +273,14 @@ const LeaveAllocation = () => {
     e?.preventDefault();
     if (!selectedEmp) { setToast({ type: "error", text: "Please select an employee first." }); return; }
     setSubmitLoading(true);
+    const payload = leaveTypes.reduce((acc, type) => {
+      if (type.balanceKey) {
+        acc[type.balanceKey] = Number(form[type.fieldKey]) || 0;
+      }
+      return acc;
+    }, { empId: Number(selectedEmp.id) });
     const res = await leaveService.allocateLeave({
-      empId: Number(selectedEmp.id),
-      sickLeave: Number(form.sickLeave) || 0,
-      casualLeave: Number(form.casualLeave) || 0,
-      paidLeave: Number(form.paidLeave) || 0,
+      ...payload,
     });
     setSubmitLoading(false);
     if (res.success) {
@@ -233,7 +296,10 @@ const LeaveAllocation = () => {
     !search || e.name.toLowerCase().includes(search.toLowerCase()) || e.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalAllocated = (Number(form.sickLeave) || 0) + (Number(form.casualLeave) || 0) + (Number(form.paidLeave) || 0);
+  const totalAllocated = leaveTypes.reduce((sum, type) => {
+    if (!type.supportsAllocation) return sum;
+    return sum + (Number(form[type.fieldKey]) || 0);
+  }, 0);
   const fmt = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   return (
@@ -378,14 +444,14 @@ const LeaveAllocation = () => {
                   </div>
 
                   {/* Balance Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {LEAVE_TYPES.map(lt => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {leaveTypes.map(lt => (
                       <BalanceCard
-                        key={lt.key}
+                        key={lt.id}
                         lt={lt}
                         balance={currentBalance}
-                        formValue={form[lt.key]}
-                        onChange={v => setForm(prev => ({ ...prev, [lt.key]: v }))}
+                        formValue={form[lt.fieldKey] ?? ""}
+                        onChange={v => setForm(prev => ({ ...prev, [lt.fieldKey]: v }))}
                       />
                     ))}
                   </div>

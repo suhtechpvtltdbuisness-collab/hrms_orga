@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, X, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, X, Clock, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { leaveRequestService, leaveService } from '../../../service';
-
-const leaveTypes = ['Casual Leave', 'Sick Leave', 'Earned Leave', 'Maternity Leave', 'Paternity Leave'];
 
 const statusStyle = {
   approved: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2, label: 'Approved' },
@@ -19,6 +17,7 @@ export default function EmployeeLeave() {
   const [balance, setBalance] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [leaveTypes, setLeaveTypes] = useState([]);
 
   const userData = JSON.parse(localStorage.getItem('userData') || '{}');
   const userId = userData?.id;
@@ -26,12 +25,14 @@ export default function EmployeeLeave() {
   const loadData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [balanceRes, requestsRes] = await Promise.all([
+    const [balanceRes, requestsRes, leaveTypesRes] = await Promise.all([
       leaveService.getBalance(userId),
       leaveRequestService.getLeaveRequests({ empId: userId }),
+      leaveRequestService.getAvailableLeaveTypes(),
     ]);
     if (balanceRes.success) setBalance(balanceRes.data);
     if (requestsRes.success) setHistory(requestsRes.data || []);
+    if (leaveTypesRes.success) setLeaveTypes(leaveTypesRes.data || []);
     setLoading(false);
   }, [userId]);
 
@@ -56,7 +57,7 @@ export default function EmployeeLeave() {
     setSubmitting(true);
     setError('');
     const res = await leaveRequestService.createLeaveRequest({
-      leaveType: leaveRequestService.leaveTypeToApi(form.type),
+      leaveType: form.type,
       fromDate: form.from,
       toDate: form.to,
       reason: form.reason,
@@ -82,7 +83,7 @@ export default function EmployeeLeave() {
         </div>
         <button
           onClick={() => { setShowModal(true); setError(''); }}
-          disabled={!balance}
+          disabled={!balance || leaveTypes.length === 0}
           className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all active:scale-95 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" /> Apply Leave
@@ -169,7 +170,11 @@ export default function EmployeeLeave() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5">Leave Type *</label>
                 <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" required>
                   <option value="">Select leave type</option>
-                  {leaveTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {leaveTypes.map((t) => (
+                    <option key={t.id} value={t.requestType}>
+                      {t.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -186,8 +191,11 @@ export default function EmployeeLeave() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5">Reason</label>
                 <textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} rows={3} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none" placeholder="Brief reason for leave" />
               </div>
-              <button type="submit" disabled={submitting} className="w-full py-3 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-60">
-                {submitting ? 'Submitting...' : 'Submit Request'}
+              <button type="submit" disabled={submitting} className="w-full py-3 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                <span className="inline-flex items-center justify-center gap-2">
+                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting ? 'Submitting...' : 'Submit Request'}
+                </span>
               </button>
             </form>
           </div>
