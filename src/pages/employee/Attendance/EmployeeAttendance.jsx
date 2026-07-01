@@ -316,17 +316,40 @@ const resolveShiftFromContext = (attendanceInfo, profileUser, shiftTypes) => {
 const normalizeShiftAssignment = (item) => {
   const source = item?.shiftAssignment || item?.assignment || item?.record || item?.data || item || {};
   const employee = source.employee || item?.employee || item?.user || {};
-  const shiftType = source.shiftType || item?.shiftType || source.shift || item?.shift || null;
-  const shiftTypeId = firstDefined(source.shiftTypeId, item?.shiftTypeId, shiftType?.id, shiftType?._id, '');
+  const shiftType = source.shift || source.shiftType || item?.shift || item?.shiftType || null;
+  const shiftTypeId = firstDefined(
+    source.shiftTypeId,
+    source.shiftId,
+    item?.shiftTypeId,
+    item?.shiftId,
+    shiftType?.id,
+    shiftType?._id,
+    '',
+  );
 
   return {
-    id: source.id || item?.id || source._id || '',
-    employeeId: firstDefined(source.employeeId, item?.employeeId, employee.id, employee.userId, ''),
+    id: source.assignmentId || source.id || item?.assignmentId || item?.id || source._id || '',
+    employeeId: firstDefined(
+      source.employeeId,
+      source.empId,
+      item?.employeeId,
+      item?.empId,
+      employee.id,
+      employee.userId,
+      '',
+    ),
     employeeName: firstDefined(
       employee.name,
       employee.fullName,
       source.employeeName,
       item?.employeeName,
+      '',
+    ),
+    employeeCode: firstDefined(
+      source.employeeCode,
+      item?.employeeCode,
+      employee.employeeId,
+      employee.employeeCode,
       '',
     ),
     departmentName: firstDefined(
@@ -340,8 +363,8 @@ const normalizeShiftAssignment = (item) => {
     ),
     shiftTypeId: shiftTypeId ? String(shiftTypeId) : '',
     shiftType: shiftType ? normalizeShiftType(shiftType) : null,
-    date: source.date || source.shiftDate || source.assignmentDate || item?.date || '',
-    status: String(source.status || item?.status || '').toLowerCase(),
+    date: source.rosterDate || source.date || source.shiftDate || source.assignmentDate || item?.rosterDate || item?.date || '',
+    status: String(source.status || item?.status || '').trim().toLowerCase(),
     raw: source,
   };
 };
@@ -370,6 +393,7 @@ const EmployeeAttendance = () => {
 
   const [employeeName, setEmployeeName] = useState('');
   const [departmentName, setDepartmentName] = useState('');
+  const [shiftRecord, setShiftRecord] = useState(null);
   const [shiftInfo, setShiftInfo] = useState(null);
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [records, setRecords] = useState([]);
@@ -411,20 +435,24 @@ const EmployeeAttendance = () => {
       const profileUser = profileRes.success ? (profileRes.data?.user || storedUser) : storedUser;
       const userId = profileUser?.id || profileUser?._id;
 
-      const [attendanceInfoRes, shiftTypesRes, shiftAssignmentsRes] = await Promise.all([
+      const employeeLookupId = Number(profileUser?.id || profileUser?.userId || profileUser?._id);
+
+      const [attendanceInfoRes, employeeShiftRes, shiftTypesRes] = await Promise.all([
         userId ? attendanceService.getEmployeeInfo(Number(userId)) : Promise.resolve({ success: false, data: null }),
-        shiftService.getShiftTypes(),
-        userId
-          ? shiftAssignmentService.getEmployeeAssignments(Number(userId), todayKey, todayKey)
+        Number.isFinite(employeeLookupId)
+          ? shiftAssignmentService.getEmployeeAssignments(employeeLookupId, todayKey, todayKey)
           : Promise.resolve({ success: false, data: [] }),
+        shiftService.getShiftTypes(),
       ]);
 
       const attendanceInfo = attendanceInfoRes.success ? (attendanceInfoRes.data || {}) : {};
       const shiftTypes = shiftTypesRes.success && Array.isArray(shiftTypesRes.data) ? shiftTypesRes.data : [];
-      const assignmentList = shiftAssignmentsRes.success && Array.isArray(shiftAssignmentsRes.data)
-        ? shiftAssignmentsRes.data.map(normalizeShiftAssignment)
+      const assignmentList = employeeShiftRes.success && Array.isArray(employeeShiftRes.data)
+        ? employeeShiftRes.data.map(normalizeShiftAssignment)
         : [];
-      const todayAssignment = assignmentList.find((assignment) => toDateKey(assignment.date) === todayKey) || assignmentList[0] || null;
+      const todayAssignment = assignmentList.find((assignment) => toDateKey(assignment.date) === todayKey)
+        || assignmentList[0]
+        || null;
 
       const resolvedShift = todayAssignment
         ? (
@@ -452,6 +480,7 @@ const EmployeeAttendance = () => {
 
       setEmployeeName(resolvedEmployeeName);
       setDepartmentName(resolvedDepartment);
+      setShiftRecord(todayAssignment);
       setShiftInfo(resolvedShift);
     } catch (error) {
       console.error(error);
@@ -537,7 +566,7 @@ const EmployeeAttendance = () => {
 
   const currentAttendance = todayRecord;
   const hasShift = Boolean(shiftInfo?.name || shiftInfo?.startTime || shiftInfo?.endTime);
-  const currentShiftStatus = shiftInfo?.status || 'active';
+  const currentShiftStatus = shiftRecord?.status || shiftInfo?.status || 'active';
 
   const shiftStart = hasShift ? buildDateTime(time, shiftInfo.startTime) : null;
   const shiftEnd = hasShift ? buildDateTime(time, shiftInfo.endTime) : null;

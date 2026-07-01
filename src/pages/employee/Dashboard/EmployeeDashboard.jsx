@@ -98,7 +98,7 @@ export default function EmployeeDashboard() {
       } else {
         alert(res.message || 'Failed to check in');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to check in');
     } finally {
       setCheckInLoading(false);
@@ -114,7 +114,7 @@ export default function EmployeeDashboard() {
       } else {
         alert(res.message || 'Failed to check out');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to check out');
     } finally {
       setCheckOutLoading(false);
