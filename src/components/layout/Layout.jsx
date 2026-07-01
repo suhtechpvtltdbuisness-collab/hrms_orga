@@ -25,7 +25,7 @@ const Layout = ({ children }) => {
   }, []);
 
   return (
-    <div className="bg-[#eeeff1] font-sans">
+    <div className="min-h-screen bg-[#eeeff1] font-sans overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -45,14 +45,14 @@ const Layout = ({ children }) => {
         className={`transition-all duration-300 ${isSidebarOpen ? 'ml-12 min-[1260px]:ml-61' : 'ml-12'
           }`}
       >
-        <div className="px-4 pt-4 pb-0">
+        <div className="px-2 sm:px-4 pt-4 pb-0">
           {/* Topbar */}
           <div className="sticky top-0 z-30 bg-[#eeeff1] pb-2 -mt-4 pt-4">
             <Topbar />
           </div>
 
           {/* Page Content Container */}
-          <main className="flex-1 overflow-x-auto -mr-3.75">
+          <main className="flex-1 min-w-0 overflow-x-hidden">
             {/* Inner content container - align with Topbar's margin */}
             <div className="w-full mx-auto">
               {children || <Outlet />}
