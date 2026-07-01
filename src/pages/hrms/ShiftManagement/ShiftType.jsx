@@ -4,6 +4,43 @@ import { ChevronRight, Plus, Search, Trash2, Edit } from 'lucide-react';
 import { shiftService } from '../../../service';
 import toast from 'react-hot-toast';
 
+const parseTimeInMinutes = (value) => {
+    const match = String(value || '')
+        .trim()
+        .toLowerCase()
+        .match(/^(\d{1,2})(?::(\d{1,2}))?\s*(am|pm)?$/);
+
+    if (!match) return null;
+
+    let hours = Number(match[1]);
+    const minutes = Number(match[2] || 0);
+    const meridiem = match[3];
+
+    if (minutes > 59 || (meridiem && (hours < 1 || hours > 12)) || (!meridiem && hours > 23)) {
+        return null;
+    }
+
+    if (meridiem) {
+        hours %= 12;
+        if (meridiem === 'pm') hours += 12;
+    }
+
+    return (hours * 60) + minutes;
+};
+
+const calculateTotalHours = (startTime, endTime, fallback) => {
+    const start = parseTimeInMinutes(startTime);
+    const end = parseTimeInMinutes(endTime);
+
+    if (start === null || end === null) return fallback || '—';
+
+    let duration = end - start;
+    if (duration <= 0) duration += 24 * 60;
+
+    const hours = duration / 60;
+    return `${Number.isInteger(hours) ? hours.toFixed(1) : hours.toFixed(2).replace(/0$/, '')} hrs`;
+};
+
 const ShiftType = () => {
     const navigate = useNavigate();
     const [shiftTypes, setShiftTypes] = useState([]);
@@ -152,7 +189,9 @@ const ShiftType = () => {
                                     </td>
                                     <td className="py-3.5 px-6 text-center text-gray-600">{shift.startTime}</td>
                                     <td className="py-3.5 px-6 text-center text-gray-600">{shift.endTime}</td>
-                                    <td className="py-3.5 px-6 text-center text-gray-600">{shift.totalHours}</td>
+                                    <td className="py-3.5 px-6 text-center text-gray-600">
+                                        {calculateTotalHours(shift.startTime, shift.endTime, shift.totalHours)}
+                                    </td>
                                     <td className="py-3.5 px-6 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button 
