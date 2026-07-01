@@ -18,6 +18,7 @@ import EmployeeDashboard from "./pages/employee/Dashboard/EmployeeDashboard";
 import EmployeeProfile from "./pages/employee/Profile/EmployeeProfile";
 import EmployeeAttendance from "./pages/employee/Attendance/EmployeeAttendance";
 import EmployeeLeave from "./pages/employee/Leave/EmployeeLeave";
+import EmployeeLeaveManagement from "./pages/employee/Leave/EmployeeLeaveManagement";
 import EmployeePayroll from "./pages/employee/Payroll/EmployeePayroll";
 import EmployeeDocuments from "./pages/employee/Documents/EmployeeDocuments";
 import EmployeeTasks from "./pages/employee/Tasks/EmployeeTasks";
@@ -409,7 +410,8 @@ function App() {
           <Route index element={<EmployeeDashboard />} />
           <Route path="profile" element={<EmployeeProfile />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
-          <Route path="leave" element={<EmployeeLeave />} />
+          <Route path="leave" element={<EmployeeLeaveManagement />} />
+          <Route path="leave-encashment" element={<EmployeeLeave />} />
           <Route path="payroll" element={<EmployeePayroll />} />
           <Route path="documents" element={<EmployeeDocuments />} />
           <Route path="tasks" element={<EmployeeTasks />} />

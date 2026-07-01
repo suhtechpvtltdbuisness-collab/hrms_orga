@@ -2142,6 +2142,175 @@ export const shiftService = {
 };
 
 
+// ─── Shift Assignment Service ───────────────────────────────────────────────────
+const normalizeShiftAssignmentList = (payload) => {
+  const root = payload?.data ?? payload;
+  if (Array.isArray(root)) return root;
+  if (Array.isArray(root?.data)) return root.data;
+  if (Array.isArray(root?.assignments)) return root.assignments;
+  if (Array.isArray(root?.records)) return root.records;
+  if (Array.isArray(root?.rows)) return root.rows;
+  if (root && typeof root === "object") {
+    const arrayValue = Object.values(root).find(Array.isArray);
+    if (arrayValue) return arrayValue;
+  }
+  return [];
+};
+
+const normalizeShiftAssignmentMeta = (payload, fallback = {}) => {
+  const root = payload?.data ?? payload;
+  return {
+    page: Number(root?.page ?? fallback.page ?? 1),
+    limit: Number(root?.limit ?? fallback.limit ?? 10),
+    total: Number(
+      root?.total ??
+        root?.totalCount ??
+        root?.count ??
+        fallback.total ??
+        normalizeShiftAssignmentList(payload).length ??
+        0,
+    ),
+  };
+};
+
+export const shiftAssignmentService = {
+  getShiftAssignments: async ({ date, search = "", page = 1, limit = 10 } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (date) params.set("date", date);
+      params.set("search", search ?? "");
+      params.set("page", String(page ?? 1));
+      params.set("limit", String(limit ?? 10));
+
+      const response = await apiFetch(
+        `${BASE_URL}/shift-assignments?${params.toString()}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to fetch shift assignments",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message,
+        data: normalizeShiftAssignmentList(data),
+        meta: normalizeShiftAssignmentMeta(data, { page, limit }),
+        raw: data,
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateRoster: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/shift-assignments/roster`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to update roster",
+        };
+      }
+
+      return { success: true, message: data.message || "Roster updated", data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  bulkCreate: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/shift-assignments/bulk`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to create shift assignments",
+        };
+      }
+
+      return { success: true, message: data.message || "Shift assignments saved", data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getEmployeeAssignments: async (employeeId, fromDate = "", toDate = "") => {
+    try {
+      const params = new URLSearchParams();
+      if (fromDate) params.set("fromDate", fromDate);
+      if (toDate) params.set("toDate", toDate);
+
+      const query = params.toString();
+      const response = await apiFetch(
+        `${BASE_URL}/shift-assignments/employee/${employeeId}${query ? `?${query}` : ""}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to fetch employee shift assignments",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message,
+        data: normalizeShiftAssignmentList(data),
+        raw: data,
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteShiftAssignment: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/shift-assignments/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to delete shift assignment",
+        };
+      }
+
+      return { success: true, message: data.message || "Shift assignment deleted", data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
+
 const loadRazorpayScript = () =>
   new Promise((resolve, reject) => {
     if (window.Razorpay) {

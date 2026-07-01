@@ -13,14 +13,16 @@ const getGreeting = () => {
   return { text: 'Good Evening', icon: '🌙' };
 };
 
-const StatCard = ({ icon: Icon, label, value, sub, color, onClick }) => (
+const StatCard = ({ icon, label, value, sub, color, onClick }) => {
+  const CardIcon = icon;
+  return (
   <div
     onClick={onClick}
     className={`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group`}
   >
     <div className="flex items-start justify-between mb-3">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-        <Icon className="w-5 h-5" />
+        <CardIcon className="w-5 h-5" />
       </div>
       <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-violet-500 transition-colors" />
     </div>
@@ -28,19 +30,23 @@ const StatCard = ({ icon: Icon, label, value, sub, color, onClick }) => (
     <p className="text-sm font-medium text-gray-500">{label}</p>
     {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
   </div>
-);
+  );
+};
 
-const QuickAction = ({ icon: Icon, label, color, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-white hover:shadow-md transition-all group`}
-  >
-    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform`}>
-      <Icon className="w-5 h-5" />
-    </div>
-    <span className="text-xs font-medium text-gray-600 text-center leading-tight">{label}</span>
-  </button>
-);
+const QuickAction = ({ icon, label, color, onClick }) => {
+  const ActionIcon = icon;
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-white hover:shadow-md transition-all group`}
+    >
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform`}>
+        <ActionIcon className="w-5 h-5" />
+      </div>
+      <span className="text-xs font-medium text-gray-600 text-center leading-tight">{label}</span>
+    </button>
+  );
+};
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
@@ -66,8 +72,8 @@ export default function EmployeeDashboard() {
       if (res.success && res.data) {
         setTodayRecord(res.data.record || null);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -92,7 +98,7 @@ export default function EmployeeDashboard() {
       } else {
         alert(res.message || 'Failed to check in');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to check in');
     } finally {
       setCheckInLoading(false);
@@ -108,7 +114,7 @@ export default function EmployeeDashboard() {
       } else {
         alert(res.message || 'Failed to check out');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to check out');
     } finally {
       setCheckOutLoading(false);
@@ -182,7 +188,7 @@ export default function EmployeeDashboard() {
       {/* Stats + Check-In Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Clock} label="Attendance" value="92%" sub="This month" color="bg-violet-100 text-violet-600" onClick={() => navigate('/employee/attendance')} />
-        <StatCard icon={Calendar} label="Leave Balance" value="19" sub="Days remaining" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave')} />
+        <StatCard icon={Calendar} label="Leave Encashment" value="19" sub="Days remaining" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave-encashment')} />
         <StatCard icon={CheckSquare} label="Tasks Pending" value="3" sub="2 due this week" color="bg-amber-100 text-amber-600" onClick={() => navigate('/employee/tasks')} />
         <StatCard icon={DollarSign} label="Last Payslip" value="₹45,000" sub="May 2025" color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
       </div>
@@ -265,7 +271,7 @@ export default function EmployeeDashboard() {
               </div>
               <h2 className="text-sm font-semibold text-gray-900">Leave Balance</h2>
             </div>
-            <button onClick={() => navigate('/employee/leave')} className="text-xs text-violet-600 font-medium hover:underline">Apply</button>
+            <button onClick={() => navigate('/employee/leave-encashment')} className="text-xs text-violet-600 font-medium hover:underline">Open</button>
           </div>
           <div className="space-y-4">
             {leaveBalance.map((l, i) => (
@@ -377,7 +383,7 @@ export default function EmployeeDashboard() {
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-          <QuickAction icon={Calendar} label="Apply Leave" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave')} />
+          <QuickAction icon={Calendar} label="Encashment" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave-encashment')} />
           <QuickAction icon={Clock} label="Request Attendance" color="bg-violet-100 text-violet-600" onClick={() => navigate('/employee/attendance')} />
           <QuickAction icon={DollarSign} label="Download Payslip" color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
           <QuickAction icon={TrendingUp} label="View Performance" color="bg-amber-100 text-amber-600" onClick={() => navigate('/employee/performance')} />

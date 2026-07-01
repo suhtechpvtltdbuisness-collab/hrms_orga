@@ -52,17 +52,17 @@ const Topbar = () => {
     };
 
     return (
-        <div className="bg-white px-6 py-8 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9] gap-6">
+        <div className="bg-white px-3 py-4 sm:px-5 lg:px-6 lg:py-5 mx-1 sm:mx-3 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9] gap-3 sm:gap-6">
 
             {/* LEFT: Greeting + Search Bar */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
 
                 {/* Greeting */}
                 <div className="flex flex-col justify-center shrink-0">
-                    <h2 className="text-lg font-bold text-[#7D1EDB] leading-tight whitespace-nowrap">
+                    <h2 className="text-sm sm:text-lg font-bold text-[#7D1EDB] leading-tight truncate">
                         {greeting.text}, {firstName}&nbsp;{greeting.emoji}
                     </h2>
-                    <p className="text-sm text-[#9B9B9B] mt-0.5 whitespace-nowrap">
+                    <p className="hidden sm:block text-sm text-[#9B9B9B] mt-0.5 whitespace-nowrap">
                         Here's an overview of your work
                     </p>
                 </div>
@@ -82,20 +82,20 @@ const Topbar = () => {
                 </div>
 
                 {/* Mobile Search Icon */}
-                <div className="md:hidden p-2 rounded-full bg-gray-50 text-gray-500 cursor-pointer">
+                <div className="hidden sm:flex md:hidden p-2 rounded-full bg-gray-50 text-gray-500 cursor-pointer">
                     <Search size={20} />
                 </div>
             </div>
 
             {/* RIGHT: Notification + Profile */}
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
 
                 {/* Notification Bell */}
                 <div
                     onClick={() => navigate('/hrms/notifications')}
-                    className="relative cursor-pointer w-12 h-12 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]"
+                    className="relative cursor-pointer w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]"
                 >
-                    <Bell size={26} color="#7D1EDB" fill="#7D1EDB" />
+                    <Bell className="w-5 h-5 sm:w-[26px] sm:h-[26px]" color="#7D1EDB" fill="#7D1EDB" />
                     <div className="absolute top-1 right-1 w-4 h-4 bg-[#FF3B30] rounded-full border-2 border-white flex items-center justify-center">
                         <span className="text-white text-[9px] font-bold">2</span>
                     </div>
@@ -108,7 +108,7 @@ const Topbar = () => {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                     >
                         <img
-                            className="h-11 w-11 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
+                            className="h-9 w-9 sm:h-11 sm:w-11 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
                             src={userImage}
                             alt={userName}
                         />

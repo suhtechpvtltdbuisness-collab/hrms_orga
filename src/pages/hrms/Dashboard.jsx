@@ -35,7 +35,7 @@ const StatCard = ({ icon, label, value, sub, trend, highlighted, loading, onMous
   <div
     onMouseEnter={onMouseEnter}
     onMouseLeave={onMouseLeave}
-    className={`relative flex flex-col justify-between rounded-2xl p-4 border overflow-hidden cursor-pointer select-none h-full
+    className={`relative flex flex-col justify-between rounded-2xl p-4 border overflow-hidden cursor-pointer select-none min-h-[132px]
       transition-all duration-300 ease-in-out
       ${ highlighted
         ? 'bg-gradient-to-br from-[#7D1EDB] to-[#a855f7] border-transparent text-white shadow-purple-200 shadow-lg -translate-y-1'
@@ -299,13 +299,13 @@ const HRMSDashboard = () => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div
-      className="h-[calc(100vh-6.5rem)] bg-[#F7F7F9] px-4 py-3 flex flex-col gap-3 overflow-hidden"
+      className="min-h-[calc(100vh-7rem)] bg-[#F7F7F9] px-3 py-3 sm:px-4 lg:px-5 flex flex-col gap-4 overflow-x-hidden"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
 
 
       {/* ── STAT CARDS ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-6 gap-3 h-[20%] min-h-[110px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <StatCard
           loading={loading}
           icon={<Users />}
@@ -368,11 +368,11 @@ const HRMSDashboard = () => {
         />
       </div>
 
-      {/* ── MIDDLE ROW ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-[38%] min-h-0">
+      {/* ── DASHBOARD CONTENT GRID ─────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
 
         {/* Onboarding Tasks */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-1 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[300px] md:h-[360px]">
           <div className="flex items-center justify-between mb-1 shrink-0">
             <h2 className="text-base font-semibold text-[#1E1E1E]">Onboarding Tasks</h2>
             <span className="text-sm font-bold text-[#7D1EDB]">{taskPercent}%</span>
@@ -389,9 +389,9 @@ const HRMSDashboard = () => {
         </div>
 
         {/* Time Tracker */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-2 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[320px] md:h-[360px]">
           <h2 className="text-base font-semibold text-[#1E1E1E] mb-2 shrink-0">Time Tracker</h2>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-[230px]">
             {loading ? (
               <Skeleton className="h-full w-full" />
             ) : (
@@ -409,7 +409,7 @@ const HRMSDashboard = () => {
         </div>
 
         {/* Daily Attendance Statistics */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-3 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[320px] md:h-[360px]">
           <h2 className="text-base font-semibold text-[#1E1E1E] mb-1 shrink-0">Daily Attendance statistic</h2>
           <div className="flex items-center gap-3 mb-2 flex-wrap shrink-0">
             {[
@@ -423,7 +423,7 @@ const HRMSDashboard = () => {
               </div>
             ))}
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-[230px]">
             {loading ? (
               <Skeleton className="h-full w-full" />
             ) : (
@@ -441,13 +441,8 @@ const HRMSDashboard = () => {
           )}
           </div>
         </div>
-      </div>
-
-      {/* ── BOTTOM ROW ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
-
         {/* Recent Activity */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-5 xl:order-4 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[280px] md:h-[320px]">
           <div className="flex items-center justify-between mb-2 shrink-0">
             <h2 className="text-base font-semibold text-[#1E1E1E]">Recent Activity</h2>
             <button
@@ -482,7 +477,7 @@ const HRMSDashboard = () => {
         </div>
 
         {/* Job Openings */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-6 xl:order-5 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[280px] md:h-[320px]">
           <div className="flex items-center justify-between mb-2 shrink-0">
             <h2 className="text-base font-semibold text-[#1E1E1E]">Job Openings</h2>
             <button
@@ -510,7 +505,7 @@ const HRMSDashboard = () => {
                     <p className="text-sm font-medium text-[#1E1E1E] truncate">{job.title}</p>
                     <p className="text-[11px] text-[#9B9B9B]">{job.department} · {job.location}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 max-sm:flex-col max-sm:items-end">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       job.status === "active"
                         ? "bg-green-100 text-green-700"
@@ -532,14 +527,14 @@ const HRMSDashboard = () => {
         </div>
 
         {/* My Tools */}
-        <div className="bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col">
+        <div className="order-4 xl:order-6 bg-white border border-[#EBEBEB] rounded-2xl p-4 flex flex-col min-h-[300px] md:h-[360px] xl:h-[320px]">
           <h2 className="text-base font-semibold text-[#1E1E1E] mb-3 shrink-0">My Tools</h2>
-          <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+          <div className="grid grid-cols-2 gap-3 flex-1 auto-rows-fr">
             {myTools.map(({ label, Icon, path }) => (
               <button
                 key={label}
                 onClick={() => navigate(path)}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-[#F7F4FF] hover:bg-[#EDD9FF] transition-colors group cursor-pointer h-full"
+                className="flex min-h-[105px] flex-col items-center justify-center gap-1.5 rounded-xl bg-[#F7F4FF] hover:bg-[#EDD9FF] transition-colors group cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center group-hover:shadow-md transition-shadow shrink-0">
                   <Icon size={20} className="text-[#7D1EDB]" />
