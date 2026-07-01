@@ -28,6 +28,7 @@ const menuItems = [
   { name: 'My Profile',       icon: UserCircle,      path: '/employee/profile' },
   { name: 'Attendance',       icon: CalendarDays,    path: '/employee/attendance' },
   { name: 'Shift',            icon: AlarmClock,      path: '/employee/shift' },
+  { name: 'Leave Management', icon: CalendarDays,    path: '/employee/leave' },
   { name: 'Leave Encashment', icon: Clock,           path: '/employee/leave-encashment' },
   { name: 'Payroll',          icon: DollarSign,      path: '/employee/payroll' },
   { name: 'Documents',        icon: FolderOpen,      path: '/employee/documents' },
