@@ -410,6 +410,7 @@ function App() {
           <Route path="profile" element={<EmployeeProfile />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<EmployeeLeave />} />
+          <Route path="leave-encashment" element={<EmployeeLeave />} />
           <Route path="payroll" element={<EmployeePayroll />} />
           <Route path="documents" element={<EmployeeDocuments />} />
           <Route path="tasks" element={<EmployeeTasks />} />
