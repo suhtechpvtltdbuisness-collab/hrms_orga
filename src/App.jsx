@@ -17,7 +17,6 @@ import EmployeeProtectedRoute from "./components/EmployeeProtectedRoute";
 import EmployeeDashboard from "./pages/employee/Dashboard/EmployeeDashboard";
 import EmployeeProfile from "./pages/employee/Profile/EmployeeProfile";
 import EmployeeAttendance from "./pages/employee/Attendance/EmployeeAttendance";
-import EmployeeLeave from "./pages/employee/Leave/EmployeeLeave";
 import EmployeeLeaveManagement from "./pages/employee/Leave/EmployeeLeaveManagement";
 import EmployeePayroll from "./pages/employee/Payroll/EmployeePayroll";
 import EmployeeDocuments from "./pages/employee/Documents/EmployeeDocuments";
@@ -411,7 +410,7 @@ function App() {
           <Route path="profile" element={<EmployeeProfile />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<EmployeeLeaveManagement />} />
-          <Route path="leave-encashment" element={<EmployeeLeave />} />
+          <Route path="leave-encashment" element={<Navigate to="/employee/leave?tab=encashment" replace />} />
           <Route path="payroll" element={<EmployeePayroll />} />
           <Route path="documents" element={<EmployeeDocuments />} />
           <Route path="tasks" element={<EmployeeTasks />} />

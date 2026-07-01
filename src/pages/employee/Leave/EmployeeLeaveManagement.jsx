@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, X, Clock, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { leaveRequestService, leaveService } from '../../../service';
+import EmployeeLeaveEncashment from './EmployeeLeave';
 
 const statusStyle = {
   approved: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2, label: 'Approved' },
@@ -8,7 +10,7 @@ const statusStyle = {
   rejected: { bg: 'bg-red-100', text: 'text-red-600', icon: XCircle, label: 'Rejected' },
 };
 
-export default function EmployeeLeave() {
+function LeaveRequests() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ type: '', from: '', to: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +39,8 @@ export default function EmployeeLeave() {
   }, [userId]);
 
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(loadData, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [loadData]);
 
   const leaveBalance = balance
@@ -205,3 +208,45 @@ export default function EmployeeLeave() {
   );
 }
 
+export default function EmployeeLeaveManagement() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'encashment' ? 'encashment' : 'requests';
+
+  const tabs = [
+    { id: 'requests', label: 'Leave Requests' },
+    { id: 'encashment', label: 'Leave Encashment' },
+  ];
+
+  const selectTab = (tab) => {
+    if (tab === 'requests') {
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    setSearchParams({ tab }, { replace: true });
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="mx-auto max-w-5xl rounded-2xl border border-gray-100 bg-white p-1.5 shadow-sm">
+        <div className="grid grid-cols-2 gap-1.5">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => selectTab(tab.id)}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:bg-violet-50 hover:text-violet-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab === 'encashment' ? <EmployeeLeaveEncashment /> : <LeaveRequests />}
+    </div>
+  );
+}
