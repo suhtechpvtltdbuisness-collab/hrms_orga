@@ -16,7 +16,6 @@ import {
   TrendingUp,
   Palmtree,
   Video,
-  Clock,
   AlarmClock
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -29,7 +28,6 @@ const menuItems = [
   { name: 'Attendance',       icon: CalendarDays,    path: '/employee/attendance' },
   { name: 'Shift',            icon: AlarmClock,      path: '/employee/shift' },
   { name: 'Leave Management', icon: CalendarDays,    path: '/employee/leave' },
-  { name: 'Leave Encashment', icon: Clock,           path: '/employee/leave-encashment' },
   { name: 'Payroll',          icon: DollarSign,      path: '/employee/payroll' },
   { name: 'Documents',        icon: FolderOpen,      path: '/employee/documents' },
   { name: 'Tasks',            icon: CheckSquare,     path: '/employee/tasks' },

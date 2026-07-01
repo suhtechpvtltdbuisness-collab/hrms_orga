@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   BadgeCheck,
-  Calendar,
   CheckCircle2,
   Clock3,
   FileText,
@@ -17,9 +16,6 @@ import toast from 'react-hot-toast';
 import {
   authService,
   leaveManagementService,
-  leaveRequestService,
-  leaveService,
-  payrollModuleService,
 } from '../../../service';
 
 const STATUS_META = {
@@ -63,81 +59,6 @@ const formatDate = (value) => {
   });
 };
 
-const normalizeKey = (value) =>
-  String(value || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-
-const toNumber = (value) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-};
-
-const normalizeLeaveType = (type) => {
-  if (!type) return null;
-  return {
-    id: type.id ?? type._id ?? type.requestType ?? type.name,
-    name: type.name || type.label || type.requestType || 'Leave Type',
-    requestType: type.requestType || type.type || type.name || '',
-    encashable: Boolean(type.encashable ?? type.isEncashable ?? false),
-    balanceKey: type.balanceKey || type.key || null,
-    remainingKey: type.remainingKey || null,
-    raw: type,
-  };
-};
-
-const normalizeBalanceRows = (balance, leaveTypes) => {
-  if (!balance || typeof balance !== 'object') return [];
-  return leaveTypes.map((type) => {
-    const keys = [
-      type.remainingKey,
-      type.balanceKey,
-      `${type.balanceKey || type.requestType || type.name}Remaining`,
-      `${type.balanceKey || type.requestType || type.name}remaining`,
-      `${type.balanceKey || type.requestType || type.name}Taken`,
-      `${type.balanceKey || type.requestType || type.name}taken`,
-      type.requestType,
-      type.name,
-      normalizeKey(type.name),
-    ].filter(Boolean);
-
-    let available = null;
-    let total = null;
-    let used = null;
-
-    for (const [key, value] of Object.entries(balance)) {
-      const nk = normalizeKey(key);
-      if (available === null && keys.some((candidate) => nk === normalizeKey(candidate))) {
-        available = toNumber(value);
-      }
-      if (total === null && keys.some((candidate) => nk === normalizeKey(candidate.replace(/remaining$/i, '')))) {
-        total = toNumber(value);
-      }
-      if (used === null && /taken|used|consumed|enqueued|encashed/i.test(key)) {
-        const base = normalizeKey(key.replace(/(taken|used|consumed|encashed)$/i, ''));
-        if (keys.some((candidate) => normalizeKey(candidate) === base)) {
-          used = toNumber(value);
-        }
-      }
-    }
-
-    if (available === null && total !== null && used !== null) {
-      available = Math.max(0, total - used);
-    }
-
-    if (available === null) {
-      const matchKey = Object.keys(balance).find((key) =>
-        keys.some((candidate) => normalizeKey(candidate) === normalizeKey(key)));
-      if (matchKey) available = toNumber(balance[matchKey]);
-    }
-
-    return {
-      ...type,
-      availableDays: Math.max(0, available ?? 0),
-    };
-  });
-};
-
 const normalizeEncashmentRequest = (item) => {
   const source = item?.request || item?.encashment || item?.data || item || {};
   const employee = source.employee || item?.employee || source.user || item?.user || {};
@@ -167,31 +88,15 @@ const normalizeEncashmentRequest = (item) => {
   };
 };
 
-const normalizeSalaryAssignment = (item) => {
-  const source = item?.assignment || item?.data || item || {};
-  const employee = source.employee || item?.employee || {};
-  const empId = toNumber(source.empId ?? item?.empId ?? employee.id ?? employee.userId);
-
-  return {
-    empId,
-    baseSalary: toNumber(source.baseSalary ?? item?.baseSalary ?? source.monthlyPay ?? item?.monthlyPay ?? source.monthlyGross ?? item?.monthlyGross) || 0,
-    monthlyPay: toNumber(source.monthlyPay ?? item?.monthlyPay ?? source.baseSalary ?? item?.baseSalary ?? source.monthlyGross ?? item?.monthlyGross) || 0,
-    isActive: source.isActive ?? item?.isActive ?? true,
-    fromDate: source.fromDate || item?.fromDate || '',
-    toDate: source.toDate || item?.toDate || '',
-    raw: source,
-  };
-};
-
 const EmployeeLeave = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submittingAll, setSubmittingAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const [employee, setEmployee] = useState(null);
-  const [balance, setBalance] = useState(null);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [requests, setRequests] = useState([]);
   const [dailyRate, setDailyRate] = useState(0);
@@ -199,7 +104,6 @@ const EmployeeLeave = () => {
   const [form, setForm] = useState({
     leaveTypeId: '',
     days: 1,
-    remarks: '',
   });
 
   const loadData = useCallback(async ({ quiet = false } = {}) => {
@@ -219,30 +123,32 @@ const EmployeeLeave = () => {
 
       setEmployee(profileUser);
 
-      const [balanceRes, requestsRes, leaveTypesRes, allLeaveTypesRes, salaryRes] = await Promise.all([
-        leaveService.getBalance(userId),
+      const [eligibilityRes, requestsRes] = await Promise.all([
+        leaveManagementService.getEncashmentEligibility(),
         leaveManagementService.getEncashmentRequests({ empId: userId }),
-        leaveManagementService.getLeaveTypes({ encashable: true }),
-        leaveRequestService.getAvailableLeaveTypes(),
-        payrollModuleService.getSalaryStructureAssignments(),
       ]);
 
-      if (balanceRes.success) {
-        setBalance(balanceRes.data || null);
+      if (eligibilityRes.success) {
+        const eligibility = eligibilityRes.data || {};
+        const eligibleTypes = Array.isArray(eligibility.leaveTypes) ? eligibility.leaveTypes : [];
+        setLeaveTypes(eligibleTypes.map((type) => ({
+          id: type.leaveTypeId,
+          name: type.leaveTypeName,
+          requestType: type.code || type.leaveTypeName,
+          encashable: true,
+          availableDays: Number(type.availableToEncash || 0),
+          allocatedDays: Number(type.allocatedDays || 0),
+          usedDays: Number(type.usedDays || 0),
+          unusedDays: Number(type.unusedDays || 0),
+          pendingDays: Number(type.pendingEncashmentDays || 0),
+          maximumAmount: Number(type.maximumAmount || 0),
+        })));
+        setDailyRate(Number(eligibility.dailyRate || 0));
       } else {
-        setBalance(null);
+        setLeaveTypes([]);
+        setDailyRate(0);
+        setError(eligibilityRes.message || 'Leave encashment eligibility is unavailable.');
       }
-
-      const adminTypes = leaveTypesRes.success ? leaveTypesRes.data : [];
-      const employeeTypes = allLeaveTypesRes.success ? allLeaveTypesRes.data : [];
-      const normalizedTypes = [...adminTypes, ...employeeTypes]
-        .map(normalizeLeaveType)
-        .filter(Boolean);
-      const uniqueTypes = Array.from(
-        new Map(normalizedTypes.map((type) => [normalizeKey(type.requestType || type.name || type.id), type])).values(),
-      );
-      const finalTypes = uniqueTypes.filter((type) => type.encashable) || [];
-      setLeaveTypes(finalTypes.length > 0 ? finalTypes : uniqueTypes);
 
       if (requestsRes.success) {
         const list = Array.isArray(requestsRes.data) ? requestsRes.data : [];
@@ -254,20 +160,6 @@ const EmployeeLeave = () => {
         setRequests([]);
       }
 
-      if (salaryRes.success) {
-        const assignments = Array.isArray(salaryRes.data) ? salaryRes.data : salaryRes.data?.data || [];
-        const mappedAssignments = assignments.map(normalizeSalaryAssignment);
-        const activeAssignment = mappedAssignments.find((item) => String(item.empId) === String(userId) && item.isActive);
-        const baseSalary = activeAssignment?.baseSalary || activeAssignment?.monthlyPay || 0;
-        const historyRate = requestsRes.success
-          ? (Array.isArray(requestsRes.data)
-            ? requestsRes.data.map(normalizeEncashmentRequest).find((req) => Number(req.dailyRate) > 0)?.dailyRate
-            : 0)
-          : 0;
-        setDailyRate(baseSalary ? Math.round(baseSalary / 30) : Number(historyRate || 0));
-      } else {
-        setDailyRate(0);
-      }
     } catch (err) {
       console.error(err);
       setError('Something went wrong while loading leave encashment data.');
@@ -286,7 +178,7 @@ const EmployeeLeave = () => {
     return filtered.length > 0 ? filtered : leaveTypes;
   }, [leaveTypes]);
 
-  const balanceRows = useMemo(() => normalizeBalanceRows(balance, encashableTypes), [balance, encashableTypes]);
+  const balanceRows = encashableTypes;
 
   const selectedType = useMemo(
     () => encashableTypes.find((type) => String(type.id) === String(form.leaveTypeId)) || encashableTypes[0] || null,
@@ -373,23 +265,14 @@ const EmployeeLeave = () => {
     setSubmitting(true);
     try {
       const payload = {
-        empId: Number(employee?.id || employee?._id),
-        employeeId: Number(employee?.id || employee?._id),
-        leaveType: selectedType.requestType || selectedType.name,
-        leaveTypeName: selectedType.name,
+        leaveTypeId: Number(selectedType.id),
         daysRequested: days,
-        requestedDays: days,
-        daysToEncash: days,
-        dailyRate,
-        amount: requestedAmount,
-        remarks: form.remarks.trim(),
-        note: form.remarks.trim(),
       };
 
       const res = await leaveManagementService.createEncashmentRequest(payload);
       if (res.success) {
         toast.success(res.message || 'Leave encashment request submitted successfully.');
-        setForm((prev) => ({ ...prev, days: 1, remarks: '' }));
+        setForm((prev) => ({ ...prev, days: 1 }));
         await loadData({ quiet: true });
       } else {
         toast.error(res.message || 'Failed to submit encashment request.');
@@ -399,6 +282,33 @@ const EmployeeLeave = () => {
       toast.error('Something went wrong while submitting your request.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEncashAll = async () => {
+    if (availableEncashableDays <= 0) {
+      toast.error('No unused encashable leave is currently available.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Submit all ${availableEncashableDays} currently available day(s) for encashment?`,
+    );
+    if (!confirmed) return;
+
+    setSubmittingAll(true);
+    try {
+      const res = await leaveManagementService.createEncashAllRequest();
+      if (!res.success) {
+        toast.error(res.message || 'Failed to submit all available leave.');
+        return;
+      }
+      toast.success(res.message || 'All available leave submitted for encashment.');
+      await loadData({ quiet: true });
+    } catch (err) {
+      console.error(err);
+      toast.error('Something went wrong while submitting all available leave.');
+    } finally {
+      setSubmittingAll(false);
     }
   };
 
@@ -565,7 +475,11 @@ const EmployeeLeave = () => {
                 <p className="mt-2 text-lg font-bold text-[#1E1E1E]">
                   {selectedTypeBalance ? `${selectedTypeBalance.availableDays} days` : '—'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{selectedType?.name || 'Choose a leave type'}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {selectedType
+                    ? `${selectedType.usedDays} used · ${selectedType.pendingDays} pending`
+                    : 'Choose a leave type'}
+                </p>
               </div>
               <div className="rounded-2xl border border-[#E9E9F0] bg-[#FCFCFF] p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Calculated Amount</p>
@@ -579,31 +493,31 @@ const EmployeeLeave = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-2">Remarks</label>
-              <textarea
-                rows={4}
-                value={form.remarks}
-                onChange={(e) => setForm((prev) => ({ ...prev, remarks: e.target.value }))}
-                className="w-full rounded-2xl border border-[#DDE1E7] bg-white px-4 py-3.5 text-sm text-[#1F2937] outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 resize-none"
-                placeholder="Add a short note for the HR/payroll team..."
-              />
-            </div>
-
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
               <p className="text-xs text-gray-500">
                 {dailyRate
                   ? `The request will be submitted using the current daily rate of ${formatCurrency(dailyRate)}.`
                   : 'Daily rate is not available yet. Please refresh if you expect salary data to be loaded.'}
               </p>
-              <button
-                type="submit"
-                disabled={submitting || loading || !encashableTypes.length}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                Submit Request
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={handleEncashAll}
+                  disabled={submittingAll || submitting || loading || availableEncashableDays <= 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#7D1EDB] bg-white px-5 py-3 text-sm font-semibold text-[#7D1EDB] transition-colors hover:bg-violet-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submittingAll ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  Encash All Available
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingAll || submitting || loading || !encashableTypes.length || selectedTypeAvailability <= 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  Submit Request
+                </button>
+              </div>
             </div>
           </form>
         </div>

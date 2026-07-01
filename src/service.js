@@ -1411,11 +1411,15 @@ export const leaveManagementService = {
     ).toString();
     return leaveAdminRequest(`/encashment-requests${query ? `?${query}` : ""}`);
   },
+  getEncashmentEligibility: async () =>
+    leaveAdminRequest("/encashment-eligibility"),
   createEncashmentRequest: async (payload) =>
     leaveAdminRequest("/encashment-requests", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  createEncashAllRequest: async () =>
+    leaveAdminRequest("/encashment-requests/all", { method: "POST" }),
   approveEncashmentRequest: async (id) =>
     leaveAdminRequest(`/encashment-requests/${id}/approve`, { method: "PATCH" }),
   rejectEncashmentRequest: async (id, rejectionReason = "") =>
