@@ -25,10 +25,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import {
-  employeeService,
-  attendanceService,
-  leaveRequestService,
-  hiringService,
+  dashboardService,
 } from "../../service";
 // ─── HRMS Dashboard ──────────────────────────────────────────────────────────── ─────────────────────────────────────────────────────────────────
 const StatCard = ({ icon, label, value, sub, trend, highlighted, loading, onMouseEnter, onMouseLeave }) => (
@@ -144,8 +141,6 @@ const Skeleton = ({ className }) => (
 const HRMSDashboard = () => {
   const navigate = useNavigate();
 
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-
   // ── State ──────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -154,7 +149,10 @@ const HRMSDashboard = () => {
     presentToday: 0,
     absentToday: 0,
     pendingLeave: 0,
+    activeTasks: 0,
+    totalTasks: 0,
   });
+  const [trends, setTrends] = useState({});
   const [recentActivity, setRecentActivity] = useState([]);
   const [weeklyAttendance, setWeeklyAttendance] = useState([]);
   const [timeTracker, setTimeTracker] = useState([]);
@@ -182,79 +180,37 @@ const HRMSDashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const adminId = userData?.id || userData?._id;
       const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-      // Total employees
-      let totalEmployees = 0;
-      if (adminId) {
-        const empRes = await employeeService.getAllEmployeesByAdminId(adminId);
-        if (empRes.success && empRes.data) {
-          totalEmployees = Array.isArray(empRes.data) ? empRes.data.length : 0;
-        }
-      }
+      const response = await dashboardService.getAdminDashboard();
+      if (!response.success) throw new Error(response.message);
+      const data = response.data || {};
 
-      // Attendance
-      let presentToday = 0;
-      let absentToday = 0;
-      let activityItems = [];
-      const attRes = await attendanceService.getAttendances();
-      if (attRes.success && attRes.data) {
-        const records = Array.isArray(attRes.data) ? attRes.data : [];
-        const today = new Date().toISOString().split("T")[0];
-
-        const todayRecords = records.filter((r) => {
-          const att = r.attendance || r;
-          return (att.attendanceDate || att.date || "").startsWith(today);
-        });
-
-        presentToday = todayRecords.filter((r) => (r.attendance || r).status === "present").length;
-        absentToday = todayRecords.filter((r) => (r.attendance || r).status === "absent").length;
-
-        activityItems = records.slice(0, 5).map((r) => {
-          const att = r.attendance || r;
-          const emp = r.employee || r.user || r;
-          const name = emp.name || att.empName || "Employee";
-          const statusMap = {
-            on_leave: "Leave request was approved",
-            present: "checked in successfully",
-            absent: "was marked absent",
-          };
-          const action = statusMap[att.status] || "attendance was marked";
-          const rawDate = att.attendanceDate || att.date;
-          const time = rawDate
-            ? new Date(rawDate).toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-            : "Recently";
-          return { name, action, time };
-        });
-      }
-
-      // Pending leave requests
-      let pendingLeave = 0;
-      const leaveRes = await leaveRequestService.getLeaveRequests({ status: "submitted" });
-      if (leaveRes.success && leaveRes.data) {
-        const leaveData = Array.isArray(leaveRes.data) ? leaveRes.data : [];
-        pendingLeave = leaveData.length;
-        if (activityItems.length < 3) {
-          const leaveItems = leaveData.slice(0, 3).map((lr) => ({
-            name: lr.employeeName || lr.employee?.name || "Employee",
-            action: "Leave request was submitted",
-            time: lr.createdAt
-              ? new Date(lr.createdAt).toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-              : "Recently",
-          }));
-          activityItems = [...activityItems, ...leaveItems].slice(0, 5);
-        }
-      }
-
-      // Weekly chart data
-      setWeeklyAttendance(
-        days.map((day) => ({
-          day,
-          Present: 60 + Math.floor(Math.random() * 35),
-          Absent: 5 + Math.floor(Math.random() * 20),
-          Leave: 3 + Math.floor(Math.random() * 15),
-        }))
+      setStats({
+        totalEmployees: data.stats?.totalEmployees ?? 0,
+        presentToday: data.stats?.presentToday ?? 0,
+        absentToday: data.stats?.absentToday ?? 0,
+        pendingLeave: data.stats?.pendingLeave ?? 0,
+        activeTasks: data.stats?.activeTasks ?? 0,
+        totalTasks: data.stats?.totalTasks ?? 0,
+      });
+      setTrends(data.trends || {});
+      setWeeklyAttendance(Array.isArray(data.weeklyAttendance) ? data.weeklyAttendance : []);
+      setActiveJobs(data.stats?.activeJobs ?? 0);
+      setRecentJobs(Array.isArray(data.recentJobs) ? data.recentJobs : []);
+      setRecentActivity(
+        (Array.isArray(data.recentActivity) ? data.recentActivity : []).map((item) => ({
+          ...item,
+          time: item.occurredAt
+            ? new Date(item.occurredAt).toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : "Recently",
+        })),
       );
 
       setTimeTracker(
@@ -264,27 +220,6 @@ const HRMSDashboard = () => {
         }))
       );
 
-      // Job openings
-      if (adminId) {
-        try {
-          const jobRes = await hiringService.getJobsByAdminId(adminId);
-          if (jobRes.success && jobRes.data) {
-            const jobs = Array.isArray(jobRes.data) ? jobRes.data : [];
-            setActiveJobs(jobs.filter((j) => j.status === "active").length);
-            setRecentJobs(jobs.slice(0, 4).map((j) => ({
-              id: j.id,
-              title: j.jobTitle,
-              department: j.department,
-              location: j.location,
-              status: j.status,
-              openings: j.numberOfOpenings,
-            })));
-          }
-        } catch (_) {}
-      }
-
-      setStats({ totalEmployees, presentToday, absentToday, pendingLeave });
-      setRecentActivity(activityItems);
     } catch (err) {
       console.error("Dashboard data fetch error:", err);
     } finally {
@@ -311,7 +246,7 @@ const HRMSDashboard = () => {
           icon={<Users />}
           label="Total Employees"
           value={stats.totalEmployees}
-          trend={-10}
+          trend={trends.totalEmployees}
           highlighted={hoveredCard === 'total'}
           onMouseEnter={() => setHoveredCard('total')}
           onMouseLeave={() => setHoveredCard(null)}
@@ -322,7 +257,7 @@ const HRMSDashboard = () => {
           label="Present Today"
           value={stats.presentToday}
           sub={stats.totalEmployees || undefined}
-          trend={-10}
+          trend={trends.presentToday}
           highlighted={hoveredCard === 'present'}
           onMouseEnter={() => setHoveredCard('present')}
           onMouseLeave={() => setHoveredCard(null)}
@@ -333,7 +268,7 @@ const HRMSDashboard = () => {
           label="Absent Today"
           value={stats.absentToday}
           sub={stats.totalEmployees || undefined}
-          trend={-10}
+          trend={trends.absentToday}
           highlighted={hoveredCard === 'absent'}
           onMouseEnter={() => setHoveredCard('absent')}
           onMouseLeave={() => setHoveredCard(null)}
@@ -342,8 +277,8 @@ const HRMSDashboard = () => {
           loading={loading}
           icon={<ListTodo />}
           label="Active Tasks"
-          value={15}
-          sub={35}
+          value={stats.activeTasks}
+          sub={stats.totalTasks || undefined}
           highlighted={hoveredCard === 'tasks'}
           onMouseEnter={() => setHoveredCard('tasks')}
           onMouseLeave={() => setHoveredCard(null)}

@@ -55,6 +55,26 @@ const apiFetch = (url, options = {}) => {
   });
 };
 
+export const dashboardService = {
+  getAdminDashboard: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/dashboard/admin`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to fetch dashboard data",
+        };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
 export const authService = {
   register: async (userData) => {
     try {
