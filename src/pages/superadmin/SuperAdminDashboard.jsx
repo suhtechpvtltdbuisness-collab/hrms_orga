@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../../service';
 import { 
   Building2, Users, CreditCard, Activity, Search, Bell, Settings, 
-  LogOut, Menu, X 
+  LogOut, Menu, Package, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ import OrganizationsTab from './components/OrganizationsTab';
 import SubscriptionsTab from './components/SubscriptionsTab';
 import UsersTab from './components/UsersTab';
 import SettingsTab from './components/SettingsTab';
+import PlansTab from './components/PlansTab';
 
 const SuperAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -33,6 +34,7 @@ const SuperAdminDashboard = () => {
       case "dashboard": return <OverviewTab />;
       case "organizations": return <OrganizationsTab />;
       case "subscriptions": return <SubscriptionsTab />;
+      case "plans": return <PlansTab />;
       case "users": return <UsersTab />;
       case "settings": return <SettingsTab />;
       default: return <OverviewTab />;
@@ -43,6 +45,7 @@ const SuperAdminDashboard = () => {
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "organizations", label: "Organizations", icon: Building2 },
     { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
+    { id: "plans", label: "Plans", icon: Package },
     { id: "users", label: "All Users", icon: Users },
   ];
 

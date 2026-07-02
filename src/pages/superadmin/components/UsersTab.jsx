@@ -19,11 +19,7 @@ const getRoleName = (roleId, type) => {
 
 const getPlanName = (plan) => {
   if (!plan || !plan.id) return '-';
-  if (plan.planType === 'starter_pack') return 'Starter';
-  if (plan.planType === 'premium') return 'Growth';
-  if (plan.planType === 'enterprise') return 'Enterprise';
-  if (plan.planType === 'free_trial') return 'Free Trial';
-  return plan.planType;
+  return plan.name || plan.planType?.replaceAll('_', ' ') || '-';
 };
 
 const UsersTab = () => {
