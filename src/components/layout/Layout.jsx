@@ -25,7 +25,7 @@ const Layout = ({ children }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#eeeff1] font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#eeeff1] font-sans overflow-x-clip">
       {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
