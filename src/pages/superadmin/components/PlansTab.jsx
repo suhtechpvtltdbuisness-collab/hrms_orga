@@ -26,6 +26,9 @@ const getDynamicDescription = (plan) => {
   );
 };
 
+const getBillingPeriodLabel = (durationDays) =>
+  Number(durationDays) === 30 ? '/month' : `/${durationDays} days`;
+
 const PlansTab = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +149,7 @@ const PlansTab = () => {
               </div>
               <div className="mt-5 flex items-end gap-1">
                 <span className="text-3xl font-bold text-gray-900">₹{Number(plan.priceInr).toLocaleString('en-IN')}</span>
-                <span className="pb-1 text-sm text-gray-500">/{plan.durationDays} days</span>
+                <span className="pb-1 text-sm text-gray-500">{getBillingPeriodLabel(plan.durationDays)}</span>
               </div>
               <p className="mt-3 min-h-10 text-sm text-gray-600">{getDynamicDescription(plan)}</p>
               <div className="mt-4 flex items-center justify-between rounded-xl bg-purple-50 px-3 py-2.5 text-sm">
