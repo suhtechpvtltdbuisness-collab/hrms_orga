@@ -2349,6 +2349,56 @@ const loadRazorpayScript = () =>
   });
 
 export const subscriptionService = {
+  getManagedPlans: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/plans/manage`);
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch plans" };
+      return { success: true, data: data.data || [] };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createManagedPlan: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/plans/manage`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create plan" };
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateManagedPlan: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/plans/manage/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update plan" };
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteManagedPlan: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/plans/manage/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete plan" };
+      return { success: true, message: data.message };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getCurrent: async () => {
     try {
       const response = await apiFetch(`${BASE_URL}/subscriptions/current`);
