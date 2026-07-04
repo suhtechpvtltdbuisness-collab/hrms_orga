@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Clock, Calendar, TrendingUp, DollarSign, CheckSquare, Bell, ChevronRight,
-  ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star, Loader2
+  ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { attendanceService } from '../../../service';
+import {
+  AttendanceSuccessModal,
+  AttendanceVerificationModal,
+  FaceAttendanceCard,
+  FaceRegistrationWizard,
+} from '../../../features/face-attendance/FaceAttendanceFlow';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -52,8 +58,9 @@ export default function EmployeeDashboard() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRecord, setTodayRecord] = useState(null);
-  const [checkInLoading, setCheckInLoading] = useState(false);
-  const [checkOutLoading, setCheckOutLoading] = useState(false);
+  const [verificationType, setVerificationType] = useState(null);
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [attendanceResult, setAttendanceResult] = useState(null);
 
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
@@ -78,6 +85,8 @@ export default function EmployeeDashboard() {
   };
 
   useEffect(() => {
+    // Existing dashboard API hydration; state is updated when the request resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTodayAttendance();
   }, []);
 
@@ -89,36 +98,16 @@ export default function EmployeeDashboard() {
     });
   };
 
-  const handleCheckIn = async () => {
-    setCheckInLoading(true);
-    try {
-      const res = await attendanceService.checkInSelf();
-      if (res.success) {
-        await fetchTodayAttendance();
-      } else {
-        alert(res.message || 'Failed to check in');
-      }
-    } catch {
-      alert('Failed to check in');
-    } finally {
-      setCheckInLoading(false);
-    }
-  };
+  const handleCheckIn = () => setVerificationType('check-in');
+  const handleCheckOut = () => setVerificationType('check-out');
 
-  const handleCheckOut = async () => {
-    setCheckOutLoading(true);
-    try {
-      const res = await attendanceService.checkOutSelf();
-      if (res.success) {
-        await fetchTodayAttendance();
-      } else {
-        alert(res.message || 'Failed to check out');
-      }
-    } catch {
-      alert('Failed to check out');
-    } finally {
-      setCheckOutLoading(false);
-    }
+  const handleAttendanceSuccess = (result) => {
+    setVerificationType(null);
+    setAttendanceResult(result);
+    setTodayRecord((current) => ({
+      ...(current || {}),
+      ...(result.type === 'check-in' ? { checkIn: result.timestamp } : { checkOut: result.timestamp }),
+    }));
   };
 
   const checkInTime = todayRecord && todayRecord.checkIn ? formatTime(todayRecord.checkIn) : null;
@@ -193,6 +182,8 @@ export default function EmployeeDashboard() {
         <StatCard icon={DollarSign} label="Last Payslip" value="₹45,000" sub="May 2025" color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
       </div>
 
+      <FaceAttendanceCard onRegister={() => setShowRegistration(true)} />
+
       {/* Check-in widget + This Week Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Check-in / Check-out */}
@@ -216,33 +207,17 @@ export default function EmployeeDashboard() {
           {!checkInTime ? (
             <button
               onClick={handleCheckIn}
-              disabled={checkInLoading}
               style={{ background: 'linear-gradient(135deg, #756FCC 0%, #B58CEC 100%)' }}
               className="w-full py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-1.5"
             >
-              {checkInLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Checking In...</span>
-                </>
-              ) : (
-                "✓ Check In"
-              )}
+              ✓ Check In
             </button>
           ) : !checkOutTime ? (
             <button
               onClick={handleCheckOut}
-              disabled={checkOutLoading}
               className="w-full py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-1.5"
             >
-              {checkOutLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Checking Out...</span>
-                </>
-              ) : (
-                "✗ Check Out"
-              )}
+              ✗ Check Out
             </button>
           ) : (
             <div className="text-center py-2">
@@ -391,6 +366,21 @@ export default function EmployeeDashboard() {
           <QuickAction icon={Zap} label="Support Ticket" color="bg-indigo-100 text-indigo-600" onClick={() => navigate('/employee/support')} />
         </div>
       </div>
+
+      {verificationType && (
+        <AttendanceVerificationModal
+          type={verificationType}
+          onClose={() => setVerificationType(null)}
+          onRegister={() => setShowRegistration(true)}
+          onSuccess={handleAttendanceSuccess}
+        />
+      )}
+      {showRegistration && (
+        <FaceRegistrationWizard onClose={() => setShowRegistration(false)} />
+      )}
+      {attendanceResult && (
+        <AttendanceSuccessModal result={attendanceResult} onClose={() => setAttendanceResult(null)} />
+      )}
     </div>
   );
 }
