@@ -34,7 +34,7 @@ export function FaceStatusBadge({ registered }) {
 }
 
 export function FaceAttendanceCard({ onRegister }) {
-  const { faceProfile } = useFaceAttendance();
+  const { faceProfile, faceProfileLoading } = useFaceAttendance();
   const updated = faceProfile.faceUpdatedAt ? new Date(faceProfile.faceUpdatedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not registered yet';
   return (
     <section className="relative overflow-hidden rounded-2xl border border-violet-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
@@ -51,8 +51,8 @@ export function FaceAttendanceCard({ onRegister }) {
             <p className="mt-2 text-xs font-medium text-slate-400">Last updated · {updated}</p>
           </div>
         </div>
-        <button onClick={onRegister} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition hover:-translate-y-0.5 hover:shadow-md active:scale-95">
-          {faceProfile.faceRegistered ? <RefreshCw size={16} /> : <ScanFace size={17} />}{faceProfile.faceRegistered ? 'Update Face' : 'Register Face'}
+        <button disabled={faceProfileLoading} onClick={onRegister} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition hover:-translate-y-0.5 hover:shadow-md active:scale-95 disabled:cursor-wait disabled:opacity-60">
+          {faceProfileLoading ? <Loader2 className="animate-spin" size={16} /> : faceProfile.faceRegistered ? <RefreshCw size={16} /> : <ScanFace size={17} />}{faceProfileLoading ? 'Checking...' : faceProfile.faceRegistered ? 'Update Face' : 'Register Face'}
         </button>
       </div>
     </section>
@@ -170,7 +170,7 @@ export function AttendanceFailureModal({ message, onRetry, onClose }) {
 
 export function AttendanceVerificationModal({ type, onClose, onRegister, onSuccess }) {
   const { faceProfile } = useFaceAttendance(); const [mode, setMode] = useState('choose'); const [password, setPassword] = useState(''); const [showPassword, setShowPassword] = useState(false); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const [stream, setStream] = useState(null); const [image, setImage] = useState(null);
-  const finish = async (method, capture) => { setLoading(true); setError(''); try { if (method === 'password') await faceAttendanceService.verifyPassword(password); else await faceAttendanceService.verifyFace(capture); const result = await faceAttendanceService.markAttendance(type, method); onSuccess(result.data); } catch (err) { setError(err.message || 'Verification failed. Please try again.'); setMode('failure'); } finally { setLoading(false); } };
+  const finish = async (method, capture) => { setLoading(true); setError(''); try { const result = method === 'password' ? await faceAttendanceService.markPasswordAttendance(type, password) : await faceAttendanceService.markFaceAttendance(type, capture); onSuccess(result.data); } catch (err) { setError(err.message || 'Verification failed. Please try again.'); setMode('failure'); } finally { setLoading(false); } };
   if (mode === 'failure') return <AttendanceFailureModal message={error} onClose={onClose} onRetry={() => { setError(''); setImage(null); setMode('choose'); }} />;
   return <ModalShell onClose={loading ? undefined : onClose} wide>
     {mode === 'choose' && <><div className="border-b border-slate-100 px-6 py-6 sm:px-8"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl bg-violet-100 text-violet-600"><ShieldCheck size={23} /></div><div><h2 className="text-xl font-bold text-slate-900">Choose Attendance Verification</h2><p className="text-sm text-slate-500">Securely {type === 'check-out' ? 'check out' : 'check in'} using your preferred method.</p></div></div></div><div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8"><VerificationOptionCard icon={KeyRound} title="Mark Attendance with Password" description="Use your employee account password." onClick={() => setMode('password')} /><VerificationOptionCard icon={ScanFace} title="Mark Attendance with Face" description={faceProfile.faceRegistered ? 'Fast, secure facial verification using your camera.' : 'Face not registered. Please register your face before marking attendance.'} disabled={!faceProfile.faceRegistered}>{faceProfile.faceRegistered ? <button onClick={() => setMode('permission')} className="mt-5 w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">Verify Face</button> : <button onClick={() => { onClose(); onRegister(); }} className="mt-5 w-full rounded-xl border border-violet-200 bg-violet-50 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-100">Register Face</button>}</VerificationOptionCard></div></>}

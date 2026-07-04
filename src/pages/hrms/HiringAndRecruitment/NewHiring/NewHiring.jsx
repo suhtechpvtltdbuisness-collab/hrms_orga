@@ -184,7 +184,10 @@ const NewHiring = () => {
             toast.error('No resume available for preview');
             return;
         }
-        const baseUrl = import.meta.env.VITE_BACKEND_BASE_URL || window.location.origin;
+        let baseUrl = import.meta.env.VITE_BACKEND_BASE_URL || window.location.origin;
+        if (baseUrl && !baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+            baseUrl = `https://${baseUrl}`;
+        }
         const proxyUrl = `${baseUrl}/upload/blob?url=${encodeURIComponent(selectedCandidate.resume)}`;
         setShowResumeModal(true);
         setResumeLoading(true);

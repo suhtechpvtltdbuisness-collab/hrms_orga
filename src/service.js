@@ -1,6 +1,10 @@
-const BASE_URL =
+let BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL ||
   "https://hrms-orga-backend.vercel.app";
+
+if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
+  BASE_URL = `https://${BASE_URL}`;
+}
 
 const MAIN_SITE_URL =
   import.meta.env.VITE_MAIN_SITE_URL || "https://suhtech.store";

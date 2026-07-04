@@ -1,27 +1,45 @@
-const wait = (ms = 900) => new Promise((resolve) => setTimeout(resolve, ms));
+let BASE_URL =
+  import.meta.env.VITE_BACKEND_BASE_URL ||
+  'https://hrms-orga-backend.vercel.app';
 
-// API-ready boundary. Replace these mock bodies with the documented endpoints
-// without changing any consuming component.
+if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
+  BASE_URL = `https://${BASE_URL}`;
+}
+
+const request = async (path, options = {}) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.message || payload.error || 'Request failed. Please try again.');
+    error.code = payload.code;
+    error.status = response.status;
+    throw error;
+  }
+  return payload;
+};
+
 export const faceAttendanceService = {
-  getEmployeeProfile: async () => { await wait(250); return { success: true }; }, // GET /employee/profile
-  getTodayAttendance: async () => { await wait(250); return { success: true }; }, // GET /attendance/today
-  registerFace: async (image) => {
-    await wait();
-    if (!image) throw new Error('A captured face image is required.');
-    return { success: true, data: { faceImage: image, faceRegistered: true, faceUpdatedAt: new Date().toISOString() } }; // POST /employee/face/register
-  },
-  verifyFace: async (image) => {
-    await wait(1400);
-    if (!image) throw new Error('Face capture failed. Please try again.');
-    return { success: true, confidence: 0.96 }; // POST /employee/face/verify
-  },
-  verifyPassword: async (password) => {
-    await wait(900);
-    if (!password?.trim()) throw new Error('Password is required.');
-    return { success: true }; // Password verification payload for attendance endpoint
-  },
-  markAttendance: async (type, method) => {
-    await wait(700);
-    return { success: true, data: { type, method, timestamp: new Date().toISOString() } }; // POST /attendance/check-in or /attendance/check-out
-  },
+  getFaceStatus: () => request('/employee/face/status'),
+  getTodayAttendance: () => request('/attendance/today-status'),
+  registerFace: (image) => request('/employee/face/register', {
+    method: 'POST', body: JSON.stringify({ image }),
+  }),
+  verifyFace: (image) => request('/employee/face/verify', {
+    method: 'POST', body: JSON.stringify({ image }),
+  }),
+  markFaceAttendance: (type, image) => request('/employee/face/attendance', {
+    method: 'POST', body: JSON.stringify({ type, image }),
+  }),
+  markPasswordAttendance: (type, password) => request('/employee/face/password-attendance', {
+    method: 'POST', body: JSON.stringify({ type, password }),
+  }),
 };
