@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import EmployeeSidebar from './EmployeeSidebar';
 import EmployeeTopbar from './EmployeeTopbar';
 import { Outlet } from 'react-router-dom';
+import { FaceAttendanceProvider } from '../../features/face-attendance/FaceAttendanceContext';
 
 const EmployeeLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -18,6 +19,7 @@ const EmployeeLayout = () => {
   }, []);
 
   return (
+    <FaceAttendanceProvider>
     <div className="min-h-screen bg-[#eeeff1] font-sans">
       {/* Sidebar */}
       <EmployeeSidebar
@@ -49,6 +51,7 @@ const EmployeeLayout = () => {
         </main>
       </div>
     </div>
+    </FaceAttendanceProvider>
   );
 };
 
