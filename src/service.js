@@ -1698,6 +1698,18 @@ export const attendanceUtils = {
       record.checkoutFaceImage ||
       record.check_out_face_image ||
       null;
+    const checkInTime = att.checkIn || att.checkInTime || record.checkIn || null;
+    const checkOutTime = att.checkOut || att.checkOutTime || record.checkOut || null;
+    let workedDuration = att.workedDuration || record.workedDuration || null;
+    if (!workedDuration && checkInTime && checkOutTime) {
+      const workedMinutes = Math.max(
+        0,
+        Math.floor((new Date(checkOutTime).getTime() - new Date(checkInTime).getTime()) / 60_000),
+      );
+      workedDuration = `${Math.floor(workedMinutes / 60)}h ${workedMinutes % 60}m`;
+    } else if (!workedDuration && checkInTime && !checkOutTime) {
+      workedDuration = "In progress";
+    }
 
     return {
       srNo: String(index + 1).padStart(2, "0"),
@@ -1705,6 +1717,7 @@ export const attendanceUtils = {
       empId: (att.empId || emp.employeeId || emp.id) ? `EMP-${String(att.empId || emp.employeeId || emp.id).padStart(3, "0")}` : "-",
       status: att.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[att.status] || att.status),
       date: attendanceUtils.toDisplayDate(att.attendanceDate || att.date),
+      workedDuration: workedDuration || "-",
       leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
       rawStatus: att.status,
       rawLeaveType: att.leaveType,
