@@ -1649,7 +1649,8 @@ export const attendanceUtils = {
   mapRecordToRow: (record, index) => {
     const att = record.attendance || record;
     const emp = record.employee || record.user || record;
-    const verificationMethod =
+    const checkInVerificationMethod =
+      att.checkInVerificationMethod ||
       att.verificationMethod ||
       att.method ||
       att.checkInMethod ||
@@ -1658,7 +1659,8 @@ export const attendanceUtils = {
       record.verificationMethod ||
       record.method ||
       "";
-    const faceImage =
+    const checkInFaceImage =
+      att.checkInFaceImage ||
       att.faceImage ||
       att.face_image ||
       att.faceCapture ||
@@ -1680,6 +1682,22 @@ export const attendanceUtils = {
       record.image ||
       record.photo ||
       null;
+    const checkOutVerificationMethod =
+      att.checkOutVerificationMethod ||
+      att.checkoutVerificationMethod ||
+      att.check_out_verification_method ||
+      record.checkOutVerificationMethod ||
+      record.checkoutVerificationMethod ||
+      record.check_out_verification_method ||
+      "";
+    const checkOutFaceImage =
+      att.checkOutFaceImage ||
+      att.checkoutFaceImage ||
+      att.check_out_face_image ||
+      record.checkOutFaceImage ||
+      record.checkoutFaceImage ||
+      record.check_out_face_image ||
+      null;
 
     return {
       srNo: String(index + 1).padStart(2, "0"),
@@ -1690,8 +1708,12 @@ export const attendanceUtils = {
       leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
       rawStatus: att.status,
       rawLeaveType: att.leaveType,
-      verificationMethod: typeof verificationMethod === "string" ? verificationMethod.toLowerCase() : verificationMethod,
-      faceImage: resolveBackendAssetUrl(faceImage),
+      checkInVerificationMethod: typeof checkInVerificationMethod === "string" ? checkInVerificationMethod.toLowerCase() : checkInVerificationMethod,
+      verificationMethod: typeof checkInVerificationMethod === "string" ? checkInVerificationMethod.toLowerCase() : checkInVerificationMethod,
+      checkInFaceImage: resolveBackendAssetUrl(checkInFaceImage),
+      faceImage: resolveBackendAssetUrl(checkInFaceImage),
+      checkOutVerificationMethod: typeof checkOutVerificationMethod === "string" ? checkOutVerificationMethod.toLowerCase() : checkOutVerificationMethod,
+      checkOutFaceImage: resolveBackendAssetUrl(checkOutFaceImage),
       id: att.id || att._id || record._id || record.id,
     };
   },

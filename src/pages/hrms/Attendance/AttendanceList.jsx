@@ -110,10 +110,52 @@ const AttendanceList = () => {
 
   const hasFaceAttendance = useMemo(
     () => attendanceData.some(
-      (item) => item.faceImage || item.verificationMethod === 'face',
+      (item) => item.checkInFaceImage
+        || item.checkOutFaceImage
+        || item.checkInVerificationMethod === 'face'
+        || item.checkOutVerificationMethod === 'face',
     ),
     [attendanceData],
   );
+
+  const renderFaceCapture = (item, captureType) => {
+    const isCheckIn = captureType === 'check-in';
+    const image = isCheckIn ? item.checkInFaceImage : item.checkOutFaceImage;
+    const method = isCheckIn
+      ? item.checkInVerificationMethod
+      : item.checkOutVerificationMethod;
+    const label = isCheckIn ? 'Face Check-In' : 'Face Check-Out';
+
+    if (image) {
+      return (
+        <button
+          type="button"
+          onClick={() => setSelectedFaceRecord({
+            ...item,
+            previewImage: image,
+            previewLabel: label,
+          })}
+          className="mx-auto flex items-center justify-center rounded-xl border border-[#E9D5FF] bg-[#FAF5FF] p-1.5 transition hover:scale-105 hover:border-[#7D1EDB]"
+        >
+          <img
+            src={image}
+            alt={`${item.name} ${captureType} face`}
+            className="h-12 w-12 rounded-lg object-cover"
+          />
+        </button>
+      );
+    }
+
+    if (method === 'face') {
+      return (
+        <span className="inline-flex items-center rounded-full bg-[#F3E8FF] px-3 py-1 text-[12px] font-medium text-[#7D1EDB]">
+          Face verified
+        </span>
+      );
+    }
+
+    return <span className="text-[13px] text-[#9CA3AF]">-</span>;
+  };
 
   const filteredData = useMemo(() => {
     return attendanceData.filter((item) => {
@@ -294,7 +336,7 @@ const AttendanceList = () => {
       )}
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto border border-[#CECECE] rounded-lg">
-        <table className={`w-full table-fixed ${hasFaceAttendance ? 'min-w-[980px]' : 'min-w-[800px]'}`}>
+        <table className={`w-full table-fixed ${hasFaceAttendance ? 'min-w-[1150px]' : 'min-w-[800px]'}`}>
           <thead className="sticky top-0 bg-white z-10">
             <tr className="text-left border-b border-[#CECECE]" style={{ fontFamily: 'Poppins, sans-serif' }}>
                <th className="py-3 px-6 w-[80px] text-[12px] font-normal text-[#757575] bg-white">Sr No.</th>
@@ -304,14 +346,17 @@ const AttendanceList = () => {
                <th className="py-3 px-6 w-[180px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Attendance Date</th>
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Leave Type</th>
                {hasFaceAttendance && (
-                 <th className="py-3 px-6 w-[170px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Face Check-In</th>
+                 <>
+                   <th className="py-3 px-6 w-[170px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Face Check-In</th>
+                   <th className="py-3 px-6 w-[170px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Face Check-Out</th>
+                 </>
                )}
             </tr>
           </thead>
           <tbody style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
              {isLoading ? (
                 <tr>
-                  <td colSpan={hasFaceAttendance ? 7 : 6} className="text-center py-8 text-gray-500">Loading attendance...</td>
+                  <td colSpan={hasFaceAttendance ? 8 : 6} className="text-center py-8 text-gray-500">Loading attendance...</td>
                 </tr>
              ) : currentItems.length > 0 ? (
                  currentItems.map((item, index) => (
@@ -330,33 +375,20 @@ const AttendanceList = () => {
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.date}</td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.leaveType}</td>
                        {hasFaceAttendance && (
-                         <td className="py-2 px-6 text-center">
-                           {item.faceImage ? (
-                             <button
-                               type="button"
-                               onClick={() => setSelectedFaceRecord(item)}
-                               className="mx-auto flex items-center justify-center rounded-xl border border-[#E9D5FF] bg-[#FAF5FF] p-1.5 transition hover:scale-105 hover:border-[#7D1EDB]"
-                             >
-                               <img
-                                 src={item.faceImage}
-                                 alt={`${item.name} face check-in`}
-                                 className="h-12 w-12 rounded-lg object-cover"
-                               />
-                             </button>
-                           ) : item.verificationMethod === 'face' ? (
-                             <span className="inline-flex items-center rounded-full bg-[#F3E8FF] px-3 py-1 text-[12px] font-medium text-[#7D1EDB]">
-                               Face verified
-                             </span>
-                           ) : (
-                             <span className="text-[13px] text-[#9CA3AF]">-</span>
-                           )}
-                         </td>
+                         <>
+                           <td className="py-2 px-6 text-center">
+                             {renderFaceCapture(item, 'check-in')}
+                           </td>
+                           <td className="py-2 px-6 text-center">
+                             {renderFaceCapture(item, 'check-out')}
+                           </td>
+                         </>
                        )}
                     </tr>
                  ))
              ) : (
                 <tr>
-                    <td colSpan={hasFaceAttendance ? 7 : 6} className="text-center py-4">
+                    <td colSpan={hasFaceAttendance ? 8 : 6} className="text-center py-4">
                         <div className="flex flex-col items-center justify-center">
                             <img
                                 src="/images/emptyAttendance.png"
@@ -449,7 +481,9 @@ const AttendanceList = () => {
             </button>
 
             <div className="mb-4">
-              <p className="text-lg font-semibold text-[#111827]">Face Check-In Preview</p>
+              <p className="text-lg font-semibold text-[#111827]">
+                {selectedFaceRecord.previewLabel} Preview
+              </p>
               <p className="mt-1 text-sm text-[#6B7280]">
                 {selectedFaceRecord.name} • {selectedFaceRecord.empId}
               </p>
@@ -458,8 +492,8 @@ const AttendanceList = () => {
 
             <div className="overflow-hidden rounded-2xl bg-[#F3F4F6]">
               <img
-                src={selectedFaceRecord.faceImage}
-                alt={`${selectedFaceRecord.name} face attendance`}
+                src={selectedFaceRecord.previewImage}
+                alt={`${selectedFaceRecord.name} ${selectedFaceRecord.previewLabel}`}
                 className="h-auto w-full object-cover"
               />
             </div>
