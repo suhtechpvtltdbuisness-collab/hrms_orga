@@ -6,6 +6,12 @@ if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https:/
   BASE_URL = `https://${BASE_URL}`;
 }
 
+const resolveBackendAssetUrl = (url) => {
+  if (!url || typeof url !== "string") return url || "";
+  if (/^(https?:|blob:|data:)/i.test(url)) return url;
+  return new URL(url, `${BASE_URL.replace(/\/$/, "")}/`).toString();
+};
+
 const MAIN_SITE_URL =
   import.meta.env.VITE_MAIN_SITE_URL || "https://suhtech.store";
 
@@ -1685,7 +1691,7 @@ export const attendanceUtils = {
       rawStatus: att.status,
       rawLeaveType: att.leaveType,
       verificationMethod: typeof verificationMethod === "string" ? verificationMethod.toLowerCase() : verificationMethod,
-      faceImage,
+      faceImage: resolveBackendAssetUrl(faceImage),
       id: att.id || att._id || record._id || record.id,
     };
   },
@@ -2926,7 +2932,7 @@ export const getProfilePicUrl = (url) => {
   if (url.includes("blob.vercel-storage.com")) {
     return `${BASE_URL}/upload/blob?url=${encodeURIComponent(url)}`;
   }
-  return url;
+  return resolveBackendAssetUrl(url);
 };
 
 export const organizationService = {
