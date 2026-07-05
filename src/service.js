@@ -1643,6 +1643,38 @@ export const attendanceUtils = {
   mapRecordToRow: (record, index) => {
     const att = record.attendance || record;
     const emp = record.employee || record.user || record;
+    const verificationMethod =
+      att.verificationMethod ||
+      att.method ||
+      att.checkInMethod ||
+      att.markedBy ||
+      att.mode ||
+      record.verificationMethod ||
+      record.method ||
+      "";
+    const faceImage =
+      att.faceImage ||
+      att.face_image ||
+      att.faceCapture ||
+      att.face_capture ||
+      att.facePhoto ||
+      att.face_photo ||
+      att.capturedImage ||
+      att.captured_image ||
+      att.image ||
+      att.photo ||
+      record.faceImage ||
+      record.face_image ||
+      record.faceCapture ||
+      record.face_capture ||
+      record.facePhoto ||
+      record.face_photo ||
+      record.capturedImage ||
+      record.captured_image ||
+      record.image ||
+      record.photo ||
+      null;
+
     return {
       srNo: String(index + 1).padStart(2, "0"),
       name: emp.name || att.empName || emp.firstName || "-",
@@ -1652,6 +1684,8 @@ export const attendanceUtils = {
       leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
       rawStatus: att.status,
       rawLeaveType: att.leaveType,
+      verificationMethod: typeof verificationMethod === "string" ? verificationMethod.toLowerCase() : verificationMethod,
+      faceImage,
       id: att.id || att._id || record._id || record.id,
     };
   },

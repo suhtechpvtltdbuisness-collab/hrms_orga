@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Plus, ChevronRight, ArrowLeft, ArrowRight, X } from 'lucide-react';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
 import { useNavigate } from 'react-router-dom';
 import MarkAttendanceModal from './MarkAttendanceModal';
@@ -16,6 +16,7 @@ const AttendanceList = () => {
   const [employeeNames, setEmployeeNames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedFaceRecord, setSelectedFaceRecord] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -106,6 +107,13 @@ const AttendanceList = () => {
     }
     return { backgroundColor: '#F3F4F6', color: '#6B7280' };
   };
+
+  const hasFaceAttendance = useMemo(
+    () => attendanceData.some(
+      (item) => item.faceImage || item.verificationMethod === 'face',
+    ),
+    [attendanceData],
+  );
 
   const filteredData = useMemo(() => {
     return attendanceData.filter((item) => {
@@ -286,7 +294,7 @@ const AttendanceList = () => {
       )}
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto border border-[#CECECE] rounded-lg">
-        <table className="w-full table-fixed min-w-[800px]">
+        <table className={`w-full table-fixed ${hasFaceAttendance ? 'min-w-[980px]' : 'min-w-[800px]'}`}>
           <thead className="sticky top-0 bg-white z-10">
             <tr className="text-left border-b border-[#CECECE]" style={{ fontFamily: 'Poppins, sans-serif' }}>
                <th className="py-3 px-6 w-[80px] text-[12px] font-normal text-[#757575] bg-white">Sr No.</th>
@@ -295,12 +303,15 @@ const AttendanceList = () => {
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Status</th>
                <th className="py-3 px-6 w-[180px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Attendance Date</th>
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Leave Type</th>
+               {hasFaceAttendance && (
+                 <th className="py-3 px-6 w-[170px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Face Check-In</th>
+               )}
             </tr>
           </thead>
           <tbody style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
              {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-gray-500">Loading attendance...</td>
+                  <td colSpan={hasFaceAttendance ? 7 : 6} className="text-center py-8 text-gray-500">Loading attendance...</td>
                 </tr>
              ) : currentItems.length > 0 ? (
                  currentItems.map((item, index) => (
@@ -318,11 +329,34 @@ const AttendanceList = () => {
                        </td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.date}</td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.leaveType}</td>
+                       {hasFaceAttendance && (
+                         <td className="py-2 px-6 text-center">
+                           {item.faceImage ? (
+                             <button
+                               type="button"
+                               onClick={() => setSelectedFaceRecord(item)}
+                               className="mx-auto flex items-center justify-center rounded-xl border border-[#E9D5FF] bg-[#FAF5FF] p-1.5 transition hover:scale-105 hover:border-[#7D1EDB]"
+                             >
+                               <img
+                                 src={item.faceImage}
+                                 alt={`${item.name} face check-in`}
+                                 className="h-12 w-12 rounded-lg object-cover"
+                               />
+                             </button>
+                           ) : item.verificationMethod === 'face' ? (
+                             <span className="inline-flex items-center rounded-full bg-[#F3E8FF] px-3 py-1 text-[12px] font-medium text-[#7D1EDB]">
+                               Face verified
+                             </span>
+                           ) : (
+                             <span className="text-[13px] text-[#9CA3AF]">-</span>
+                           )}
+                         </td>
+                       )}
                     </tr>
                  ))
              ) : (
                 <tr>
-                    <td colSpan="6" className="text-center py-4">
+                    <td colSpan={hasFaceAttendance ? 7 : 6} className="text-center py-4">
                         <div className="flex flex-col items-center justify-center">
                             <img
                                 src="/images/emptyAttendance.png"
@@ -402,6 +436,36 @@ const AttendanceList = () => {
         onClose={() => setIsErrorModalOpen(false)}
         message={errorMessage}
       />
+
+      {selectedFaceRecord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setSelectedFaceRecord(null)}
+              className="absolute right-4 top-4 rounded-full p-1 text-[#6B7280] transition hover:bg-gray-100 hover:text-black"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="mb-4">
+              <p className="text-lg font-semibold text-[#111827]">Face Check-In Preview</p>
+              <p className="mt-1 text-sm text-[#6B7280]">
+                {selectedFaceRecord.name} • {selectedFaceRecord.empId}
+              </p>
+              <p className="text-sm text-[#6B7280]">{selectedFaceRecord.date}</p>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl bg-[#F3F4F6]">
+              <img
+                src={selectedFaceRecord.faceImage}
+                alt={`${selectedFaceRecord.name} face attendance`}
+                className="h-auto w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
