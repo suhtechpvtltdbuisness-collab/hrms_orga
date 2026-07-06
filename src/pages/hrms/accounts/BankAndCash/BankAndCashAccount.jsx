@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus } from "lucide-react";
+import { accountsService } from "../../../../service";
 
 const BankAndCashAccount = () => {
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
 
   useEffect(() => {
-    const storedAccounts =
-      JSON.parse(localStorage.getItem("hrms_bank_accounts")) || [];
-    setAccounts(storedAccounts);
+    const loadAccounts = async () => {
+      const result = await accountsService.getBankCashAccounts();
+      setAccounts(result.success ? result.data || [] : []);
+    };
+    loadAccounts();
   }, []);
 
-  const handleDelete = (id) => {
-    const updatedAccounts = accounts.filter((acc) => acc.id !== id);
-    localStorage.setItem("hrms_bank_accounts", JSON.stringify(updatedAccounts));
-    setAccounts(updatedAccounts);
+  const handleDelete = async (id) => {
+    const result = await accountsService.deleteBankCashAccount(id);
+    if (!result.success) {
+      alert(result.message || "Failed to delete account");
+      return;
+    }
+    setAccounts((current) => current.filter((acc) => acc.id !== id));
   };
 
   const handleEdit = (account) => {
