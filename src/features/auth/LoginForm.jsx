@@ -27,8 +27,6 @@ function captureFrame(video) {
   if (!context) {
     throw new Error("Unable to capture image from camera.");
   }
-  context.translate(canvas.width, 0);
-  context.scale(-1, 1);
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/jpeg", 0.92);
 }
@@ -171,7 +169,7 @@ function FaceLoginModal({ open, image, loading, error, onClose, onCapture, onRet
           ) : (
             <>
               <div className="overflow-hidden rounded-2xl bg-slate-950">
-                <img src={image} alt="Captured face" className="aspect-video w-full object-cover" />
+                <img src={image} alt="Captured face" className="aspect-video w-full object-cover -scale-x-100" />
               </div>
               <p className="mt-4 text-sm text-slate-500">
                 If the image is clear and centered, continue to sign in with facial verification.
