@@ -152,6 +152,41 @@ export const authService = {
       };
     }
   },
+  faceLogin: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/auth/face-login`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Face login failed",
+          code: data.code,
+        };
+      }
+
+      persistUserSession(
+        data.data?.user,
+        data.data?.tokens,
+        data.data?.subscription,
+      );
+
+      return {
+        success: true,
+        message: data.message,
+        data: data.data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Something went wrong",
+      };
+    }
+  },
   logout: async () => {
     try {
       await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" });
