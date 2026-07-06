@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { accountsService } from "../../../../service";
 
 const AddBankAccount = () => {
   const navigate = useNavigate();
@@ -17,12 +18,26 @@ const AddBankAccount = () => {
     linkedGLAccount: "",
   });
 
-  const glAccounts = ["FIN-001-Parent Account"];
+  const [glAccounts, setGlAccounts] = useState([]);
 
   useEffect(() => {
     if (editingAccount) {
-      setFormData(editingAccount);
+      setFormData({
+        id: editingAccount.id,
+        accountType: editingAccount.accountType || "",
+        bankName: editingAccount.bankName || "",
+        accountNumber: editingAccount.accountNumber || "",
+        openingBalance: editingAccount.openingBalance || "",
+        linkedGLAccount: editingAccount.linkedGlAccountId ? String(editingAccount.linkedGlAccountId) : "",
+      });
     }
+    const loadGlAccounts = async () => {
+      const result = await accountsService.getChartAccounts();
+      if (result.success) {
+        setGlAccounts(result.data || []);
+      }
+    };
+    loadGlAccounts();
   }, [editingAccount]);
 
   const accountTypeOptions = ["Bank", "Cash"];
@@ -53,7 +68,7 @@ const AddBankAccount = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.bankName || !formData.accountNumber) {
       alert("Bank Name and Account Number are required!");
       return;
@@ -65,20 +80,20 @@ const AddBankAccount = () => {
       return;
     }
 
-    const existingAccounts =
-      JSON.parse(localStorage.getItem("hrms_bank_accounts")) || [];
-
-    let updatedAccounts;
-    if (editingAccount) {
-      updatedAccounts = existingAccounts.map((acc) =>
-        acc.id === formData.id ? formData : acc
-      );
-    } else {
-      const newAccount = { ...formData, id: Date.now().toString() };
-      updatedAccounts = [...existingAccounts, newAccount];
+    const payload = {
+      accountType: formData.accountType,
+      bankName: formData.bankName,
+      accountNumber: formData.accountNumber,
+      openingBalance: formData.openingBalance || "0",
+      linkedGlAccountId: formData.linkedGLAccount || null,
+    };
+    const result = editingAccount
+      ? await accountsService.updateBankCashAccount(formData.id, payload)
+      : await accountsService.createBankCashAccount(payload);
+    if (!result.success) {
+      alert(result.message || "Failed to save account");
+      return;
     }
-
-    localStorage.setItem("hrms_bank_accounts", JSON.stringify(updatedAccounts));
     navigate("/hrms/bank-and-cash");
   };
 
@@ -218,7 +233,7 @@ const AddBankAccount = () => {
                 Linked GL Account
               </label>
               <FilterDropdown
-                options={glAccounts}
+                options={glAccounts.map((account) => ({ label: account.accountName, value: String(account.id) }))}
                 value={formData.linkedGLAccount}
                 onChange={(val) => handleDropdownChange("linkedGLAccount", val)}
                 className="w-full h-10.5 px-4 bg-white border border-[#D9D9D9] rounded-lg text-[16px] font-normal text-[#1E1E1E] focus:ring-1 focus:ring-[#7D1EDB] flex items-center justify-between"

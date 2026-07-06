@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus } from "lucide-react";
+import { accountsService } from "../../../../service";
 
 const ChartOfAccounts = () => {
   const navigate = useNavigate();
   const [accountData, setAccountData] = useState([]);
 
   useEffect(() => {
-    const storedAccounts =
-      JSON.parse(localStorage.getItem("hrms_accounts")) || [];
-    setAccountData(storedAccounts);
+    const loadAccounts = async () => {
+      const result = await accountsService.getChartAccounts();
+      setAccountData(result.success ? result.data || [] : []);
+    };
+    loadAccounts();
   }, []);
 
-  const handleDelete = (id) => {
-    const updatedAccounts = accountData.filter((acc) => acc.id !== id);
-    localStorage.setItem("hrms_accounts", JSON.stringify(updatedAccounts));
-    setAccountData(updatedAccounts);
+  const handleDelete = async (id) => {
+    const result = await accountsService.deleteChartAccount(id);
+    if (!result.success) {
+      alert(result.message || "Failed to delete account");
+      return;
+    }
+    setAccountData((current) => current.filter((acc) => acc.id !== id));
   };
 
   const handleEdit = (account) => {

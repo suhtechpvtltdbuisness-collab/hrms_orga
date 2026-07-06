@@ -1,24 +1,27 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus } from "lucide-react";
+import { accountsService } from "../../../../service";
 
 const JournalEntry = () => {
   const navigate = useNavigate();
   const [state, setState] = React.useState({ entries: [] });
 
   React.useEffect(() => {
-    const storedEntries =
-      JSON.parse(localStorage.getItem("hrms_journal_entries")) || [];
-    setState({ entries: storedEntries });
+    const loadEntries = async () => {
+      const result = await accountsService.getJournalEntries();
+      setState({ entries: result.success ? result.data || [] : [] });
+    };
+    loadEntries();
   }, []);
 
-  const handleDelete = (id) => {
-    const updatedEntries = state.entries.filter((entry) => entry.id !== id);
-    localStorage.setItem(
-      "hrms_journal_entries",
-      JSON.stringify(updatedEntries)
-    );
-    setState({ entries: updatedEntries });
+  const handleDelete = async (id) => {
+    const result = await accountsService.deleteJournalEntry(id);
+    if (!result.success) {
+      alert(result.message || "Failed to delete journal entry");
+      return;
+    }
+    setState({ entries: state.entries.filter((entry) => entry.id !== id) });
   };
 
   return (

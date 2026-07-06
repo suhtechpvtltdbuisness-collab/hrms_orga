@@ -1,70 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Upload } from "lucide-react";
+import { accountsService } from "../../../../service";
 
 const AccountLedger = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [ledgerData, setLedgerData] = useState([]);
+  const [account, setAccount] = useState(location.state?.account || null);
 
-  // Mock Data
-  const ledgerData = [
-    {
-      id: 1,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 2,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 3,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 4,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 5,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 6,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-    {
-      id: 7,
-      date: "26/10/2026",
-      accountNo: "XXXXX4906",
-      debit: "0.01",
-      credit: "0.01",
-      balance: "0.01",
-    },
-  ];
+  useEffect(() => {
+    const loadLedger = async () => {
+      if (!location.state?.account?.id) return;
+      const result = await accountsService.getAccountLedger(location.state.account.id);
+      if (result.success) {
+        setAccount(result.data?.account || null);
+        setLedgerData(result.data?.ledger || []);
+      }
+    };
+    loadLedger();
+  }, [location.state]);
 
   return (
     <div
@@ -98,7 +53,7 @@ const AccountLedger = () => {
           className="text-[20px] font-semibold text-[#494949]"
           style={{ fontFamily: '"Nunito Sans", sans-serif' }}
         >
-          {location.state?.account?.accountName || "Account Ledger"}
+          {account?.accountName || "Account Ledger"}
         </h1>
 
         <button className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]">
@@ -141,20 +96,20 @@ const AccountLedger = () => {
               </tr>
             </thead>
             <tbody className="">
-              {ledgerData.map((row) => (
+              {ledgerData.map((row, index) => (
                 <tr
                   key={row.id}
                   className="hover:bg-gray-50 transition-colors font-semibold"
                   style={{ fontFamily: "Nunito Sans, sans-serif" }}
                 >
                   <td className="py-3 px-6 text-[14px] text-[#1E1E1E]">
-                    {String(row.id).padStart(2, "0")}
+                    {String(index + 1).padStart(2, "0")}
                   </td>
                   <td className="py-3 px-6 text-[14px] text-[#1E1E1E]">
                     {row.date}
                   </td>
                   <td className="py-3 px-6 text-[14px] text-[#1E1E1E]">
-                    {row.accountNo}
+                    {row.accountName}
                   </td>
                   <td className="py-3 px-6 text-[14px] text-[#1E1E1E]">
                     {row.debit}

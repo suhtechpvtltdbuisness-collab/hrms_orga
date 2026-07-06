@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronRight, X } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
+import { accountsService } from "../../../../service";
 
 const AddJournalEntry = () => {
   const navigate = useNavigate();
@@ -17,19 +18,27 @@ const AddJournalEntry = () => {
   const [accountOptions, setAccountOptions] = useState([]);
 
   useEffect(() => {
-    // Load accounts from localStorage for the dropdown
-    const accounts = JSON.parse(localStorage.getItem("hrms_accounts")) || [];
-    setAccountOptions(accounts.map((acc) => acc.accountName));
+    const loadData = async () => {
+      const accountsResult = await accountsService.getChartAccounts();
+      const accounts = accountsResult.success ? accountsResult.data || [] : [];
+      setAccountOptions(accounts.map((acc) => ({ label: acc.accountName, value: String(acc.id) })));
 
-    // Load entry data if in edit mode
-    if (id) {
-      const entries =
-        JSON.parse(localStorage.getItem("hrms_journal_entries")) || [];
-      const entryToEdit = entries.find((e) => e.id === parseInt(id));
-      if (entryToEdit) {
-        setFormData(entryToEdit);
+      if (id) {
+        const entryResult = await accountsService.getJournalEntry(id);
+        if (entryResult.success && entryResult.data) {
+          setFormData({
+            entryDate: entryResult.data.entryDate,
+            remarks: entryResult.data.remarks,
+            entries: (entryResult.data.entries || []).map((entry) => ({
+              account: String(entry.accountId),
+              debit: entry.debit,
+              credit: entry.credit,
+            })),
+          });
+        }
       }
-    }
+    };
+    loadData();
   }, [id]);
 
   const handleHeaderChange = (e) => {
@@ -79,7 +88,7 @@ const AddJournalEntry = () => {
 
   const { totalDebit, totalCredit, balance } = calculateTotals();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       !formData.entryDate ||
       !formData.remarks ||
@@ -89,40 +98,22 @@ const AddJournalEntry = () => {
       return;
     }
 
-    const existingEntries =
-      JSON.parse(localStorage.getItem("hrms_journal_entries")) || [];
-
-    if (id) {
-      const updatedEntries = existingEntries.map((entry) => {
-        if (entry.id === parseInt(id)) {
-          return {
-            ...entry,
-            ...formData,
-            totalDebit,
-            totalCredit,
-            balance,
-          };
-        }
-        return entry;
-      });
-      localStorage.setItem(
-        "hrms_journal_entries",
-        JSON.stringify(updatedEntries)
-      );
-    } else {
-      const newEntry = {
-        id: Date.now(),
-        ...formData,
-        totalDebit,
-        totalCredit,
-        balance,
-      };
-      localStorage.setItem(
-        "hrms_journal_entries",
-        JSON.stringify([...existingEntries, newEntry])
-      );
+    const payload = {
+      entryDate: formData.entryDate,
+      remarks: formData.remarks,
+      entries: formData.entries.map((entry) => ({
+        accountId: entry.account,
+        debit: entry.debit || "0",
+        credit: entry.credit || "0",
+      })),
+    };
+    const result = id
+      ? await accountsService.updateJournalEntry(id, payload)
+      : await accountsService.createJournalEntry(payload);
+    if (!result.success) {
+      alert(result.message || "Failed to save journal entry");
+      return;
     }
-
     navigate("/hrms/journal-entry");
   };
 

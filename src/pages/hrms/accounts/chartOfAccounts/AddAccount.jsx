@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import DisableAccountModal from "./DisableAccountModal";
+import { accountsService } from "../../../../service";
 
 const AddAccount = () => {
   const navigate = useNavigate();
@@ -63,27 +64,30 @@ const AddAccount = () => {
       alert("Account Name and Type are required!");
       return;
     }
-
-    const existingAccounts =
-      JSON.parse(localStorage.getItem("hrms_accounts")) || [];
-
-    let updatedAccounts;
-    if (editingAccount) {
-      // Update existing
-      updatedAccounts = existingAccounts.map((acc) =>
-        acc.id === formData.id ? formData : acc
-      );
-    } else {
-      // Create new
-      const newAccount = { ...formData, id: Date.now().toString() }; // Simple ID generation
-      updatedAccounts = [...existingAccounts, newAccount];
-    }
-
-    localStorage.setItem("hrms_accounts", JSON.stringify(updatedAccounts));
-    navigate("/hrms/chart-of-accounts");
   };
 
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
+  const submitAccount = async () => {
+    if (!formData.accountName || !formData.accountType) {
+      alert("Account Name and Type are required!");
+      return;
+    }
+    const payload = {
+      accountName: formData.accountName,
+      accountType: formData.accountType,
+      parentAccount: formData.parentAccount,
+      currency: formData.currency,
+      openingBalance: formData.openingBalance || "0",
+    };
+    const result = editingAccount
+      ? await accountsService.updateChartAccount(formData.id, payload)
+      : await accountsService.createChartAccount(payload);
+    if (!result.success) {
+      alert(result.message || "Failed to save account");
+      return;
+    }
+    navigate("/hrms/chart-of-accounts");
+  };
 
   return (
     <div
@@ -132,7 +136,7 @@ const AddAccount = () => {
           </button>
           <button
             className="px-3 py-2 bg-[#7D1EDB] rounded-full text-white font-medium text-[16px] hover:bg-purple-700 transition-colors"
-            onClick={handleSave}
+            onClick={submitAccount}
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             Save
@@ -257,7 +261,7 @@ const AddAccount = () => {
             <div className="flex items-center gap-4 mt-4">
               <button
                 className="px-3 py-2.5 bg-[#7D1EDB] rounded-full text-white font-medium text-[16px] hover:bg-purple-700 transition-colors"
-                onClick={handleSave}
+                onClick={submitAccount}
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
                 {editingAccount ? "Update Account" : "Create Account"}
@@ -278,7 +282,15 @@ const AddAccount = () => {
       <DisableAccountModal
         isOpen={isDisableModalOpen}
         onClose={() => setIsDisableModalOpen(false)}
-        onConfirm={() => navigate("/hrms/chart-of-accounts")}
+        onConfirm={async () => {
+          const result = await accountsService.deleteChartAccount(formData.id);
+          if (!result.success) {
+            alert(result.message || "Failed to disable account");
+            setIsDisableModalOpen(false);
+            return;
+          }
+          navigate("/hrms/chart-of-accounts");
+        }}
         accountName={formData.accountName}
       />
     </div>

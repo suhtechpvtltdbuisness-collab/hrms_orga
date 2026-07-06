@@ -1608,6 +1608,167 @@ export const payrollService = {
   },
 };
 
+export const accountsService = {
+  getChartAccounts: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/chart-of-accounts`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch chart of accounts" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createChartAccount: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/chart-of-accounts`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateChartAccount: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/chart-of-accounts/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteChartAccount: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/chart-of-accounts/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getAccountLedger: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/chart-of-accounts/${id}/ledger`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch account ledger" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getBankCashAccounts: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/bank-and-cash`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch bank and cash accounts" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createBankCashAccount: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/bank-and-cash`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create bank account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateBankCashAccount: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/bank-and-cash/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update bank account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteBankCashAccount: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/bank-and-cash/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete bank account" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getJournalEntries: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/journal-entries`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch journal entries" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getJournalEntry: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/journal-entries/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch journal entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createJournalEntry: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/journal-entries`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create journal entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateJournalEntry: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/journal-entries/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update journal entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteJournalEntry: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/accounts/journal-entries/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete journal entry" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
 // ─── Attendance helpers ────────────────────────────────────────────────────────
 const ATTENDANCE_STATUS_TO_API = {
   Present: "present",
