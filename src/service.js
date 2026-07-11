@@ -1,6 +1,6 @@
 let BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL ||
-  "https://hrms-orga-backend.vercel.app";
+  "https://api.orga.cc";
 
 if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
   BASE_URL = `https://${BASE_URL}`;
@@ -50,7 +50,12 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-const apiFetch = (url, options = {}) => {
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+const MAX_RETRIES = 3;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const apiFetch = async (url, options = {}) => {
   const headers = {
     ...getAuthHeaders(),
     ...options.headers,
@@ -58,11 +63,29 @@ const apiFetch = (url, options = {}) => {
   if (options.body instanceof FormData) {
     delete headers["Content-Type"];
   }
-  return fetch(url, {
-    credentials: "include",
-    ...options,
-    headers,
-  });
+  const isBodyRetryable =
+    !(options.body instanceof ReadableStream);
+
+  let lastError;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        credentials: "include",
+        ...options,
+        headers,
+      });
+      if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_RETRIES) {
+        await sleep(300 * 2 ** attempt);
+        continue;
+      }
+      return response;
+    } catch (error) {
+      lastError = error;
+      if (!isBodyRetryable || attempt === MAX_RETRIES) break;
+      await sleep(300 * 2 ** attempt);
+    }
+  }
+  throw lastError;
 };
 
 export const dashboardService = {
