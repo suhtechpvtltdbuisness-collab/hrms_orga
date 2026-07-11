@@ -1,15 +1,13 @@
-let BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL ||
-  "https://api.orga.cc";
-
-if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
-  BASE_URL = `https://${BASE_URL}`;
-}
+const API_BASE_PATH = "/api";
+const BASE_URL =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${API_BASE_PATH}`
+    : API_BASE_PATH;
 
 const resolveBackendAssetUrl = (url) => {
   if (!url || typeof url !== "string") return url || "";
   if (/^(https?:|blob:|data:)/i.test(url)) return url;
-  return new URL(url, `${BASE_URL.replace(/\/$/, "")}/`).toString();
+  return `${BASE_URL}/${url.replace(/^\/+/, "")}`;
 };
 
 const MAIN_SITE_URL =

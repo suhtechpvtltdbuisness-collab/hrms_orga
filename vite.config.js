@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: process.env.VITE_BACKEND_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {
