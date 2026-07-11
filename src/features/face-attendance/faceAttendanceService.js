@@ -1,10 +1,8 @@
-let BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL ||
-  'https://hrms-orga-backend.vercel.app';
-
-if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
-  BASE_URL = `https://${BASE_URL}`;
-}
+const API_BASE_PATH = "/api";
+const BASE_URL =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${API_BASE_PATH}`
+    : API_BASE_PATH;
 
 const request = async (path, options = {}) => {
   const token = localStorage.getItem('authToken');
