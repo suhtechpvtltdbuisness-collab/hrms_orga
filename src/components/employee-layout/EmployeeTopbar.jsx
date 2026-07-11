@@ -1,11 +1,11 @@
 import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Menu, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const getInitials = (name) =>
   name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'E';
 
-const EmployeeTopbar = () => {
+const EmployeeTopbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
@@ -17,9 +17,18 @@ const EmployeeTopbar = () => {
   const initials = getInitials(userName);
 
   return (
-    <div className="bg-white px-4 py-6 mx-4 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9]">
+    <div className="bg-white px-3 py-4 sm:px-4 sm:py-5 mx-1 sm:mx-3 mr-1 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9] gap-3">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        className="min-[1260px]:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-600"
+        aria-label="Open sidebar"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Search Bar — same as admin */}
-      <div className="relative w-96 flex items-center bg-[#F9FAFB] rounded-full px-4 py-4 border border-[#F2F2F2] focus-within:ring-2 focus-within:ring-purple-100 focus-within:border-purple-200 transition-all">
+      <div className="relative hidden md:flex w-full max-w-96 items-center bg-[#F9FAFB] rounded-full px-4 py-3 border border-[#F2F2F2] focus-within:ring-2 focus-within:ring-purple-100 focus-within:border-purple-200 transition-all">
         <img
           src="/images/search-circle.svg"
           alt="Search Icon"
@@ -38,14 +47,14 @@ const EmployeeTopbar = () => {
       </div>
 
       {/* Right: Notification + Profile */}
-      <div className="flex items-center space-x-6">
+      <div className="ml-auto flex items-center gap-2 sm:gap-4">
         {/* Notification Bell */}
         <div
           onClick={() => navigate('/employee/announcements')}
-          className="relative cursor-pointer w-15 h-15 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]"
+          className="relative cursor-pointer h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 bg-[#EEECFF]"
         >
-          <Bell size={32} color="#7D1EDB" fill="#7D1EDB" />
-          <div className="absolute top-2 right-2 w-5 h-5 bg-[#FF3B30] rounded-full border-2 border-white flex items-center justify-center">
+          <Bell className="h-5 w-5 sm:h-7 sm:w-7" color="#7D1EDB" fill="#7D1EDB" />
+          <div className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#FF3B30] sm:right-2 sm:top-2 sm:h-5 sm:w-5">
             <span className="text-white text-[10px] font-bold">2</span>
           </div>
         </div>
@@ -53,18 +62,17 @@ const EmployeeTopbar = () => {
         {/* User Profile */}
         <div
           onClick={() => navigate('/employee/profile')}
-          className="flex items-center space-x-3 cursor-pointer group"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group"
         >
           <div className="relative">
             {userImage ? (
               <img
-                className="h-13 w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
+                className="h-10 w-10 sm:h-13 sm:w-13 rounded-full object-cover border-2 border-yellow-400 group-hover:border-purple-400 transition-colors"
                 src={userImage}
                 alt={userName}
               />
             ) : (
-              <div className="h-13 w-13 rounded-full border-2 border-yellow-400 group-hover:border-purple-400 transition-colors bg-gradient-to-br from-[#7D1EDB] to-indigo-500 flex items-center justify-center text-white font-bold text-base select-none"
-                style={{ width: '52px', height: '52px' }}
+              <div className="h-10 w-10 sm:h-13 sm:w-13 rounded-full border-2 border-yellow-400 group-hover:border-purple-400 transition-colors bg-gradient-to-br from-[#7D1EDB] to-indigo-500 flex items-center justify-center text-white font-bold text-base select-none"
               >
                 {initials}
               </div>

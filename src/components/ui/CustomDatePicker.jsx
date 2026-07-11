@@ -223,7 +223,7 @@ const CustomDatePicker = ({
 
             {/* Popup */}
             {isOpen && (
-                <div className={`absolute left-0 z-50 bg-white border border-[#D0D0D0] mt-1 rounded-[20px] overflow-hidden w-[260px] shadow-lg ${position === 'bottom' ? 'top-full mb-2' : 'bottom-full mt-2'}`}>
+                <div className={`absolute left-0 z-50 w-[min(260px,calc(100vw-2rem))] bg-white border border-[#D0D0D0] mt-1 rounded-[20px] overflow-hidden shadow-lg ${position === 'bottom' ? 'top-full mb-2' : 'bottom-full mt-2'}`}>
                     {/* Header */}
                     <div className="px-5 pt-4 pb-2 border-b border-[#CAC4D0]">
                         <p className="text-[#49454F] text-xs font-medium mb-1">Select date</p>

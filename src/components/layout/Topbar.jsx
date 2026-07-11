@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Search, UserCircle, LogOut } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Bell, Menu, Search, UserCircle, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getProfilePicUrl, authService } from '../../service';
 import toast from 'react-hot-toast';
 
@@ -17,7 +17,7 @@ const getGreeting = () => {
     return { text: 'Good Evening', emoji: '🌙' };
 };
 
-const Topbar = () => {
+const Topbar = ({ onMenuClick }) => {
     const navigate = useNavigate();
 
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -46,7 +46,7 @@ const Topbar = () => {
             await authService.logout();
             toast.success('Logged out successfully');
             navigate('/auth', { replace: true });
-        } catch (error) {
+        } catch {
             toast.error('Logout failed');
         }
     };
@@ -55,10 +55,18 @@ const Topbar = () => {
         <div className="bg-white px-3 py-4 sm:px-5 lg:px-6 lg:py-5 mx-1 sm:mx-3 mt-0 flex justify-between items-center rounded-xl border border-[#D9D9D9] gap-3 sm:gap-6">
 
             {/* LEFT: Greeting + Search Bar */}
-            <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                <button
+                    type="button"
+                    onClick={onMenuClick}
+                    className="min-[1260px]:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-600"
+                    aria-label="Open sidebar"
+                >
+                    <Menu size={20} />
+                </button>
 
                 {/* Greeting */}
-                <div className="flex flex-col justify-center shrink-0">
+                <div className="flex min-w-0 flex-col justify-center">
                     <h2 className="text-sm sm:text-lg font-bold text-[#7D1EDB] leading-tight truncate">
                         {greeting.text}, {firstName}&nbsp;{greeting.emoji}
                     </h2>
