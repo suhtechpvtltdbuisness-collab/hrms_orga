@@ -2494,10 +2494,12 @@ const normalizeShiftAssignmentMeta = (payload, fallback = {}) => {
 };
 
 export const shiftAssignmentService = {
-  getShiftAssignments: async ({ date, search = "", page = 1, limit = 10 } = {}) => {
+  getShiftAssignments: async ({ date, dateFrom, dateTo, search = "", page = 1, limit = 10 } = {}) => {
     try {
       const params = new URLSearchParams();
       if (date) params.set("date", date);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
       params.set("search", search ?? "");
       params.set("page", String(page ?? 1));
       params.set("limit", String(limit ?? 10));
