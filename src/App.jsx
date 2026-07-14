@@ -140,6 +140,7 @@ import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import Profile from "./pages/hrms/Profile/Profile";
+import SalesCRM from "./pages/hrms/SalesCRM/SalesCRM";
 
 
 function App() {
@@ -389,6 +390,10 @@ function App() {
           <Route path="financial-reports/balance-sheet" element={<BalanceSheet />} />
           <Route path="financial-reports/budget-vs-actual" element={<BudgetVsActual />} />
           <Route path="financial-reports/cash-flow" element={<CashFlow />} />
+
+          {/* Sales CRM */}
+          <Route path="sales" element={<Navigate to="/hrms/sales/overview" replace />} />
+          <Route path="sales/:section" element={<SalesCRM />} />
 
           {/* Notifications */}
           <Route path="notifications" element={<Notifications />} />
