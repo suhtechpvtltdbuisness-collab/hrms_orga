@@ -2128,6 +2128,37 @@ export const attendanceService = {
     }
   },
 
+  importAttendance: async ({ file, fromDate, toDate }) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (fromDate) formData.append("fromDate", fromDate);
+      if (toDate) formData.append("toDate", toDate);
+
+      const response = await apiFetch(`${BASE_URL}/attendance/import`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to import attendance",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || "Attendance imported successfully",
+        data,
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   markSelfAttendance: async (payload = {}) => {
     try {
       const response = await apiFetch(`${BASE_URL}/attendance/self`, {

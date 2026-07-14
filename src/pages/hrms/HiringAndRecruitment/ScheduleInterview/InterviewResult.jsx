@@ -301,7 +301,6 @@ const InterviewResult = () => {
     const [outcome, setOutcome] = useState('');
     const [remarks, setRemarks] = useState({ strengths: '', weaknesses: '', finalComments: '' });
     const [submitting, setSubmitting] = useState(false);
-    const [savingDraft, setSavingDraft] = useState(false);
 
     useEffect(() => {
         const loadInterview = async () => {
@@ -349,20 +348,6 @@ const InterviewResult = () => {
     const handleOpenResume = () => {
         if (!details.resume) return;
         window.open(details.resume, '_blank', 'noopener,noreferrer');
-    };
-
-    const handleSaveDraft = async () => {
-        setSavingDraft(true);
-        const payload = {
-            status: outcome || 'result_pending',
-            strengths: remarks.strengths,
-            weaknesses: remarks.weaknesses,
-            remarks: remarks.finalComments,
-        };
-        const result = await hiringService.updateInterview(id, payload);
-        if (result.success) toast.success('Draft saved');
-        else toast.error(result.message || 'Failed to save draft');
-        setSavingDraft(false);
     };
 
     const handleSubmitResult = async () => {
@@ -452,17 +437,8 @@ const InterviewResult = () => {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <button
                             type="button"
-                            onClick={handleSaveDraft}
-                            disabled={savingDraft || submitting}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#7D1EDB] bg-white px-5 py-2.5 text-sm font-semibold text-[#7D1EDB] hover:bg-purple-50 disabled:opacity-60"
-                        >
-                            {savingDraft ? <Spinner size={16} color="#7D1EDB" /> : null}
-                            Save Draft
-                        </button>
-                        <button
-                            type="button"
                             onClick={handleSubmitResult}
-                            disabled={savingDraft || submitting}
+                            disabled={submitting}
                             className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                         >
                             {submitting ? <Spinner size={16} color="#fff" /> : null}

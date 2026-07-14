@@ -16,7 +16,6 @@ import {
     MapPin,
     Pencil,
     Phone,
-    Save,
     ShieldCheck,
     Upload,
     UserRound,
@@ -552,20 +551,6 @@ const AddEmployee = () => {
         }
         localStorage.removeItem(draftKey);
         navigate('/hrms/employees');
-    };
-
-    const saveDraft = () => {
-        const serializableData = {
-            ...formData,
-            profilePicFile: null,
-            documents: formData.documents.map(({ name, size, type }) => ({ name, size, type })),
-        };
-        localStorage.setItem(draftKey, JSON.stringify({ formData: serializableData, currentStep, savedAt: Date.now() }));
-        setToast({
-            type: 'success',
-            title: 'Draft saved',
-            message: 'Employee details were saved on this device. Uploaded files must be selected again.',
-        });
     };
 
     const handleProfilePhoto = (event) => {
@@ -1282,10 +1267,7 @@ const AddEmployee = () => {
                     </main>
 
                     <footer className="z-20 shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
-                        <div className="mx-auto flex max-w-5xl flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-                            <button type="button" onClick={saveDraft} disabled={isSubmitting} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50">
-                                <Save size={16} /> Save as draft
-                            </button>
+                        <div className="mx-auto flex max-w-5xl flex-col-reverse items-stretch justify-end gap-3 sm:flex-row sm:items-center">
                             <div className="flex gap-3">
                                 <button type="button" onClick={goBack} disabled={currentStep === 0 || isSubmitting} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none">
                                     <ArrowLeft size={16} /> Back

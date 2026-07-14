@@ -29,7 +29,6 @@ const HRMS = () => {
           path: "/hrms/employee-attendance-tool",
         },
         { name: "Upload Attendance", path: "/hrms/upload-attendance" },
-        { name: "Employee Check-IN", path: "" },
         { name: "Attendance Request", path: "/hrms/request-attendance" },
       ],
     },
