@@ -37,16 +37,15 @@ const EmployeeLayout = () => {
 
       {/* Main area shifts right based on sidebar state */}
       <div
-        className="transition-all duration-300"
-        style={{ marginLeft: isSidebarOpen ? '268px' : '64px' }}
+        className={`transition-all duration-300 ${isSidebarOpen ? 'min-[1260px]:ml-[268px]' : 'min-[1260px]:ml-16'}`}
       >
         {/* Topbar */}
         <div className="sticky top-0 z-30 pt-4 px-2 pb-0 bg-[#eeeff1]">
-          <EmployeeTopbar />
+          <EmployeeTopbar onMenuClick={() => setIsSidebarOpen(true)} />
         </div>
 
         {/* Page Content */}
-        <main className="px-4 py-4">
+        <main className="px-2 py-4 sm:px-4 overflow-x-auto">
           <Outlet />
         </main>
       </div>

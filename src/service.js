@@ -2128,6 +2128,37 @@ export const attendanceService = {
     }
   },
 
+  importAttendance: async ({ file, fromDate, toDate }) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (fromDate) formData.append("fromDate", fromDate);
+      if (toDate) formData.append("toDate", toDate);
+
+      const response = await apiFetch(`${BASE_URL}/attendance/import`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to import attendance",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || "Attendance imported successfully",
+        data,
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   markSelfAttendance: async (payload = {}) => {
     try {
       const response = await apiFetch(`${BASE_URL}/attendance/self`, {
@@ -2494,10 +2525,12 @@ const normalizeShiftAssignmentMeta = (payload, fallback = {}) => {
 };
 
 export const shiftAssignmentService = {
-  getShiftAssignments: async ({ date, search = "", page = 1, limit = 10 } = {}) => {
+  getShiftAssignments: async ({ date, dateFrom, dateTo, search = "", page = 1, limit = 10 } = {}) => {
     try {
       const params = new URLSearchParams();
       if (date) params.set("date", date);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
       params.set("search", search ?? "");
       params.set("page", String(page ?? 1));
       params.set("limit", String(limit ?? 10));

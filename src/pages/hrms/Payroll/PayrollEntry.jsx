@@ -191,7 +191,7 @@ const PayrollEntry = () => {
         try {
             const res = await payrollModuleService.createPayrollEntry(payload);
             if (res.success) {
-                toast.success('Payroll calculated and saved as draft');
+                toast.success('Payroll calculated successfully');
                 setViewMode('list');
                 fetchData();
             } else {

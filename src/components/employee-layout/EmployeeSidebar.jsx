@@ -62,7 +62,7 @@ const EmployeeSidebar = ({ isOpen, toggleSidebar }) => {
 
   return (
     <aside
-      className="fixed top-0 left-0 h-screen z-50 bg-white border-r border-gray-100 shadow-sm transition-all duration-300 flex flex-col rounded-r-2xl"
+      className={`fixed top-0 left-0 h-screen z-50 bg-white border-r border-gray-100 shadow-sm transition-all duration-300 flex flex-col rounded-r-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full min-[1260px]:translate-x-0'}`}
       style={{ width: isOpen ? '268px' : '64px', padding: isOpen ? '20px' : '16px 0' }}
     >
       {/* Logo — same as admin panel */}

@@ -1,12 +1,65 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Upload } from 'lucide-react';
+import { ChevronRight, FileText, Loader2, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
+import { attendanceService, attendanceUtils } from '../../../../service';
 
 const UploadAttendance = () => {
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
     const [fromDate, setFromDate] = useState('26/01/2026');
     const [toDate, setToDate] = useState('29/01/2026');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+
+    const allowedExtensions = ['csv', 'xls', 'xlsx'];
+
+    const handleFileSelect = (file) => {
+        if (!file) return;
+
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!allowedExtensions.includes(extension)) {
+            toast.error('Please upload a CSV, XLS, or XLSX file.');
+            return;
+        }
+
+        setSelectedFile(file);
+    };
+
+    const handleInputChange = (event) => {
+        handleFileSelect(event.target.files?.[0]);
+        event.target.value = '';
+    };
+
+    const handleDrop = (event) => {
+        event.preventDefault();
+        setIsDragging(false);
+        handleFileSelect(event.dataTransfer.files?.[0]);
+    };
+
+    const handleSave = async () => {
+        if (!selectedFile) {
+            toast.error('Please select an attendance file first.');
+            return;
+        }
+
+        setIsImporting(true);
+        const result = await attendanceService.importAttendance({
+            file: selectedFile,
+            fromDate: attendanceUtils.toApiDate(fromDate),
+            toDate: attendanceUtils.toApiDate(toDate),
+        });
+
+        if (result.success) {
+            toast.success(result.message || 'Attendance imported successfully.');
+            setSelectedFile(null);
+        } else {
+            toast.error(result.message || 'Failed to import attendance.');
+        }
+        setIsImporting(false);
+    };
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
@@ -33,10 +86,13 @@ const UploadAttendance = () => {
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <h1 className="text-[20px] font-semibold text-[#1E1E1E]" style={{ fontFamily: 'Poppins, sans-serif' }}>Upload Attendance</h1>
                 <button 
-                    className="bg-[#7D1EDB] text-white px-4 py-2 rounded-full font-medium hover:bg-purple-700 transition-colors"
+                    onClick={handleSave}
+                    disabled={isImporting || !selectedFile}
+                    className="bg-[#7D1EDB] text-white px-4 py-2 rounded-full font-medium hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
                     style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
-                    Save
+                    {isImporting ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {isImporting ? 'Saving...' : 'Save'}
                 </button>
             </div>
 
@@ -67,24 +123,76 @@ const UploadAttendance = () => {
                         </div>
                     </div>
 
-                    <button className="px-2 py-2 border border-[#DCDCDC] rounded-[8px] text-sm text-[#374151] hover:bg-gray-50" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-                        Get Template
-                    </button>
                 </div>
 
                 {/* Import Attendance Section */}
                 <div className="border border-[#D6D6D6] rounded-lg p-4">
                     <h3 className="text-[16px] font-semibold text-[#1E1E1E] mb-2" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Import Attendance</h3>
                     
-                    <div className="border border-dashed bg-[#F7F7F7] border-[#C5C5C5] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors min-h-[160px]">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,.xls,.xlsx"
+                        className="hidden"
+                        onChange={handleInputChange}
+                    />
+
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                fileInputRef.current?.click();
+                            }
+                        }}
+                        onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsDragging(true);
+                        }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        className={`border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors min-h-[160px] ${
+                            isDragging
+                                ? 'bg-purple-50 border-[#7D1EDB]'
+                                : selectedFile
+                                    ? 'bg-white border-[#7D1EDB]'
+                                    : 'bg-[#F7F7F7] border-[#C5C5C5] hover:bg-gray-50'
+                        }`}
+                    >
                         <img 
                             src="/images/uploadDoc.svg" 
                             alt="Upload Document" 
                             className="w-12 h-10 mb-4"
                         />
-                        <h4 className="text-[16px] font-semibold text-[#1E1E1E] " style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Upload Document</h4>
-                        <p className="text-[12px] text-[#7D1EDB]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Drag & Drop Or Click To Browse</p>
+                        <h4 className="text-[16px] font-semibold text-[#1E1E1E] " style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                            {selectedFile ? 'File Selected' : 'Upload Document'}
+                        </h4>
+                        <p className="text-[12px] text-[#7D1EDB]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                            {selectedFile ? selectedFile.name : 'Drag & Drop Or Click To Browse'}
+                        </p>
                     </div>
+
+                    {selectedFile && (
+                        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#D9D9D9] bg-white px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2">
+                                <FileText size={18} className="text-[#7D1EDB] shrink-0" />
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-[#1E1E1E]">{selectedFile.name}</p>
+                                    <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedFile(null)}
+                                className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+                                aria-label="Remove selected file"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
             </div>

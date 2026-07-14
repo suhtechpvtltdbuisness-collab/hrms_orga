@@ -42,17 +42,17 @@ const Layout = ({ children }) => {
 
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${isSidebarOpen ? 'ml-12 min-[1260px]:ml-61' : 'ml-12'
+        className={`transition-all duration-300 ${isSidebarOpen ? 'min-[1260px]:ml-61' : 'min-[1260px]:ml-16'
           }`}
       >
         <div className="px-2 sm:px-4 pt-4 pb-0">
           {/* Topbar */}
           <div className="sticky top-0 z-30 bg-[#eeeff1] pb-2 -mt-4 pt-4">
-            <Topbar />
+            <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
           </div>
 
           {/* Page Content Container */}
-          <main className="flex-1 min-w-0 overflow-x-hidden">
+          <main className="flex-1 min-w-0 overflow-x-auto">
             {/* Inner content container - align with Topbar's margin */}
             <div className="w-full mx-auto">
               {children || <Outlet />}

@@ -13,10 +13,6 @@ const ScheduleInterviewList = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
 
-    useEffect(() => {
-        loadInterviews();
-    }, []);
-
     const loadInterviews = async () => {
         setLoading(true);
         const result = await hiringService.getAllInterviews();
@@ -33,6 +29,13 @@ const ScheduleInterviewList = () => {
         }
         setLoading(false);
     };
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            loadInterviews();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, []);
 
     const handleDelete = (id) => {
         setDeleteId(id);
