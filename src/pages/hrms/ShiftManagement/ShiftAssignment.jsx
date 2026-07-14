@@ -12,6 +12,11 @@ const getTodayDisplayDate = () => {
     return `${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()}`;
 };
 
+const compareApiDates = (left, right) => {
+    if (!left || !right) return 0;
+    return attendanceUtils.toApiDate(left).localeCompare(attendanceUtils.toApiDate(right));
+};
+
 const formatTimeLabel = (value) => {
     if (!value) return '';
     const raw = String(value).trim();
@@ -107,7 +112,8 @@ const ShiftAssignment = () => {
     const navigate = useNavigate();
     const requestIdRef = useRef(0);
 
-    const [selectedDate, setSelectedDate] = useState(getTodayDisplayDate);
+    const [selectedFromDate, setSelectedFromDate] = useState(getTodayDisplayDate);
+    const [selectedToDate, setSelectedToDate] = useState(getTodayDisplayDate);
     const [searchQuery, setSearchQuery] = useState('');
     const [appliedSearch, setAppliedSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -122,7 +128,8 @@ const ShiftAssignment = () => {
     const [savingRoster, setSavingRoster] = useState(false);
 
     const pageSize = 10;
-    const apiDate = useMemo(() => attendanceUtils.toApiDate(selectedDate), [selectedDate]);
+    const apiFromDate = useMemo(() => attendanceUtils.toApiDate(selectedFromDate), [selectedFromDate]);
+    const apiToDate = useMemo(() => attendanceUtils.toApiDate(selectedToDate), [selectedToDate]);
 
     const shiftTypeMap = useMemo(
         () => new Map(shiftTypes.map((shift) => [String(shift.id ?? shift._id), shift])),
@@ -169,7 +176,9 @@ const ShiftAssignment = () => {
 
         try {
             const response = await shiftAssignmentService.getShiftAssignments({
-                date: apiDate,
+                date: apiFromDate,
+                dateFrom: apiFromDate,
+                dateTo: apiToDate,
                 search: appliedSearch,
                 page: currentPage,
                 limit: pageSize,
@@ -205,13 +214,14 @@ const ShiftAssignment = () => {
             const assignmentResults = await Promise.all(
                 employeeRows.map(async (row) => {
                     if (!row.employeeId) return row;
-                    const assignmentRes = await shiftAssignmentService.getEmployeeAssignments(Number(row.employeeId), apiDate, apiDate);
+                    const assignmentRes = await shiftAssignmentService.getEmployeeAssignments(Number(row.employeeId), apiFromDate, apiToDate);
                     if (!assignmentRes.success) return row;
 
                     const assignments = Array.isArray(assignmentRes.data) ? assignmentRes.data : [];
                     const todayAssignment = assignments.find((entry) => {
                         const entryDate = entry?.date || entry?.rosterDate || entry?.assignmentDate || '';
-                        return entryDate ? attendanceUtils.toApiDate(entryDate) === apiDate : true;
+                        const apiEntryDate = attendanceUtils.toApiDate(entryDate);
+                        return entryDate ? apiEntryDate >= apiFromDate && apiEntryDate <= apiToDate : true;
                     }) || assignments[0];
 
                     if (!todayAssignment) return row;
@@ -222,7 +232,7 @@ const ShiftAssignment = () => {
                     return {
                         ...row,
                         id: todayAssignment.id || row.id,
-                        date: todayAssignment.date || todayAssignment.rosterDate || apiDate,
+                        date: todayAssignment.date || todayAssignment.rosterDate || apiFromDate,
                         shiftTypeId: shiftTypeId ? String(shiftTypeId) : '',
                         shiftTypeName: shiftType?.name || todayAssignment.shiftTypeName || todayAssignment.shiftName || '',
                         isDirty: false,
@@ -247,7 +257,7 @@ const ShiftAssignment = () => {
                 setLoadingRoster(false);
             }
         }
-    }, [apiDate, appliedSearch, currentPage, pageSize, shiftTypeMap]);
+    }, [apiFromDate, apiToDate, appliedSearch, currentPage, pageSize, shiftTypeMap]);
 
     useEffect(() => {
         loadShiftTypes();
@@ -304,7 +314,9 @@ const ShiftAssignment = () => {
         try {
             const shiftTypeId = bulkShiftId ? Number(bulkShiftId) : null;
             const payload = {
-                date: apiDate,
+                date: apiFromDate,
+                dateFrom: apiFromDate,
+                dateTo: apiToDate,
                 shiftTypeId,
                 employeeIds: targetRows.map((row) => Number(row.employeeId)).filter((id) => !Number.isNaN(id)),
                 assignments: targetRows
@@ -352,7 +364,9 @@ const ShiftAssignment = () => {
             }
 
             const response = await shiftAssignmentService.updateRoster({
-                date: apiDate,
+                date: apiFromDate,
+                dateFrom: apiFromDate,
+                dateTo: apiToDate,
                 assignments,
             });
 
@@ -407,6 +421,24 @@ const ShiftAssignment = () => {
     const visibleRows = rows;
     const allVisibleSelected = visibleRows.length > 0 && selectedRows.length === visibleRows.length;
 
+    const handleFromDateChange = (date) => {
+        if (!date) return;
+        setSelectedFromDate(date);
+        if (compareApiDates(date, selectedToDate) > 0) {
+            setSelectedToDate(date);
+        }
+        setCurrentPage(1);
+    };
+
+    const handleToDateChange = (date) => {
+        if (!date) return;
+        setSelectedToDate(date);
+        if (compareApiDates(selectedFromDate, date) > 0) {
+            setSelectedFromDate(date);
+        }
+        setCurrentPage(1);
+    };
+
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col">
             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
@@ -458,16 +490,21 @@ const ShiftAssignment = () => {
                 </div>
 
                 <div className="min-w-[210px] flex items-center gap-2">
-                    <label className="text-xs text-gray-500 font-semibold shrink-0">Date:</label>
+                    <label className="text-xs text-gray-500 font-semibold shrink-0">From:</label>
                     <CustomDatePicker
-                        value={selectedDate}
-                        onChange={(date) => {
-                            if (date) {
-                                setSelectedDate(date);
-                                setCurrentPage(1);
-                            }
-                        }}
-                        placeholder="Select Date"
+                        value={selectedFromDate}
+                        onChange={handleFromDateChange}
+                        placeholder="From Date"
+                        className="w-full h-10 bg-white"
+                    />
+                </div>
+
+                <div className="min-w-[210px] flex items-center gap-2">
+                    <label className="text-xs text-gray-500 font-semibold shrink-0">To:</label>
+                    <CustomDatePicker
+                        value={selectedToDate}
+                        onChange={handleToDateChange}
+                        placeholder="To Date"
                         className="w-full h-10 bg-white"
                     />
                 </div>
@@ -546,7 +583,7 @@ const ShiftAssignment = () => {
 
                                 return (
                                     <tr
-                                        key={`${row.id || row.employeeId}-${row.date || apiDate}`}
+                                        key={`${row.id || row.employeeId}-${row.date || apiFromDate}`}
                                         className={`hover:bg-gray-50 transition-colors text-[13px] font-medium text-[#1E1E1E] border-b border-[#E5E7EB] ${row.isDirty ? 'bg-amber-50/40' : ''}`}
                                         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
                                     >
@@ -613,7 +650,7 @@ const ShiftAssignment = () => {
                             {!loadingRoster && !loadingShifts && !visibleRows.length && (
                                 <tr>
                                     <td colSpan={8} className="py-12 text-center text-gray-400">
-                                        No shift assignments found for this date.
+                                        No shift assignments found for this date range.
                                     </td>
                                 </tr>
                             )}

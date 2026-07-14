@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +14,8 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  TrendingUp,
+  ChevronDown,
   ChevronLeft
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -23,6 +25,15 @@ import { authService } from '../../service';
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [expandedMenu, setExpandedMenu] = useState(
+    location.pathname.startsWith('/hrms/sales') ? 'Sales' : ''
+  );
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/hrms/sales')) {
+      setExpandedMenu('Sales');
+    }
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await authService.logout();
@@ -36,6 +47,28 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Project Management', icon: Briefcase, path: '' },
     { name: 'Employees', icon: Mail, path: '/hrms/employees' },
     { name: 'Attendance', icon: CalendarDays, path: '/hrms/attendance' },
+    {
+      name: 'Sales',
+      icon: TrendingUp,
+      path: '/hrms/sales/overview',
+      children: [
+        { name: 'Overview', path: '/hrms/sales/overview' },
+        { name: 'Leads', path: '/hrms/sales/leads' },
+        { name: 'Clients', path: '/hrms/sales/clients' },
+        { name: 'Opportunities', path: '/hrms/sales/opportunities' },
+        { name: 'Pipeline', path: '/hrms/sales/pipeline' },
+        { name: 'Sales AI Co-Pilot', path: '/hrms/sales/sales-ai-co-pilot' },
+        { name: 'Knowledge Hub', path: '/hrms/sales/knowledge-hub' },
+        { name: 'Proposal Builder', path: '/hrms/sales/proposal-builder' },
+        { name: 'Quotations', path: '/hrms/sales/quotations' },
+        { name: 'Contracts', path: '/hrms/sales/contracts' },
+        { name: 'Products & Services', path: '/hrms/sales/products-services' },
+        { name: 'Pricing Calculator', path: '/hrms/sales/pricing-calculator' },
+        { name: 'Case Studies', path: '/hrms/sales/case-studies' },
+        { name: 'Competitor Battlecards', path: '/hrms/sales/competitor-battlecards' },
+        { name: 'Objection Playbooks', path: '/hrms/sales/objection-playbooks' }
+      ]
+    },
     { name: 'Tasks', icon: CheckSquare, path: '' },
     { name: 'Reports', icon: BarChart3, path: '/hrms/financial-reports/profit-and-loss' },
     { name: 'Announcements', icon: Megaphone, path: '' },
@@ -47,6 +80,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const isActive = (item) => {
     if (!item.path) return false;
+
+    if (item.children?.length) {
+      return item.children.some((child) => location.pathname === child.path)
+        || location.pathname.startsWith('/hrms/sales');
+    }
 
     if (item.name === 'Dashboard') {
       return location.pathname === '/hrms/dashboard';
@@ -60,11 +98,31 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   };
 
   const handleItemClick = (item) => {
+    if (item.children?.length) {
+      if (!isOpen) {
+        navigate(item.path);
+        return;
+      }
+
+      setExpandedMenu((current) => current === item.name ? '' : item.name);
+      if (!location.pathname.startsWith('/hrms/sales')) {
+        navigate(item.path);
+      }
+      return;
+    }
+
     if (!item.path) {
       toast(`${item.name} module is coming soon!`, { icon: '🚀' });
       return;
     }
     navigate(item.path);
+    if (window.innerWidth < 1260 && isOpen) {
+      toggleSidebar();
+    }
+  };
+
+  const handleChildClick = (path) => {
+    navigate(path);
     if (window.innerWidth < 1260 && isOpen) {
       toggleSidebar();
     }
@@ -108,29 +166,64 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 mt-8 space-y-1">
+      <nav className="flex-1 mt-8 space-y-1 overflow-y-auto pr-1">
         {menuItems.map((item) => {
           const active = isActive(item);
+          const expanded = expandedMenu === item.name;
 
           return (
-            <div
-              key={item.name}
-              onClick={() => handleItemClick(item)}
-              className={`
-                flex items-center rounded-full transition-all duration-200 cursor-pointer
-                ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
-                ${active
-                  ? 'bg-[#EEF2FF] text-[#7D1EDB]'
-                  : 'text-gray-800 hover:bg-gray-50 hover:text-gray-900'
-                }
-              `}
-            >
-              <item.icon
-                className={`w-5 h-5 ${active ? 'text-[#7D1EDB]' : 'text-gray-800'
-                  }`}
-              />
-              {isOpen && (
-                <span className="text-sm font-medium">{item.name}</span>
+            <div key={item.name}>
+              <div
+                onClick={() => handleItemClick(item)}
+                className={`
+                  flex items-center rounded-full transition-all duration-200 cursor-pointer
+                  ${isOpen ? 'px-4 py-3 gap-3' : 'justify-center py-3'}
+                  ${active
+                    ? 'bg-[#EEF2FF] text-[#7D1EDB]'
+                    : 'text-gray-800 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
+              >
+                <item.icon
+                  className={`w-5 h-5 ${active ? 'text-[#7D1EDB]' : 'text-gray-800'
+                    }`}
+                />
+                {isOpen && (
+                  <>
+                    <span className="min-w-0 flex-1 text-sm font-medium">{item.name}</span>
+                    {item.children?.length > 0 && (
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+
+              {isOpen && item.children?.length > 0 && expanded && (
+                <div className="ml-6 mt-1 space-y-1 border-l border-[#E5E7EB] pl-3">
+                  {item.children.map((child) => {
+                    const childActive = location.pathname === child.path;
+
+                    return (
+                      <button
+                        key={child.path}
+                        type="button"
+                        onClick={() => handleChildClick(child.path)}
+                        className={`
+                          flex w-full items-center gap-2 rounded-full px-3 py-2 text-left text-xs font-medium transition
+                          ${childActive
+                            ? 'bg-[#F4ECFF] text-[#7D1EDB]'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-[#7D1EDB]'
+                          }
+                        `}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${childActive ? 'bg-[#7D1EDB]' : 'bg-gray-300'}`} />
+                        <span className="truncate">{child.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
           );

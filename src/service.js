@@ -1,15 +1,13 @@
-let BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL ||
-  "https://hrms-orga-backend.vercel.app";
-
-if (BASE_URL && !BASE_URL.startsWith("http://") && !BASE_URL.startsWith("https://")) {
-  BASE_URL = `https://${BASE_URL}`;
-}
+const API_BASE_PATH = "/api";
+const BASE_URL =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${API_BASE_PATH}`
+    : API_BASE_PATH;
 
 const resolveBackendAssetUrl = (url) => {
   if (!url || typeof url !== "string") return url || "";
   if (/^(https?:|blob:|data:)/i.test(url)) return url;
-  return new URL(url, `${BASE_URL.replace(/\/$/, "")}/`).toString();
+  return `${BASE_URL}/${url.replace(/^\/+/, "")}`;
 };
 
 const MAIN_SITE_URL =
@@ -50,7 +48,12 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-const apiFetch = (url, options = {}) => {
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+const MAX_RETRIES = 3;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const apiFetch = async (url, options = {}) => {
   const headers = {
     ...getAuthHeaders(),
     ...options.headers,
@@ -58,11 +61,29 @@ const apiFetch = (url, options = {}) => {
   if (options.body instanceof FormData) {
     delete headers["Content-Type"];
   }
-  return fetch(url, {
-    credentials: "include",
-    ...options,
-    headers,
-  });
+  const isBodyRetryable =
+    !(options.body instanceof ReadableStream);
+
+  let lastError;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        credentials: "include",
+        ...options,
+        headers,
+      });
+      if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_RETRIES) {
+        await sleep(300 * 2 ** attempt);
+        continue;
+      }
+      return response;
+    } catch (error) {
+      lastError = error;
+      if (!isBodyRetryable || attempt === MAX_RETRIES) break;
+      await sleep(300 * 2 ** attempt);
+    }
+  }
+  throw lastError;
 };
 
 export const dashboardService = {
@@ -2107,6 +2128,37 @@ export const attendanceService = {
     }
   },
 
+  importAttendance: async ({ file, fromDate, toDate }) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (fromDate) formData.append("fromDate", fromDate);
+      if (toDate) formData.append("toDate", toDate);
+
+      const response = await apiFetch(`${BASE_URL}/attendance/import`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || data.message || "Failed to import attendance",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || "Attendance imported successfully",
+        data,
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   markSelfAttendance: async (payload = {}) => {
     try {
       const response = await apiFetch(`${BASE_URL}/attendance/self`, {
@@ -2473,10 +2525,12 @@ const normalizeShiftAssignmentMeta = (payload, fallback = {}) => {
 };
 
 export const shiftAssignmentService = {
-  getShiftAssignments: async ({ date, search = "", page = 1, limit = 10 } = {}) => {
+  getShiftAssignments: async ({ date, dateFrom, dateTo, search = "", page = 1, limit = 10 } = {}) => {
     try {
       const params = new URLSearchParams();
       if (date) params.set("date", date);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
       params.set("search", search ?? "");
       params.set("page", String(page ?? 1));
       params.set("limit", String(limit ?? 10));

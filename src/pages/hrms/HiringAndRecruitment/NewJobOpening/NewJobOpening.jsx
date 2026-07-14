@@ -83,21 +83,6 @@ const NewJobOpening = () => {
         setJdUploading(false);
     };
 
-    const handleSaveDraft = async () => {
-        setSubmitting(true);
-        const loadingToast = toast.loading('Saving draft...');
-        const payload = buildPayload(false);
-        const result = await hiringService.createJob(payload);
-        toast.dismiss(loadingToast);
-        if (result.success) {
-            toast.success('Job opening saved as draft!');
-            navigate('/hrms');
-        } else {
-            toast.error(result.message);
-        }
-        setSubmitting(false);
-    };
-
     const handlePublishJob = async () => {
         if (!formData.jobTitle.trim()) {
             toast.error('Please enter a job title before publishing.');
@@ -165,15 +150,6 @@ const NewJobOpening = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0 shrink-0">
                 <h1 className="text-xl font-semibold text-gray-900">Add Job Opening</h1>
                 <div className="flex gap-4 w-full sm:w-auto">
-                    <button
-                        onClick={handleSaveDraft}
-                        disabled={submitting}
-                        className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white disabled:opacity-50 flex items-center gap-2"
-                        style={{ borderRadius: '30px' }}
-                    >
-                        {submitting ? <Spinner size={16} color="#7D1EDB" /> : null}
-                        Save Draft
-                    </button>
                     <button
                         onClick={handlePublishJob}
                         disabled={submitting}

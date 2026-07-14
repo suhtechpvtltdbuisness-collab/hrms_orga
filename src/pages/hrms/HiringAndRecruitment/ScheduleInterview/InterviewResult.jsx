@@ -1,419 +1,581 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import {
+    ArrowLeft,
+    Briefcase,
+    CalendarDays,
+    ChevronRight,
+    Clock,
+    FileText,
+    Mail,
+    Phone,
+    UserRound,
+    UsersRound,
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Spinner from '../../../../components/ui/Spinner';
-import { hiringService } from '../../../../service';
+import { getProfilePicUrl, hiringService } from '../../../../service';
+
+const EMPTY_VALUE = 'Not available';
+
+const compact = (items) => items.filter((item) => item !== undefined && item !== null && item !== '');
+
+const titleCase = (value) => {
+    if (!value) return EMPTY_VALUE;
+    return String(value)
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const clampPercent = (value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return null;
+    return Math.min(100, Math.max(0, Math.round(number)));
+};
+
+const formatDateTime = (value) => {
+    if (!value) return EMPTY_VALUE;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return EMPTY_VALUE;
+    return date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+    });
+};
+
+const splitInstruction = (instruction) => {
+    if (!instruction) return { round: EMPTY_VALUE, mode: EMPTY_VALUE };
+    const [round, mode] = String(instruction).split(' - ');
+    return {
+        round: round?.trim() || EMPTY_VALUE,
+        mode: mode?.trim() || EMPTY_VALUE,
+    };
+};
+
+const getInitials = (name) => {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'NA';
+    return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+};
+
+const normalizeInterviewers = (interview) => {
+    const source =
+        interview?.interviewers ||
+        interview?.interviewer ||
+        interview?.panel ||
+        interview?.interviewPanel ||
+        interview?.interviewerName ||
+        interview?.interviewerNames;
+
+    if (Array.isArray(source)) {
+        return source
+            .map((person) => {
+                if (typeof person === 'string') return person;
+                return compact([person?.name, person?.fullName, person?.email]).join(' - ');
+            })
+            .filter(Boolean)
+            .join(', ');
+    }
+
+    if (typeof source === 'object' && source) {
+        return compact([source.name, source.fullName, source.email]).join(' - ');
+    }
+
+    if (source) return String(source);
+    if (interview?.interviewerId) return `Panel ${interview.interviewerId}`;
+    return EMPTY_VALUE;
+};
+
+const normalizeRatings = (interview) => {
+    const source =
+        interview?.ratings ||
+        interview?.ratingCriteria ||
+        interview?.scores ||
+        interview?.feedback?.ratings ||
+        interview?.feedback?.scores ||
+        interview?.result?.ratings;
+
+    if (!source) return [];
+
+    if (Array.isArray(source)) {
+        return source
+            .map((rating) => {
+                const label = rating?.label || rating?.name || rating?.criteria || rating?.title;
+                const score = clampPercent(rating?.percentage ?? rating?.score ?? rating?.value ?? rating?.rating);
+                if (!label || score === null) return null;
+                return { label, score };
+            })
+            .filter(Boolean);
+    }
+
+    if (typeof source === 'object') {
+        return Object.entries(source)
+            .map(([label, value]) => {
+                const score = clampPercent(
+                    typeof value === 'object'
+                        ? value?.percentage ?? value?.score ?? value?.value ?? value?.rating
+                        : value
+                );
+                if (score === null) return null;
+                return { label: titleCase(label), score };
+            })
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
+const getRemarks = (interview) => ({
+    strengths:
+        interview?.strengths ||
+        interview?.feedback?.strengths ||
+        interview?.result?.strengths ||
+        '',
+    weaknesses:
+        interview?.weaknesses ||
+        interview?.feedback?.weaknesses ||
+        interview?.result?.weaknesses ||
+        '',
+    finalComments:
+        interview?.finalComments ||
+        interview?.remarks ||
+        interview?.feedback?.finalComments ||
+        interview?.feedback?.remarks ||
+        interview?.result?.remarks ||
+        (typeof interview?.feedback === 'string' ? interview.feedback : '') ||
+        '',
+});
+
+const getOutcomeFromStatus = (status) => {
+    const initialStatus = String(status || '').toLowerCase();
+    if (initialStatus.includes('selected')) return 'selected';
+    if (initialStatus.includes('reject')) return 'rejected';
+    if (initialStatus.includes('hold')) return 'on_hold';
+    return '';
+};
+
+const getCandidatePhoto = (interview, application) => {
+    const raw =
+        interview?.candidatePhoto ||
+        interview?.candidateImage ||
+        interview?.candidateProfilePic ||
+        interview?.profilePic ||
+        application?.candidatePhoto ||
+        application?.candidateImage ||
+        application?.profilePic ||
+        application?.photo;
+    return raw ? getProfilePicUrl(raw) : '';
+};
+
+const buildInterviewDetails = (interview, application) => {
+    const { round, mode } = splitInstruction(interview?.instruction);
+    const candidateName =
+        interview?.candidateName ||
+        interview?.candidate?.name ||
+        application?.applicantName ||
+        EMPTY_VALUE;
+
+    return {
+        id: interview?.id,
+        candidateName,
+        candidatePhoto: getCandidatePhoto(interview, application),
+        email:
+            interview?.candidateEmail ||
+            interview?.candidate?.email ||
+            application?.applicantEmail ||
+            EMPTY_VALUE,
+        phone:
+            interview?.candidatePhone ||
+            interview?.candidate?.phone ||
+            application?.applicantPhone ||
+            EMPTY_VALUE,
+        appliedPosition:
+            interview?.jobTitle ||
+            interview?.position ||
+            interview?.appliedPosition ||
+            application?.jobTitle ||
+            EMPTY_VALUE,
+        round: interview?.round || interview?.interviewRound || round,
+        mode,
+        scheduledAt: formatDateTime(interview?.scheduledAt || interview?.interviewDate || interview?.dateTime),
+        interviewers: normalizeInterviewers(interview),
+        resume: interview?.resume || interview?.candidate?.resume || application?.resume || '',
+        ratings: normalizeRatings(interview),
+        remarks: getRemarks(interview),
+        status: titleCase(interview?.status || interview?.result?.status),
+    };
+};
+
+const PageShell = ({ children }) => (
+    <div
+        className="mx-2 mb-4 mt-4 flex h-[calc(100vh-9rem)] flex-col overflow-hidden rounded-xl border border-[#D9D9D9] bg-[#F8FAFC] px-3 py-4 font-sans sm:mx-4 sm:px-4 md:h-[calc(100vh-10rem)] md:px-6 xl:h-[calc(100vh-11rem)]"
+        style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+    >
+        {children}
+    </div>
+);
+
+const Field = ({ icon: Icon, label, value, children }) => (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {Icon ? <Icon size={15} className="text-[#7D1EDB]" /> : null}
+            {label}
+        </div>
+        <div className="break-words text-sm font-semibold text-slate-900">{children || value || EMPTY_VALUE}</div>
+    </div>
+);
+
+const StatusBadge = ({ status }) => {
+    const normalized = String(status || '').toLowerCase();
+    const styles = normalized.includes('selected')
+        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+        : normalized.includes('reject')
+          ? 'bg-rose-50 text-rose-700 ring-rose-200'
+          : normalized.includes('hold') || normalized.includes('pending')
+            ? 'bg-amber-50 text-amber-700 ring-amber-200'
+            : normalized.includes('schedule')
+              ? 'bg-sky-50 text-sky-700 ring-sky-200'
+              : 'bg-slate-100 text-slate-700 ring-slate-200';
+
+    return (
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 ${styles}`}>
+            {status || EMPTY_VALUE}
+        </span>
+    );
+};
+
+const RatingBar = ({ label, score }) => (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mb-2 flex items-center justify-between gap-4">
+            <span className="text-sm font-semibold text-slate-800">{label}</span>
+            <span className="text-sm font-bold text-[#7D1EDB]">{score}%</span>
+        </div>
+        <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+                className="h-full rounded-full bg-[#7D1EDB] transition-all"
+                style={{ width: `${score}%` }}
+            />
+        </div>
+    </div>
+);
+
+const EmptyPanel = ({ title, description }) => (
+    <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center">
+        <p className="text-sm font-semibold text-slate-700">{title}</p>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
+    </div>
+);
+
+const LoadingSkeleton = () => (
+    <PageShell>
+        <div className="mb-4 h-5 w-64 animate-pulse rounded bg-slate-200" />
+        <div className="grid flex-1 gap-4 overflow-hidden lg:grid-cols-[320px_1fr]">
+            <div className="rounded-xl bg-white p-5">
+                <div className="mx-auto h-24 w-24 animate-pulse rounded-full bg-slate-200" />
+                <div className="mx-auto mt-5 h-5 w-44 animate-pulse rounded bg-slate-200" />
+                <div className="mx-auto mt-3 h-4 w-56 animate-pulse rounded bg-slate-100" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+                {Array.from({ length: 8 }).map((_, index) => (
+                    <div key={index} className="h-24 animate-pulse rounded-xl bg-white" />
+                ))}
+            </div>
+        </div>
+    </PageShell>
+);
 
 const InterviewResult = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [outcome, setOutcome] = useState('Selected');
-    const [showOutcomeModal, setShowOutcomeModal] = useState(false);
+
+    const [interview, setInterview] = useState(null);
+    const [application, setApplication] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [outcome, setOutcome] = useState('');
+    const [remarks, setRemarks] = useState({ strengths: '', weaknesses: '', finalComments: '' });
     const [submitting, setSubmitting] = useState(false);
 
-    // Section styles
-    const cardStyle = {
-        border: '1px solid #E4E4E4',
-        borderRadius: '8px',
-        backgroundColor: '#FFFFFF',
-        padding: '20px',
-        marginBottom: '16px',
-        boxSizing: 'border-box'
+    useEffect(() => {
+        const loadInterview = async () => {
+            if (!id) {
+                setError('Interview details not found');
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            setError('');
+            setInterview(null);
+            setApplication(null);
+
+            const result = await hiringService.getInterviewById(id);
+
+            if (!result.success || !result.data) {
+                setError(result.message || 'Interview details not found');
+                setLoading(false);
+                return;
+            }
+
+            const selectedInterview = result.data;
+            setInterview(selectedInterview);
+            setOutcome(getOutcomeFromStatus(selectedInterview.status));
+            setRemarks(getRemarks(selectedInterview));
+
+            if (selectedInterview.jobApplicationId) {
+                const applicationResult = await hiringService.getApplicationById(selectedInterview.jobApplicationId);
+                if (applicationResult.success && applicationResult.data) {
+                    setApplication(applicationResult.data);
+                }
+            } else if (selectedInterview.jobApplication || selectedInterview.application) {
+                setApplication(selectedInterview.jobApplication || selectedInterview.application);
+            }
+
+            setLoading(false);
+        };
+
+        loadInterview();
+    }, [id]);
+
+    const details = useMemo(() => buildInterviewDetails(interview, application), [interview, application]);
+
+    const handleOpenResume = () => {
+        if (!details.resume) return;
+        window.open(details.resume, '_blank', 'noopener,noreferrer');
     };
 
-    const sectionTitleStyle = {
-        fontSize: '14px',
-        fontWeight: 600,
-        color: '#111827',
-        marginBottom: '16px',
-        fontFamily: '"Nunito Sans", sans-serif'
+    const handleSubmitResult = async () => {
+        if (!outcome) {
+            toast.error('Please select an interview status');
+            return;
+        }
+
+        setSubmitting(true);
+        const result = await hiringService.submitFeedback(id, {
+            status: outcome,
+            strengths: remarks.strengths,
+            weaknesses: remarks.weaknesses,
+            remarks: remarks.finalComments,
+            feedback: remarks.finalComments,
+        });
+
+        if (result.success) {
+            toast.success('Interview result submitted');
+            setInterview((current) => ({ ...current, ...(result.data || {}), status: outcome }));
+        } else {
+            toast.error(result.message || 'Failed to submit result');
+        }
+        setSubmitting(false);
     };
 
-    const labelStyle = {
-        fontSize: '13px',
-        color: '#344054', // Darker gray for labels
-        fontFamily: '"Nunito Sans", sans-serif'
-    };
+    if (loading) return <LoadingSkeleton />;
 
-    const valueStyle = {
-        fontSize: '14px',
-        fontWeight: 500,
-        color: '#111827',
-        fontFamily: '"Nunito Sans", sans-serif'
-    };
-
-    const textareaStyle = {
-        width: '100%',
-        height: '100px',
-        padding: '12px',
-        border: '1px solid #D0D5DD',
-        borderRadius: '8px',
-        fontSize: '14px',
-        color: '#111827',
-        outline: 'none',
-        resize: 'none',
-        fontFamily: '"Nunito Sans", sans-serif'
-    };
-
-    const RatingItem = ({ label, percentage }) => (
-        <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ ...labelStyle, fontWeight: 500 }}>{label}</span>
-                <span style={{ fontSize: '12px', color: '#98A2B3', fontFamily: '"Nunito Sans", sans-serif' }}>{percentage}%</span>
-            </div>
-            <div style={{ width: '100%', height: '8px', backgroundColor: '#F2F4F7', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: '#2E90FA', borderRadius: '4px' }} />
-            </div>
-        </div>
-    );
-
-    const CandidateOutcomeModal = () => {
-        const isSelected = outcome === 'Selected';
-        
+    if (error || !interview) {
         return (
-            <div style={{ 
-                position: 'fixed', 
-                inset: 0, 
-                backgroundColor: 'rgba(16, 24, 40, 0.7)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                zIndex: 1000,
-                backdropFilter: 'blur(4px)'
-            }}>
-                <div style={{ 
-                    width: '645px', 
-                    height: isSelected ? '655px' : '465px', 
-                    backgroundColor: '#FFFFFF', 
-                    borderRadius: '16px', 
-                    border: '1px solid #D9D9D9',
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'height 0.3s ease'
-                }}>
-                    {/* Header */}
-                    <div style={{ padding: '24px 24px 16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#101828', margin: 0 }}>Candidate Outcome</h2>
-                        <button 
-                            onClick={() => setShowOutcomeModal(false)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3' }}
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-
-                    <div style={{ flex: 1, padding: '0 24px 24px 24px', display: 'flex', gap: '24px', overflowY: 'auto' }}>
-                        {/* Left Column: Form */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <img 
-                                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" 
-                                    alt="Olivia Rhye" 
-                                    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                                />
-                                <span style={{ fontSize: '16px', fontWeight: 600, color: '#101828' }}>Olivia Rhye</span>
-                            </div>
-
-                            <div>
-                                <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Round</label>
-                                <input type="text" defaultValue="Final Round" style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
-                            </div>
-
-                            {isSelected ? (
-                                <>
-                                    <div>
-                                        <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Interview Date</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input type="text" defaultValue="12/02/2026" style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
-                                            <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Interviewers</label>
-                                        <input type="text" defaultValue="John Smith, Alice John" style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
-                                    </div>
-                                </>
-                            ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Interviewers</label>
-                                        <input type="text" defaultValue="John Smith, Alice John" style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
-                                    </div>
-                                    <div>
-                                        <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Interview Date</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input type="text" defaultValue="12/02/2026" style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
-                                            <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div>
-                                <label style={{ ...labelStyle, display: 'block', marginBottom: '6px' }}>Interview Outcome</label>
-                                <div style={{ position: 'relative' }}>
-                                    <select 
-                                        value={outcome}
-                                        onChange={(e) => setOutcome(e.target.value)}
-                                        style={{ width: '100%', padding: '10px 14px', border: '1px solid #D0D5DD', borderRadius: '8px', fontSize: '14px', outline: 'none', appearance: 'none', backgroundColor: '#FFF' }}
-                                    >
-                                        <option value="Selected">Selected</option>
-                                        <option value="On Hold">On Hold</option>
-                                        <option value="Rejected">Rejected</option>
-                                    </select>
-                                    <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                    </div>
-                                </div>
-                            </div>
+            <PageShell>
+                <div className="mb-4 flex items-center gap-1 text-sm">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list')}
+                        className="inline-flex items-center gap-2 font-semibold text-[#7D1EDB]"
+                    >
+                        <ArrowLeft size={15} className="text-slate-900" />
+                        Schedule Interview List
+                    </button>
+                    <ChevronRight size={16} className="text-slate-400" />
+                    <span className="text-slate-500">Interview Result</span>
+                </div>
+                <div className="grid flex-1 place-items-center">
+                    <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-slate-500">
+                            <FileText size={26} />
                         </div>
-
-                        {/* Right Column: Email Preview (Only for Selected) */}
-                        {isSelected && (
-                            <div style={{ width: '280px' }}>
-                                <div style={{ border: '1px solid #EAECF0', borderRadius: '12px', padding: '16px', height: '100%', overflowY: 'auto' }}>
-                                    <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#101828', marginTop: 0, marginBottom: '16px' }}>Email Preview</h4>
-                                    
-                                    <div style={{ border: '1px solid #F2F4F7', borderRadius: '8px', padding: '12px', backgroundColor: '#FFFFFF' }}>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-                                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=50&auto=format&fit=crop" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                                            <div>
-                                                <div style={{ fontSize: '12px', fontWeight: 600 }}>Jane.Doe <span style={{ color: '#667085', fontWeight: 400 }}>&lt;jane.doe@company.com&gt;</span></div>
-                                                <div style={{ fontSize: '10px', color: '#667085' }}>To: Alice Johnson</div>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#101828' }}>
-                                            <p style={{ fontWeight: 700, fontSize: '12px', marginBottom: '12px' }}>Congratulations! You Have An Offer From [Company Name]</p>
-                                            <p>Hi [Candidate Name],</p>
-                                            <p>Congratulations! Following your recent interview, we are thrilled to offer you the position of <strong>Senior Product Designer</strong> at [Company Name].</p>
-                                            <p>We were all very impressed during the interview process, and we believe your skills and experience will be an excellent match for our team.</p>
-                                            <p>Please find the official offer letter attached to this email, which contains details about your role, compensation, and benefits. The proposed <strong>Joining Date is 15/09/2024</strong>.</p>
-                                            <p>We are all very excited to have you join us. Please let us know if you have any questions.</p>
-                                            <p>Best Regards,<br/>The [Company Name] Team</p>
-                                        </div>
-
-                                        <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', backgroundColor: '#F9FAFB', border: '1px solid #F2F4F7', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{ width: '32px', height: '32px', backgroundColor: '#EAECF0', borderRadius: '4px', display: 'flex', alignItems: 'center', justifySelf: 'center' }}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" style={{ margin: 'auto' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                            </div>
-                                            <div>
-                                                <div style={{ fontSize: '11px', fontWeight: 600 }}>Offer_Letter.Pdf</div>
-                                                <div style={{ fontSize: '10px', color: '#667085' }}>128 KB</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Footer */}
-                    <div style={{ padding: '24px', borderTop: '1px solid #F2F4F7', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                        <button 
-                            onClick={() => setShowOutcomeModal(false)}
-                            style={{ width: '180px', height: '44px', borderRadius: '22px', border: '1px solid #7D1EDB', backgroundColor: '#FFF', color: '#7D1EDB', fontWeight: 600, cursor: 'pointer' }}
+                        <h1 className="mt-4 text-xl font-bold text-slate-900">Interview details not found</h1>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            The selected interview record could not be loaded. Please go back and choose an interview from the schedule list.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list')}
+                            className="mt-6 rounded-full bg-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700"
                         >
-                            Cancel
-                        </button>
-                        <button 
-                            style={{ width: '180px', height: '44px', borderRadius: '22px', border: 'none', backgroundColor: '#7D1EDB', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => {
-                                setShowOutcomeModal(false);
-                                toast.success(isSelected ? 'Offer letter sending...' : 'Email template sent');
-                                navigate('/hrms/hiring-and-recruitment/offer-letter-accepted-list');
-                            }}
-                        >
-                            {isSelected ? 'Send offer letter' : 'Email Template'}
+                            Back to list
                         </button>
                     </div>
                 </div>
-            </div>
+            </PageShell>
         );
-    };
+    }
 
     return (
-        <div 
-            className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
-            style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-        >
-                {/* ── Header Area ── */}
-                <div className="mb-4 shrink-0">
-                    <div className="flex items-center gap-1 text-sm text-[#7D1EDB] mb-4">
-                        <div 
-                            className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => navigate(`/hrms/hiring-and-recruitment/scheduled-interview/${id}`)}
+        <PageShell>
+            <div className="mb-4 shrink-0">
+                <div className="mb-3 flex flex-wrap items-center gap-1 text-sm">
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/hrms/hiring-and-recruitment/scheduled-interview/${id}`)}
+                        className="inline-flex items-center gap-2 font-semibold text-[#7D1EDB]"
+                    >
+                        <ArrowLeft size={15} className="text-slate-900" />
+                        Scheduled Interview
+                    </button>
+                    <ChevronRight size={16} className="text-slate-400" />
+                    <span className="text-slate-500">Interview Result</span>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-900">Interview Result</h1>
+                        <p className="mt-1 text-sm text-slate-500">Interview ID: {details.id}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <button
+                            type="button"
+                            onClick={handleSubmitResult}
+                            disabled={submitting}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                         >
-                            <ArrowLeft size={14} className="text-gray-900" />
-                            <span className="hover:text-purple-500 font-medium">Scheduled Interview</span>
-                        </div>
-                        <ChevronRight size={16} className="text-[#9CA3AF]" />
-                        <span className="text-[#667085]">Interview Result</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-                            Interview Result
-                        </h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                            <button 
-                                className="px-4 py-2.5 border border-purple-600 text-purple-600 font-medium rounded-full hover:bg-purple-50 transition-colors bg-white disabled:opacity-50 flex items-center gap-2"
-                                style={{ borderRadius: '30px' }}
-                                onClick={async () => {
-                                    const loadingToast = toast.loading('Saving draft...');
-                                    const result = await hiringService.updateInterview(Number(id), { status: 'result_pending' });
-                                    toast.dismiss(loadingToast);
-                                    if (result.success) toast.success('Draft saved!');
-                                    else toast.error(result.message);
-                                }}
-                                disabled={submitting}
-                            >
-                                {submitting ? <Spinner size={16} color="#7D1EDB" /> : null}
-                                Save Draft
-                            </button>
-                            <button 
-                                className="px-4 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors border-none cursor-pointer disabled:opacity-50 flex items-center gap-2"
-                                style={{ fontSize: '14px', fontFamily: 'Poppins, sans-serif' }}
-                                onClick={async () => {
-                                    setSubmitting(true);
-                                    const loadingToast = toast.loading('Submitting result...');
-                                    const status = outcome === 'Selected' ? 'selected' : outcome === 'On Hold' ? 'on_hold' : 'rejected';
-                                    const result = await hiringService.submitFeedback(Number(id), { status, feedback: outcome });
-                                    toast.dismiss(loadingToast);
-                                    if (result.success) {
-                                        toast.success('Result submitted successfully!');
-                                        setShowOutcomeModal(true);
-                                    } else toast.error(result.message);
-                                    setSubmitting(false);
-                                }}
-                                disabled={submitting}
-                            >
-                                {submitting ? <Spinner size={16} color="#fff" /> : null}
-                                Submit Result
-                            </button>
-                        </div>
+                            {submitting ? <Spinner size={16} color="#fff" /> : null}
+                            Submit Result
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                {/* ── Main Content Area ── */}
-                <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        
-                        {/* Candidate Summary */}
-                        <div style={cardStyle}>
-                            <h3 style={sectionTitleStyle}>Candidate Summary</h3>
-                            <div style={{ display: 'flex', gap: '48px', alignItems: 'flex-start' }}>
-                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                    <img 
-                                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" 
-                                        alt="Olivia Rhye" 
-                                        style={{ width: '48px', height: '48px', borderRadius: '50%' }}
+            <div className="custom-scrollbar flex-1 overflow-y-auto pr-1">
+                <div className="grid gap-4 xl:grid-cols-[330px_1fr]">
+                    <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col items-center text-center">
+                            {details.candidatePhoto ? (
+                                <img
+                                    src={details.candidatePhoto}
+                                    alt={details.candidateName}
+                                    className="h-24 w-24 rounded-full border-4 border-purple-50 object-cover"
+                                />
+                            ) : (
+                                <div className="grid h-24 w-24 place-items-center rounded-full border-4 border-purple-50 bg-[#F3E8FF] text-2xl font-bold text-[#7D1EDB]">
+                                    {getInitials(details.candidateName)}
+                                </div>
+                            )}
+                            <h2 className="mt-4 text-lg font-bold text-slate-900">{details.candidateName}</h2>
+                            <p className="mt-1 text-sm font-medium text-slate-500">{details.appliedPosition}</p>
+                            <div className="mt-4"><StatusBadge status={details.status} /></div>
+                        </div>
+
+                        <div className="mt-6 space-y-3 border-t border-slate-100 pt-5">
+                            <div className="flex items-start gap-3 text-sm text-slate-600">
+                                <Mail size={16} className="mt-0.5 text-[#7D1EDB]" />
+                                <span className="break-all">{details.email}</span>
+                            </div>
+                            <div className="flex items-start gap-3 text-sm text-slate-600">
+                                <Phone size={16} className="mt-0.5 text-[#7D1EDB]" />
+                                <span>{details.phone}</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleOpenResume}
+                                disabled={!details.resume}
+                                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#7D1EDB] px-4 py-2.5 text-sm font-semibold text-[#7D1EDB] hover:bg-purple-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                            >
+                                <FileText size={16} />
+                                {details.resume ? 'View Resume' : 'Resume unavailable'}
+                            </button>
+                        </div>
+                    </aside>
+
+                    <main className="space-y-4">
+                        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <h3 className="text-base font-bold text-slate-900">Interview Details</h3>
+                                <StatusBadge status={details.status} />
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                <Field icon={Briefcase} label="Applied Position" value={details.appliedPosition} />
+                                <Field icon={UserRound} label="Interview Round" value={details.round} />
+                                <Field icon={CalendarDays} label="Date & Time" value={details.scheduledAt} />
+                                <Field icon={UsersRound} label="Interviewers" value={details.interviewers} />
+                                <Field icon={Clock} label="Mode" value={details.mode} />
+                                <Field label="Status"><StatusBadge status={details.status} /></Field>
+                            </div>
+                        </section>
+
+                        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                            <h3 className="mb-4 text-base font-bold text-slate-900">Ratings</h3>
+                            {details.ratings.length ? (
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    {details.ratings.map((rating) => (
+                                        <RatingBar key={rating.label} label={rating.label} score={rating.score} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyPanel
+                                    title="No ratings recorded"
+                                    description="Ratings will appear here once they are saved for this interview."
+                                />
+                            )}
+                        </section>
+
+                        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                <h3 className="text-base font-bold text-slate-900">Remarks</h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {[
+                                        ['selected', 'Selected'],
+                                        ['on_hold', 'On Hold'],
+                                        ['rejected', 'Rejected'],
+                                    ].map(([value, label]) => (
+                                        <label key={value} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
+                                            <input
+                                                type="radio"
+                                                name="interview-outcome"
+                                                value={value}
+                                                checked={outcome === value}
+                                                onChange={() => setOutcome(value)}
+                                                className="h-4 w-4 accent-[#7D1EDB]"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid gap-3 lg:grid-cols-3">
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700">Strengths</label>
+                                    <textarea
+                                        value={remarks.strengths}
+                                        onChange={(event) => setRemarks((current) => ({ ...current, strengths: event.target.value }))}
+                                        className="min-h-28 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#7D1EDB] focus:bg-white"
                                     />
-                                    <span style={{ fontSize: '16px', fontWeight: 600, color: '#101828', fontFamily: '"Nunito Sans", sans-serif' }}>Olivia Rhye</span>
                                 </div>
-                                
-                                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '40px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                        <div>
-                                            <span style={labelStyle}>Round</span>
-                                            <div style={valueStyle}>Final Round</div>
-                                        </div>
-                                        <div>
-                                            <span style={labelStyle}>Interviewers</span>
-                                            <div style={valueStyle}>Jane Doe, John Smith</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'flex-end' }}>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <span style={labelStyle}>Interview Date</span>
-                                            <div style={{ ...valueStyle, fontWeight: 700 }}>20-7-2024</div>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <span style={{ ...labelStyle, display: 'block', marginBottom: '4px' }}>Resume</span>
-                                            <div style={{ ...valueStyle, color: '#7D1EDB', cursor: 'pointer', fontSize: '13px' }}>View Resume</div>
-                                        </div>
-                                    </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700">Weaknesses</label>
+                                    <textarea
+                                        value={remarks.weaknesses}
+                                        onChange={(event) => setRemarks((current) => ({ ...current, weaknesses: event.target.value }))}
+                                        className="min-h-28 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#7D1EDB] focus:bg-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700">Final Comments</label>
+                                    <textarea
+                                        value={remarks.finalComments}
+                                        onChange={(event) => setRemarks((current) => ({ ...current, finalComments: event.target.value }))}
+                                        className="min-h-28 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#7D1EDB] focus:bg-white"
+                                    />
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Rating Criteria */}
-                        <div style={cardStyle}>
-                            <h3 style={sectionTitleStyle}>Rating Criteria</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-                                <div>
-                                    <RatingItem label="Technical Skills" percentage={70} />
-                                    <RatingItem label="Communication" percentage={80} />
-                                    <RatingItem label="Problem Solving" percentage={90} />
-                                </div>
-                                <div>
-                                    <RatingItem label="Culture Fit" percentage={60} />
-                                    <RatingItem label="Overall Score" percentage={80} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Interview Notes */}
-                        <div style={cardStyle}>
-                            <h3 style={sectionTitleStyle}>Interview Notes</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                                <div>
-                                    <span style={{ ...labelStyle, fontSize: '14px', marginBottom: '8px', display: 'block', color: '#111827', fontWeight: 500 }}>Strengths</span>
-                                    <textarea style={textareaStyle} placeholder="Excellent grasp of core concepts, clear communication..." />
-                                </div>
-                                <div>
-                                    <span style={{ ...labelStyle, fontSize: '14px', marginBottom: '8px', display: 'block', color: '#111827', fontWeight: 500 }}>Weaknesses</span>
-                                    <textarea style={textareaStyle} placeholder="Lacked depth in system design, could be more concise..." />
-                                </div>
-                                <div>
-                                    <span style={{ ...labelStyle, fontSize: '14px', marginBottom: '8px', display: 'block', color: '#111827', fontWeight: 500 }}>Final Comments</span>
-                                    <textarea style={textareaStyle} placeholder="Overall summary and recommendation..." />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Select Outcome */}
-                        <div style={{ ...cardStyle, width: '400px', marginBottom: 0 }}>
-                            <h3 style={sectionTitleStyle}>Select Outcome</h3>
-                            <div style={{ display: 'flex', gap: '24px' }}>
-                                {['Selected', 'On Hold', 'Rejected'].map((option) => (
-                                    <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <div 
-                                            onClick={() => {
-                                                setOutcome(option);
-                                                if (option === 'Selected' || option === 'On Hold') setShowOutcomeModal(true);
-                                            }}
-                                            style={{ 
-                                                width: '20px', 
-                                                height: '20px', 
-                                                borderRadius: '50%', 
-                                                border: `2px solid ${outcome === option ? '#101828' : '#D0D5DD'}`, 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center',
-                                                transition: 'all 0.2s',
-                                                backgroundColor: '#FFF'
-                                            }}
-                                        >
-                                            {outcome === option && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#101828' }} />}
-                                        </div>
-                                        <span style={{ fontSize: '14px', color: '#111827', fontWeight: 500 }}>{option}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                        </section>
+                    </main>
                 </div>
-
-                {showOutcomeModal && <CandidateOutcomeModal />}
-        </div>
+            </div>
+        </PageShell>
     );
 };
 

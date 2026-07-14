@@ -681,7 +681,7 @@ const OnboardingFinalView = ({ offer, onBackToList }) => {
     },
   ];
 
-  const getTaskStatusStyle = (status) => ({
+  const getTaskStatusStyle = () => ({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1621,6 +1621,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "01",
       name: "Olivia Rhye",
       date: "8 Jan, 2026",
+      joiningDate: "15 Jan, 2026",
       status: "Onboarding Completed",
     },
     {
@@ -1628,6 +1629,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "02",
       name: "Olivia Rhye",
       date: "10 Feb, 2026",
+      joiningDate: "17 Feb, 2026",
       status: "Onboarding In Progress",
     },
     {
@@ -1635,6 +1637,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "03",
       name: "Olivia Rhye",
       date: "18 Feb, 2026",
+      joiningDate: "25 Feb, 2026",
       status: "Onboarding Completed",
     },
     {
@@ -1642,6 +1645,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "04",
       name: "Olivia Rhye",
       date: "20 Feb, 2026",
+      joiningDate: "1 Mar, 2026",
       status: "Onboarding In Progress",
     },
     {
@@ -1649,6 +1653,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "05",
       name: "Olivia Rhye",
       date: "1 March, 2026",
+      joiningDate: "8 Mar, 2026",
       status: "Onboarding Completed",
     },
     {
@@ -1656,6 +1661,7 @@ const OfferLetterAcceptedList = () => {
       srNo: "06",
       name: "Olivia Rhye",
       date: "20 March, 2026",
+      joiningDate: "27 Mar, 2026",
       status: "Onboarding Completed",
     },
   ]);
@@ -1805,6 +1811,9 @@ const OfferLetterAcceptedList = () => {
                 <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider text-center">
                   OFFER LETTER ACCEPTED DATE
                 </th>
+                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider text-center">
+                  JOINING DATE
+                </th>
                 <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider">
                   STATUS
                 </th>
@@ -1831,6 +1840,9 @@ const OfferLetterAcceptedList = () => {
                   </td>
                   <td className="px-4 py-3 text-gray-700 text-center">
                     {offer.date}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 text-center">
+                    {offer.joiningDate || "N/A"}
                   </td>
                   <td className="px-4 py-3">
                     <span
