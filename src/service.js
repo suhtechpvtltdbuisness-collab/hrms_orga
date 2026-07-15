@@ -3668,3 +3668,147 @@ export const payrollModuleService = {
     }
   },
 };
+
+// ======================
+// SALES CRM SERVICE
+// ======================
+const buildQueryString = (params = {}) => {
+  const entries = Object.entries(params).filter(
+    ([, value]) => value !== undefined && value !== null && value !== "",
+  );
+  return entries.length ? `?${new URLSearchParams(Object.fromEntries(entries))}` : "";
+};
+
+export const salesCrmService = {
+  getWorkspace: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/workspace`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch sales workspace" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getRecords: async (params = {}) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/records${buildQueryString(params)}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch sales records" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createRecord: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/records`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create sales record" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateRecord: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/records/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update sales record" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteRecord: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/records/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete sales record" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createKnowledge: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/knowledge`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create knowledge article" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createProduct: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/products`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create product" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createDocument: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/documents`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create sales document" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  askCopilot: async (question) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/copilot`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ question }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to get co-pilot answer" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
