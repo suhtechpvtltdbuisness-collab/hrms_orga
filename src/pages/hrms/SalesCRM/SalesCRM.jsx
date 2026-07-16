@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -10,6 +10,7 @@ import {
   BriefcaseBusiness,
   Building2,
   Calculator,
+  Check,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
@@ -31,9 +32,11 @@ import {
   Target,
   TrendingUp,
   Trophy,
+  UserPlus,
   Users,
   X,
 } from "lucide-react";
+import { salesCrmService } from "../../../service";
 
 const routeBase = "/hrms/sales";
 
@@ -57,86 +60,253 @@ const salesSections = [
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
-const salesCrmService = {
-  async getWorkspace() {
-    return {
-      updatedAt: "4 minutes ago",
-      metrics: [
-        { title: "Today's Revenue", value: "INR 4.2L", trend: "+12.4%", icon: CircleDollarSign },
-        { title: "Monthly Revenue", value: "INR 86.4L", trend: "+9.1%", icon: TrendingUp },
-        { title: "Total Leads", value: "184", trend: "+28 this week", icon: Users },
-        { title: "Qualified Leads", value: "68", trend: "37% quality", icon: Trophy },
-        { title: "Lost Leads", value: "19", trend: "-6 this month", icon: Activity },
-        { title: "Won Deals", value: "23", trend: "+4 vs Jan", icon: Handshake },
-        { title: "Active Opportunities", value: "47", trend: "INR 4.65Cr", icon: Target },
-        { title: "Conversion Rate", value: "31.4%", trend: "-1.8 pts", icon: BarChart3 },
-        { title: "Average Deal Size", value: "INR 9.9L", trend: "+7.2%", icon: BriefcaseBusiness },
-        { title: "Target Achievement", value: "78%", trend: "INR 24L left", icon: ClipboardList },
-      ],
-      revenueTrend: [42, 58, 51, 76, 69, 84, 96],
-      leadSources: [
-        { label: "Website", value: 38 },
-        { label: "Referral", value: 26 },
-        { label: "Campaign", value: 21 },
-        { label: "Partner", value: 15 },
-      ],
-      activities: [
-        "Apex Manufacturing moved to negotiation",
-        "Proposal sent to Nova Foods",
-        "Discovery call completed with Trident Logistics",
-        "Meridian Textiles renewal added to pipeline",
-      ],
-      followUps: [
-        { client: "Orbit Retail Group", time: "Today, 4:30 PM", owner: "Priya N." },
-        { client: "Sunrise Diagnostics", time: "Tomorrow, 11:00 AM", owner: "Aman M." },
-        { client: "Bluewave Fintech", time: "18 Jul, 2:15 PM", owner: "Karan S." },
-      ],
-      deals: [
-        { name: "Apex Manufacturing", amount: "INR 14.2L", stage: "Discovery", owner: "KS", health: 62 },
-        { name: "Nova Foods", amount: "INR 7.4L", stage: "Qualified", owner: "DR", health: 71 },
-        { name: "Sunrise Diagnostics", amount: "INR 6.2L", stage: "Proposal", owner: "AM", health: 78 },
-        { name: "Orbit Retail Group", amount: "INR 11.9L", stage: "Negotiation", owner: "PN", health: 86 },
-        { name: "Bluewave Fintech", amount: "INR 5.1L", stage: "Discovery", owner: "PN", health: 48 },
-        { name: "Stellar EdTech", amount: "INR 3.6L", stage: "Qualified", owner: "PN", health: 66 },
-        { name: "Trident Logistics", amount: "INR 4.8L", stage: "Proposal", owner: "DR", health: 82 },
-        { name: "Meridian Textiles", amount: "INR 18.6L", stage: "Won", owner: "AM", health: 94 },
-      ],
-      knowledge: [
-        { title: "ORGA Payroll and Attendance bundle playbook", category: "Services", owner: "Soumya S.", views: 412, confidence: 96, updated: "2d ago" },
-        { title: "Case study: faster payroll close at Meridian Textiles", category: "Case Studies", owner: "Priya N.", views: 388, confidence: 94, updated: "5d ago" },
-        { title: "Competitor comparison for growing teams", category: "Competitor Comparison", owner: "Aman M.", views: 281, confidence: 91, updated: "1w ago" },
-      ],
-      rows: {
-        leads: [
-          { name: "Ravi Sharma", company: "Apex Manufacturing", status: "Qualified", owner: "Karan S.", value: "INR 14.2L", next: "Demo tomorrow" },
-          { name: "Meera Joshi", company: "Bluewave Fintech", status: "New", owner: "Priya N.", value: "INR 5.1L", next: "Intro call pending" },
-          { name: "Arjun Rao", company: "Nova Foods", status: "Contacted", owner: "Dev R.", value: "INR 7.4L", next: "Send ROI note" },
-        ],
-        clients: [
-          { name: "Meridian Textiles", company: "Manufacturing", status: "Active", owner: "Aman M.", value: "INR 18.6L", next: "Renewal in 45 days" },
-          { name: "Orbit Retail Group", company: "Retail", status: "Expansion", owner: "Priya N.", value: "INR 11.9L", next: "Branch rollout plan" },
-        ],
-        opportunities: [
-          { name: "Payroll automation rollout", company: "Sunrise Diagnostics", status: "Proposal", owner: "Aman M.", value: "INR 6.2L", next: "CFO approval" },
-          { name: "Attendance and shift suite", company: "Trident Logistics", status: "Negotiation", owner: "Dev R.", value: "INR 4.8L", next: "Pricing review" },
-        ],
-      },
-    };
-  },
+// ---------- Formatting helpers ----------
+
+const formatINR = (value) => {
+  const numeric = Number(value) || 0;
+  if (numeric >= 1e7) return `INR ${(numeric / 1e7).toFixed(1)}Cr`;
+  if (numeric >= 1e5) return `INR ${(numeric / 1e5).toFixed(1)}L`;
+  return `INR ${numeric.toLocaleString("en-IN")}`;
 };
+
+const formatDateTime = (iso) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const timeAgo = (iso) => {
+  if (!iso) return "recently";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+};
+
+const ownerInitials = (owner) => {
+  if (!owner) return "--";
+  return owner
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+};
+
+const parseAmount = (raw) => {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const numeric = Number(String(raw).replace(/[^0-9.]/g, ""));
+  return isNaN(numeric) ? undefined : numeric;
+};
+
+const buildLeadNotes = (form) => {
+  const baseNotes = form.notes?.trim();
+  const detailRows = [
+    ["Contact", form.contact],
+    ["Phone", form.phone],
+    ["Source", form.source],
+    ["Acquisition cost", form.acquisitionCost],
+    ["Expected close date", form.expectedCloseDate],
+    ["Last contact", form.lastContact],
+    ["Employees", form.employees],
+    ["Interested modules", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return [baseNotes, ...detailRows].filter(Boolean).join("\n");
+};
+
+const buildClientNotes = (form) => {
+  const detailRows = [
+    ["Email", form.email],
+    ["Phone", form.phone],
+    ["Contract start", form.contractStart],
+    ["Contract end", form.contractEnd],
+    ["Industry", form.industry],
+    ["Plan", form.plan],
+    ["Employees", form.employees],
+    ["GSTIN", form.gstin],
+    ["Billing address", form.billingAddress],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return detailRows.join("\n");
+};
+
+const buildOpportunityNotes = (form) => {
+  const detailRows = [
+    ["Primary contact", form.primaryContact],
+    ["Employees", form.employees],
+    ["Competitor in deal", form.competitor],
+    ["Modules in scope", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
+    ["Win probability", form.winProbability ? `${form.winProbability}%` : ""],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return detailRows.join("\n");
+};
+
+const toTableRow = (record) => ({
+  id: record.id,
+  name: record.name,
+  company: record.company || "—",
+  status: record.status,
+  owner: record.owner || "—",
+  value: formatINR(record.value),
+  next: record.nextAction || (record.followUpAt ? `Follow-up ${formatDateTime(record.followUpAt)}` : "—"),
+});
+
+// ---------- Action → API mapping ----------
+
+const DOC_ACTION_TYPES = {
+  "Create Proposal": "proposal",
+  "Preview Proposal": "proposal",
+  "Export PDF": "proposal",
+  "Send Proposal": "proposal",
+  "Generate Quote": "quotation",
+  "Upload Contract": "contract",
+  "Add Case Study": "case-study",
+  "Create Battlecard": "battlecard",
+  "Add Objection": "objection-playbook",
+};
+
+const recordTypeForAction = (action, section) => {
+  if (action === "New Deal" || action.startsWith("Add Deal")) return "deal";
+  if (action === "Add Lead" || action === "Schedule Follow-up") return "lead";
+  if (action === "Import Clients") return "client";
+  if (action === "New Opportunity") return "opportunity";
+  if (section === "leads") return "lead";
+  if (section === "clients") return "client";
+  if (section === "opportunities") return "opportunity";
+  return "deal";
+};
+
+const submitSalesAction = async (action, section, form) => {
+  const normalizedForm = (() => {
+    if (action === "Add Lead") {
+      return {
+        ...form,
+        name: form.leadName || form.name,
+        owner: form.leadOwner || form.owner,
+        value: form.estimatedValue || form.value,
+        followUp: form.expectedCloseDate || form.followUp,
+        notes: buildLeadNotes(form),
+      };
+    }
+
+    if (action === "Import Clients") {
+      return {
+        ...form,
+        name: form.primaryContact || form.name,
+        owner: form.accountManager || form.owner,
+        value: form.monthlyRevenue || form.value,
+        stage: form.renewalStatus || "Active",
+        followUp: form.contractEnd || form.followUp,
+        notes: buildClientNotes(form),
+      };
+    }
+
+    if (action === "New Opportunity") {
+      return {
+        ...form,
+        name: form.company || form.name,
+        value: form.dealValue || form.value,
+        followUp: form.expectedClose || form.followUp,
+        notes: buildOpportunityNotes(form),
+      };
+    }
+
+    return form;
+  })();
+
+  const name = normalizedForm.name?.trim();
+  const company = normalizedForm.company?.trim();
+  const value = parseAmount(normalizedForm.value);
+  const notes = normalizedForm.notes?.trim();
+  const owner = normalizedForm.owner?.trim();
+
+  if (action === "New Article") {
+    return salesCrmService.createKnowledge({
+      title: name,
+      category: company || "Services",
+      owner,
+      content: notes,
+    });
+  }
+
+  if (action === "Add Product") {
+    return salesCrmService.createProduct({
+      name,
+      category: company || "Subscription",
+      team: owner,
+      priceLabel: form.value?.trim(),
+      note: notes,
+    });
+  }
+
+  if (DOC_ACTION_TYPES[action]) {
+    return salesCrmService.createDocument({
+      docType: DOC_ACTION_TYPES[action],
+      title: name,
+      clientName: company,
+      owner,
+      amount: value,
+      notes,
+    });
+  }
+
+  const recordType = recordTypeForAction(action, section);
+  let status = normalizedForm.stage;
+  if (recordType === "deal" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].includes(status)) {
+    status = "Discovery";
+  }
+
+  return salesCrmService.createRecord({
+    recordType,
+    name,
+    company,
+    status,
+    owner,
+    value,
+    followUpAt: normalizedForm.followUp || undefined,
+    notes,
+  });
+};
+
+// ---------- Data hook ----------
 
 function useSalesWorkspace() {
   const [state, setState] = useState({ loading: true, error: "", data: null });
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refresh = useCallback(() => setRefreshKey((key) => key + 1), []);
 
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       try {
-        setState({ loading: true, error: "", data: null });
+        setState((prev) => ({ ...prev, loading: !prev.data, error: "" }));
         const result = await salesCrmService.getWorkspace();
-        await new Promise((resolve) => setTimeout(resolve, 250));
-        if (mounted) setState({ loading: false, error: "", data: result });
+        if (!mounted) return;
+        if (result.success) {
+          setState({ loading: false, error: "", data: result.data });
+        } else {
+          setState({ loading: false, error: result.message || "Unable to load Sales CRM data.", data: null });
+        }
       } catch (error) {
         if (mounted) {
           setState({
@@ -152,17 +322,18 @@ function useSalesWorkspace() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [refreshKey]);
 
-  return state;
+  return { ...state, refresh };
 }
 
 function SalesCRM() {
   const navigate = useNavigate();
   const { section = "overview" } = useParams();
   const activeSection = salesSections.some((item) => item.slug === section) ? section : "overview";
-  const { loading, error, data } = useSalesWorkspace();
+  const { loading, error, data, refresh } = useSalesWorkspace();
   const [actionModal, setActionModal] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const openActionModal = (action = "New Deal") => {
     setActionModal({ action, section: activeSection });
@@ -172,10 +343,29 @@ function SalesCRM() {
     setActionModal(null);
   };
 
-  const handleActionSubmit = (event) => {
+  const handleActionSubmit = async (event) => {
     event.preventDefault();
-    toast.success(`${actionModal?.action || "Sales item"} created successfully`);
-    closeActionModal();
+    if (submitting) return;
+
+    const rawFormData = new FormData(event.currentTarget);
+    const formData = Object.fromEntries(rawFormData.entries());
+    const modules = rawFormData.getAll("modules");
+    if (modules.length) {
+      formData.modules = modules;
+    }
+    setSubmitting(true);
+    try {
+      const result = await submitSalesAction(actionModal.action, actionModal.section, formData);
+      if (result.success) {
+        toast.success(`${actionModal?.action || "Sales item"} saved successfully`);
+        closeActionModal();
+        refresh();
+      } else {
+        toast.error(result.message || "Failed to save. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -204,6 +394,7 @@ function SalesCRM() {
         <SalesActionModal
           action={actionModal.action}
           section={actionModal.section}
+          submitting={submitting}
           onClose={closeActionModal}
           onSubmit={handleActionSubmit}
         />
@@ -271,77 +462,140 @@ function SalesSectionTabs({ activeSection }) {
   );
 }
 
+const LIBRARY_SECTIONS = {
+  quotations: { title: "Quotations", cta: "Generate Quote", icon: ReceiptText, docType: "quotation" },
+  contracts: { title: "Contracts", cta: "Upload Contract", icon: FileCheck2, docType: "contract" },
+  "case-studies": { title: "Case Studies", cta: "Add Case Study", icon: FolderOpen, docType: "case-study" },
+  "competitor-battlecards": { title: "Competitor Battlecards", cta: "Create Battlecard", icon: ShieldQuestion, docType: "battlecard" },
+  "objection-playbooks": { title: "Objection Playbooks", cta: "Add Objection", icon: MessageSquareText, docType: "objection-playbook" },
+};
+
 function SalesContent({ section, data, onAction }) {
   if (section === "overview") return <Overview data={data} onAction={onAction} />;
   if (section === "pipeline") return <Pipeline deals={data.deals} onAction={onAction} />;
   if (section === "sales-ai-co-pilot") return <CoPilot />;
   if (section === "knowledge-hub") return <KnowledgeHub items={data.knowledge} onAction={onAction} />;
   if (["leads", "clients", "opportunities"].includes(section)) {
-    return <RecordsPage section={section} rows={data.rows[section] || []} onAction={onAction} />;
+    return <RecordsPage section={section} records={data.rows[section] || []} onAction={onAction} />;
   }
-  if (section === "proposal-builder") return <ProposalBuilder onAction={onAction} />;
+  if (section === "proposal-builder") return <ProposalBuilder documents={data.documents?.proposal || []} onAction={onAction} />;
   if (section === "pricing-calculator") return <PricingCalculator />;
-  if (section === "products-services") return <ProductsServices onAction={onAction} />;
-  if (section === "quotations") return <WorkspaceLibrary title="Quotations" cta="Generate Quote" icon={ReceiptText} onAction={onAction} />;
-  if (section === "contracts") return <WorkspaceLibrary title="Contracts" cta="Upload Contract" icon={FileCheck2} onAction={onAction} />;
-  if (section === "case-studies") return <WorkspaceLibrary title="Case Studies" cta="Add Case Study" icon={FolderOpen} onAction={onAction} />;
-  if (section === "competitor-battlecards") return <WorkspaceLibrary title="Competitor Battlecards" cta="Create Battlecard" icon={ShieldQuestion} onAction={onAction} />;
-  if (section === "objection-playbooks") return <WorkspaceLibrary title="Objection Playbooks" cta="Add Objection" icon={MessageSquareText} onAction={onAction} />;
+  if (section === "products-services") return <ProductsServices products={data.products} onAction={onAction} />;
+  if (LIBRARY_SECTIONS[section]) {
+    const config = LIBRARY_SECTIONS[section];
+    return (
+      <WorkspaceLibrary
+        title={config.title}
+        cta={config.cta}
+        icon={config.icon}
+        documents={data.documents?.[config.docType] || []}
+        onAction={onAction}
+      />
+    );
+  }
 
   return <StatePanel title="Sales page not found" description="Choose a Sales workspace section from the navigation." />;
 }
 
 function Overview({ data, onAction }) {
+  const metrics = useMemo(() => {
+    const summary = data.metrics || {};
+    const openPipelineValue = (data.deals || [])
+      .filter((deal) => !["Won", "Lost"].includes(deal.status))
+      .reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
+    const leadQuality = summary.totalLeads > 0
+      ? Math.round((summary.qualifiedLeads / summary.totalLeads) * 100)
+      : 0;
+
+    return [
+      { title: "Today's Revenue", value: formatINR(summary.todayRevenue), trend: "Won today", icon: CircleDollarSign },
+      { title: "Monthly Revenue", value: formatINR(summary.monthlyRevenue), trend: "This month", icon: TrendingUp },
+      { title: "Total Leads", value: String(summary.totalLeads ?? 0), trend: "All time", icon: Users },
+      { title: "Qualified Leads", value: String(summary.qualifiedLeads ?? 0), trend: `${leadQuality}% quality`, icon: Trophy },
+      { title: "Lost Leads", value: String(summary.lostLeads ?? 0), trend: "All time", icon: Activity },
+      { title: "Won Deals", value: String(summary.wonDeals ?? 0), trend: "All time", icon: Handshake },
+      { title: "Active Opportunities", value: String(summary.activeOpportunities ?? 0), trend: formatINR(summary.opportunityValue), icon: Target },
+      { title: "Conversion Rate", value: `${summary.conversionRate ?? 0}%`, trend: "Won vs closed", icon: BarChart3 },
+      { title: "Average Deal Size", value: formatINR(summary.averageDealSize), trend: "Per won deal", icon: BriefcaseBusiness },
+      { title: "Open Pipeline", value: formatINR(openPipelineValue), trend: "Across active deals", icon: ClipboardList },
+    ];
+  }, [data]);
+
+  const trendBars = useMemo(() => {
+    const trend = data.revenueTrend || [];
+    const max = Math.max(...trend.map((item) => item.total), 1);
+    return trend.map((item) => ({
+      ...item,
+      pct: Math.round((item.total / max) * 88) + 12,
+    }));
+  }, [data.revenueTrend]);
+
   return (
     <div className="space-y-6">
       <SectionIntro
         eyebrow="Sales Workspace"
         title="Sales Overview"
-        description={`Performance at a glance. Last refreshed ${data.updatedAt}.`}
+        description={`Performance at a glance. Last refreshed ${timeAgo(data.updatedAt)}.`}
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {data.metrics.map((metric) => (
+        {metrics.map((metric) => (
           <MetricCard key={metric.title} metric={metric} />
         ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Revenue Trend" action="Last 7 periods" className="min-h-[360px]">
-          <div className="flex h-56 items-end gap-3 rounded-xl bg-[#F8FAFC] p-4">
-            {data.revenueTrend.map((value, index) => (
-              <div key={index} className="flex flex-1 flex-col items-center gap-2">
-                <div
-                  className="w-full rounded-t-lg bg-gradient-to-t from-[#7D1EDB] to-[#C084FC]"
-                  style={{ height: `${value}%` }}
-                />
-                <span className="text-xs text-[#667085]">W{index + 1}</span>
-              </div>
-            ))}
-          </div>
+        <Panel title="Revenue Trend" action="Won deals by week" className="min-h-[360px]">
+          {trendBars.length ? (
+            <div className="flex h-56 items-end gap-3 rounded-xl bg-[#F8FAFC] p-4">
+              {trendBars.map((item, index) => (
+                <div key={item.week} className="flex flex-1 flex-col items-center gap-2" title={formatINR(item.total)}>
+                  <div
+                    className="w-full rounded-t-lg bg-gradient-to-t from-[#7D1EDB] to-[#C084FC]"
+                    style={{ height: `${item.pct}%` }}
+                  />
+                  <span className="text-xs text-[#667085]">W{index + 1}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <PanelEmpty message="Revenue trend will appear once deals are marked Won." />
+          )}
         </Panel>
         <Panel title="Lead Sources" action="Live Mix" className="min-h-[360px]">
-          <div className="space-y-4">
-            {data.leadSources.map((source) => (
-              <ProgressRow key={source.label} label={source.label} value={source.value} />
-            ))}
-          </div>
+          {data.leadSources?.length ? (
+            <div className="space-y-4">
+              {data.leadSources.map((source) => (
+                <ProgressRow key={source.label} label={source.label} value={source.value} />
+              ))}
+            </div>
+          ) : (
+            <PanelEmpty message="Lead sources will appear once leads are added." />
+          )}
         </Panel>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Panel title="Recent Activities" className="min-h-[280px]">
-          <StackedList items={data.activities} />
+          {data.activities?.length ? (
+            <StackedList items={data.activities} />
+          ) : (
+            <PanelEmpty message="Activity will appear as your team works the pipeline." />
+          )}
         </Panel>
         <Panel title="Upcoming Follow-ups" className="min-h-[280px]">
-          <div className="space-y-3">
-            {data.followUps.map((item) => (
-              <div key={item.client} className="rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] p-4">
-                <p className="font-semibold text-[#333333]">{item.client}</p>
-                <p className="mt-1 text-sm text-[#667085]">{item.time} - {item.owner}</p>
-              </div>
-            ))}
-          </div>
+          {data.followUps?.length ? (
+            <div className="space-y-3">
+              {data.followUps.map((item) => (
+                <div key={item.id} className="rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] p-4">
+                  <p className="font-semibold text-[#333333]">{item.client}</p>
+                  <p className="mt-1 text-sm text-[#667085]">{formatDateTime(item.time)} - {item.owner || "Unassigned"}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <PanelEmpty message="No follow-ups scheduled. Add one from any record." />
+          )}
         </Panel>
         <Panel title="Quick Actions" className="min-h-[280px]">
           <div className="grid gap-3">
@@ -385,30 +639,57 @@ function MetricCard({ metric }) {
   );
 }
 
-function RecordsPage({ section, rows, onAction }) {
+function RecordsPage({ section, records, onAction }) {
+  const [search, setSearch] = useState("");
   const title = section.charAt(0).toUpperCase() + section.slice(1);
   const cta = section === "leads" ? "Add Lead" : section === "clients" ? "Import Clients" : "New Opportunity";
+
+  const rows = useMemo(() => {
+    const mapped = records.map(toTableRow);
+    if (!search.trim()) return mapped;
+    const term = search.trim().toLowerCase();
+    return mapped.filter((row) =>
+      [row.name, row.company, row.owner, row.status].some((field) =>
+        String(field).toLowerCase().includes(term),
+      ),
+    );
+  }, [records, search]);
 
   return (
     <div className="space-y-6">
       <SectionIntro eyebrow="Sales Workspace" title={title} description="Search, filter, assign owners, track activities, and keep follow-ups moving." />
-      <DataToolbar cta={cta} onAction={() => onAction(cta)} />
-      {rows.length ? <SalesTable rows={rows} /> : <EmptyState icon={Users} title={`No ${section} added yet`} description="Records created from backend APIs will appear here with actions and pagination." cta={cta} onAction={() => onAction(cta)} />}
+      <DataToolbar cta={cta} search={search} onSearch={setSearch} onAction={() => onAction(cta)} />
+      {rows.length ? (
+        <SalesTable rows={rows} />
+      ) : (
+        <EmptyState
+          icon={Users}
+          title={search ? `No ${section} match "${search}"` : `No ${section} added yet`}
+          description={search ? "Try a different search term." : `Create your first ${section.slice(0, -1)} to get started.`}
+          cta={cta}
+          onAction={() => onAction(cta)}
+        />
+      )}
     </div>
   );
 }
 
-function DataToolbar({ cta, onAction }) {
+function DataToolbar({ cta, search = "", onSearch, onAction }) {
   return (
     <div className="flex min-h-[82px] flex-col gap-3 rounded-lg border border-[#E4E0E0] bg-white p-3 lg:flex-row lg:items-center lg:justify-between">
       <label className="flex min-h-12 flex-1 items-center gap-3 rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm text-[#667085]">
         <Search className="h-4 w-4" />
-        <input className="w-full bg-transparent outline-none placeholder:text-[#98A2B3]" placeholder="Search by name, company, owner, status..." />
+        <input
+          className="w-full bg-transparent outline-none placeholder:text-[#98A2B3]"
+          placeholder="Search by name, company, owner, status..."
+          value={search}
+          onChange={(event) => onSearch?.(event.target.value)}
+        />
       </label>
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => toast("Filters will be connected with backend data.")}
+          onClick={() => toast("Use the search box to filter records.")}
           className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB] lg:flex-none"
         >
           <Filter className="h-4 w-4" />
@@ -434,23 +715,20 @@ function SalesTable({ rows }) {
         <table className="min-w-[880px] w-full text-left text-sm">
           <thead className="bg-[#F9FAFB] text-xs uppercase tracking-[0.08em] text-[#667085]">
             <tr>
-              {["Name", "Company", "Status", "Owner", "Value", "Next Action", "Action"].map((head) => (
+              {["Name", "Company", "Status", "Owner", "Value", "Next Action"].map((head) => (
                 <th key={head} className="px-5 py-4 font-semibold">{head}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E5E7EB]">
             {rows.map((row) => (
-              <tr key={`${row.name}-${row.company}`} className="bg-white text-[#667085]">
+              <tr key={row.id ?? `${row.name}-${row.company}`} className="bg-white text-[#667085]">
                 <td className="px-5 py-4 font-semibold text-[#333333]">{row.name}</td>
                 <td className="px-5 py-4">{row.company}</td>
                 <td className="px-5 py-4"><StatusBadge label={row.status} /></td>
                 <td className="px-5 py-4">{row.owner}</td>
                 <td className="px-5 py-4 font-semibold text-[#333333]">{row.value}</td>
                 <td className="px-5 py-4">{row.next}</td>
-                <td className="px-5 py-4">
-                  <button className="text-sm font-semibold text-[#7D1EDB] hover:text-[#6916BF]">View</button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -460,12 +738,13 @@ function SalesTable({ rows }) {
   );
 }
 
+const PIPELINE_STAGES = ["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
+
 function Pipeline({ deals, onAction }) {
-  const stages = ["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
   const grouped = useMemo(() => {
-    return stages.map((stage) => ({
+    return PIPELINE_STAGES.map((stage) => ({
       stage,
-      deals: deals.filter((deal) => deal.stage === stage),
+      deals: (deals || []).filter((deal) => deal.status === stage),
     }));
   }, [deals]);
 
@@ -482,7 +761,7 @@ function Pipeline({ deals, onAction }) {
               </h3>
               <span className="text-sm font-semibold text-[#667085]">{column.deals.length}</span>
             </div>
-            {column.deals.map((deal) => <DealCard key={deal.name} deal={deal} />)}
+            {column.deals.map((deal) => <DealCard key={deal.id} deal={deal} />)}
             <button
               type="button"
               onClick={() => onAction(`Add Deal - ${column.stage}`)}
@@ -503,10 +782,10 @@ function DealCard({ deal }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="font-semibold text-[#333333]">{deal.name}</h4>
-          <p className="mt-4 text-lg font-semibold text-[#333333]">{deal.amount}</p>
+          <p className="mt-4 text-lg font-semibold text-[#333333]">{formatINR(deal.value)}</p>
         </div>
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F4ECFF] text-xs font-semibold text-[#7D1EDB]">
-          {deal.owner}
+          {ownerInitials(deal.owner)}
         </span>
       </div>
       <div className="mt-4 flex justify-between text-sm font-medium text-[#667085]">
@@ -520,41 +799,139 @@ function DealCard({ deal }) {
   );
 }
 
+const COPILOT_SUGGESTIONS = [
+  "How much sales did we do this month?",
+  "Which employee closed the most deals?",
+  "What deals are in negotiation right now?",
+  "Which follow-ups are coming up?",
+];
+
+const SALES_DATA_KEYWORDS = [
+  "sales", "revenue", "deal", "lead", "client", "customer", "pipeline",
+  "opportunit", "follow", "employee", "team", "owner", "month", "today",
+  "week", "year", "quarter", "target", "conversion", "won", "lost",
+  "product", "quotation", "proposal", "amount", "value", "performance",
+  "how much", "how many", "top", "best", "most", "total",
+];
+
+const GREETING_PATTERNS =
+  /^(hi+|hii+|hello+|hey+|good\s+(morning|afternoon|evening|day)|thanks?|thank you|bye+|what can you do|help|who are you|how are you)/i;
+
+const loadingLabelFor = (question) => {
+  const lower = question.trim().toLowerCase();
+  if (GREETING_PATTERNS.test(lower)) {
+    return "Thinking...";
+  }
+  return SALES_DATA_KEYWORDS.some((keyword) => lower.includes(keyword))
+    ? "Analyzing your sales data..."
+    : "Thinking...";
+};
+
 function CoPilot() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState("Thinking...");
+
+  const ask = async (rawQuestion) => {
+    const question = (rawQuestion ?? input).trim();
+    if (!question || asking) return;
+
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", text: question }]);
+    setLoadingLabel(loadingLabelFor(question));
+    setAsking(true);
+    try {
+      const result = await salesCrmService.askCopilot(question);
+      if (result.success) {
+        setMessages((prev) => [...prev, { role: "assistant", text: result.data.answer }]);
+      } else {
+        setMessages((prev) => [...prev, { role: "assistant", text: result.message, isError: true }]);
+      }
+    } finally {
+      setAsking(false);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] px-4 py-10 text-center sm:px-8">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB]">
-        <Bot className="h-8 w-8" />
-      </div>
-      <div>
-        <h2 className="text-2xl font-semibold text-[#333333] sm:text-3xl">Sales AI Co-Pilot</h2>
+    <div className="mx-auto max-w-5xl space-y-6 rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] px-4 py-8 sm:px-8">
+      <div className="text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB]">
+          <Bot className="h-8 w-8" />
+        </div>
+        <h2 className="mt-4 text-2xl font-semibold text-[#333333] sm:text-3xl">Sales AI Co-Pilot</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#667085]">
-          This UI is ready for an LLM service layer to generate proposals, emails, meeting summaries, next-best-actions, pricing suggestions, and objection replies.
+          Ask questions about your sales data — revenue, employee performance, pipeline, leads, and follow-ups. Answers come only from your organization's CRM records.
         </p>
       </div>
+
+      {messages.length > 0 && (
+        <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-lg border border-[#E4E0E0] bg-white p-4 text-left">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={cx("flex", message.role === "user" ? "justify-end" : "justify-start")}
+            >
+              <div
+                className={cx(
+                  "max-w-[85%] whitespace-pre-wrap rounded-xl px-4 py-3 text-sm leading-6",
+                  message.role === "user"
+                    ? "bg-[#7D1EDB] font-medium text-white"
+                    : message.isError
+                      ? "bg-[#FEF3F2] font-medium text-[#B42318]"
+                      : "bg-[#F4ECFF] font-medium text-[#333333]",
+                )}
+              >
+                {message.text}
+              </div>
+            </div>
+          ))}
+          {asking && (
+            <div className="flex justify-start">
+              <div className="rounded-xl bg-[#F4ECFF] px-4 py-3 text-sm font-medium text-[#7D1EDB]">
+                {loadingLabel}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="rounded-lg border border-[#D9D9D9] bg-white p-3">
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <form
+          className="flex flex-col gap-3 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            ask();
+          }}
+        >
           <label className="flex min-h-12 flex-1 items-center gap-3 rounded-lg bg-[#F9FAFB] px-4 text-[#667085]">
             <Sparkles className="h-5 w-5 text-[#7D1EDB]" />
-            <input className="w-full bg-transparent text-sm font-medium outline-none" defaultValue="Our client has 300 employees and needs attendance with payroll." />
+            <input
+              className="w-full bg-transparent text-sm font-medium outline-none"
+              placeholder="e.g. How much sales did we do this month?"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              maxLength={500}
+            />
           </label>
           <button
-            type="button"
-            onClick={() => toast.success("Co-Pilot request queued")}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7D1EDB] px-6 py-3 text-sm font-semibold text-white"
+            type="submit"
+            disabled={asking || !input.trim()}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7D1EDB] px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Send className="h-4 w-4" />
-            Ask Co-Pilot
+            {asking ? "Asking..." : "Ask Co-Pilot"}
           </button>
-        </div>
+        </form>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
-        {["300 employees, attendance and payroll", "Retail chain, 12 branches", "Client comparing us on price"].map((prompt) => (
+        {COPILOT_SUGGESTIONS.map((prompt) => (
           <button
             key={prompt}
             type="button"
-            onClick={() => toast.success("Prompt selected")}
-            className="rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#667085] transition hover:border-[#7D1EDB] hover:text-[#7D1EDB]"
+            disabled={asking}
+            onClick={() => ask(prompt)}
+            className="rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#667085] transition hover:border-[#7D1EDB] hover:text-[#7D1EDB] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {prompt}
           </button>
@@ -564,59 +941,96 @@ function CoPilot() {
   );
 }
 
+const KNOWLEDGE_CATEGORIES = ["All", "Services", "Products", "Pricing", "Proposal Templates", "Case Studies", "Competitor Comparison", "FAQs", "Legal Documents", "Implementation Guides", "Contracts", "Email Templates", "Sales Scripts", "Objection Handling"];
+
 function KnowledgeHub({ items, onAction }) {
-  const categories = ["All", "Services", "Products", "Pricing", "Proposal Templates", "Case Studies", "Competitor Comparison", "FAQs", "Legal Documents", "Implementation Guides", "Contracts", "Email Templates", "Sales Scripts", "Objection Handling"];
+  const [category, setCategory] = useState("All");
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    let list = items || [];
+    if (category !== "All") {
+      list = list.filter((item) => item.category === category);
+    }
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      list = list.filter((item) => item.title.toLowerCase().includes(term));
+    }
+    return list;
+  }, [items, category, search]);
 
   return (
     <div className="space-y-6">
       <SectionIntro eyebrow="Sales Workspace" title="Knowledge Hub" description="Searchable sales knowledge for proposals, pitches, battlecards, and Co-Pilot answers." />
-      <DataToolbar cta="New Article" onAction={() => onAction("New Article")} />
+      <DataToolbar cta="New Article" search={search} onSearch={setSearch} onAction={() => onAction("New Article")} />
       <div className="flex flex-wrap gap-3">
-        {categories.map((category, index) => (
-          <button key={category} className={cx("rounded-full border px-4 py-2 text-sm font-semibold transition", index === 0 ? "border-[#7D1EDB] bg-[#F4ECFF] text-[#7D1EDB]" : "border-[#E5E7EB] bg-white text-[#667085] hover:border-[#7D1EDB]")}>
-            {category}
+        {KNOWLEDGE_CATEGORIES.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setCategory(item)}
+            className={cx("rounded-full border px-4 py-2 text-sm font-semibold transition", category === item ? "border-[#7D1EDB] bg-[#F4ECFF] text-[#7D1EDB]" : "border-[#E5E7EB] bg-white text-[#667085] hover:border-[#7D1EDB]")}
+          >
+            {item}
           </button>
         ))}
       </div>
-      <div className="space-y-4">
-        {items.map((item) => (
-          <article key={item.title} className="min-h-[136px] rounded-lg border border-[#E4E0E0] bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <span className="rounded-full bg-[#F4ECFF] px-3 py-1 text-xs font-semibold text-[#7D1EDB]">{item.category}</span>
-                <h3 className="mt-5 text-lg font-semibold text-[#333333]">{item.title}</h3>
-                <p className="mt-3 text-sm font-medium text-[#667085]">Cross-industry - {item.views} views - by {item.owner}</p>
+      {filtered.length ? (
+        <div className="space-y-4">
+          {filtered.map((item) => (
+            <article key={item.id} className="min-h-[136px] rounded-lg border border-[#E4E0E0] bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <span className="rounded-full bg-[#F4ECFF] px-3 py-1 text-xs font-semibold text-[#7D1EDB]">{item.category}</span>
+                  <h3 className="mt-5 text-lg font-semibold text-[#333333]">{item.title}</h3>
+                  <p className="mt-3 text-sm font-medium text-[#667085]">{item.views} views - by {item.owner || "Unknown"}</p>
+                </div>
+                <div className="text-left lg:text-right">
+                  <p className="text-sm font-semibold text-[#0EA5E9]">{item.confidence}% AI confidence</p>
+                  <p className="mt-4 text-sm font-medium text-[#667085] lg:mt-12">Updated {timeAgo(item.updatedAt)}</p>
+                </div>
               </div>
-              <div className="text-left lg:text-right">
-                <p className="text-sm font-semibold text-[#0EA5E9]">{item.confidence}% AI confidence</p>
-                <p className="mt-4 text-sm font-medium text-[#667085] lg:mt-12">Updated {item.updated}</p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={BookOpen}
+          title="No articles yet"
+          description="Publish your first knowledge article to power proposals and Co-Pilot answers."
+          cta="New Article"
+          onAction={() => onAction("New Article")}
+        />
+      )}
     </div>
   );
 }
 
-function ProposalBuilder({ onAction }) {
+function ProposalBuilder({ documents, onAction }) {
   return (
     <div className="space-y-6">
       <SectionIntro eyebrow="Sales Workspace" title="Proposal Builder" description="Build proposals with client details, services, pricing, scope, deliverables, terms, preview, export, and send actions." />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <Panel title="Proposal Setup">
-          <div className="grid gap-4 md:grid-cols-2">
-            {["Client", "Products / Services", "Timeline", "Terms"].map((label) => (
-              <label key={label} className="space-y-2 text-sm font-semibold text-[#333333]">
-                {label}
-                <input className="min-h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-[#333333] outline-none focus:border-[#7D1EDB]" placeholder={`Select ${label.toLowerCase()}`} />
-              </label>
-            ))}
-          </div>
+        <Panel title="Recent Proposals">
+          {documents.length ? (
+            <SalesTable
+              rows={documents.map((doc) => ({
+                id: doc.id,
+                name: doc.title,
+                company: doc.clientName || "—",
+                status: doc.status,
+                owner: doc.owner || "—",
+                value: doc.amount ? formatINR(doc.amount) : "—",
+                next: `Created ${timeAgo(doc.createdAt)}`,
+              }))}
+            />
+          ) : (
+            <PanelEmpty message="No proposals yet. Create one to see it listed here." />
+          )}
         </Panel>
         <Panel title="Proposal Actions">
           <div className="grid gap-3">
-            {["Preview Proposal", "Export PDF", "Send Proposal"].map((label) => (
+            {["Create Proposal", "Send Proposal"].map((label) => (
               <button
                 key={label}
                 type="button"
@@ -666,27 +1080,69 @@ function PricingCalculator() {
   );
 }
 
-function ProductsServices({ onAction }) {
-  const rows = [
-    { name: "Payroll Core", company: "Subscription", status: "Active", owner: "Finance", value: "INR 249/user", next: "GST 18%" },
-    { name: "Attendance Suite", company: "Subscription", status: "Active", owner: "HRMS", value: "INR 149/user", next: "Bundled discount" },
-    { name: "Implementation Package", company: "Services", status: "Active", owner: "Sales Ops", value: "INR 75,000", next: "One-time fee" },
-  ];
+function ProductsServices({ products, onAction }) {
+  const [search, setSearch] = useState("");
+
+  const rows = useMemo(() => {
+    let list = (products || []).map((product) => ({
+      id: product.id,
+      name: product.name,
+      company: product.category,
+      status: product.status,
+      owner: product.team || "—",
+      value: product.priceLabel || "—",
+      next: product.note || "—",
+    }));
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      list = list.filter((row) =>
+        [row.name, row.company, row.owner].some((field) => String(field).toLowerCase().includes(term)),
+      );
+    }
+    return list;
+  }, [products, search]);
 
   return (
     <div className="space-y-6">
       <SectionIntro eyebrow="Sales Workspace" title="Products & Services" description="Manage product categories, pricing, taxes, discount rules, service packages, images, and descriptions." />
-      <DataToolbar cta="Add Product" onAction={() => onAction("Add Product")} />
-      <SalesTable rows={rows} />
+      <DataToolbar cta="Add Product" search={search} onSearch={setSearch} onAction={() => onAction("Add Product")} />
+      {rows.length ? (
+        <SalesTable rows={rows} />
+      ) : (
+        <EmptyState
+          icon={Package}
+          title="No products added yet"
+          description="Add your subscriptions and service packages to use them in quotes and proposals."
+          cta="Add Product"
+          onAction={() => onAction("Add Product")}
+        />
+      )}
     </div>
   );
 }
 
-function WorkspaceLibrary({ title, cta, icon: Icon, onAction }) {
+function WorkspaceLibrary({ title, cta, icon: Icon, documents, onAction }) {
   return (
     <div className="space-y-6">
-      <SectionIntro eyebrow="Sales Workspace" title={title} description="This workspace is ready for backend APIs, advanced filters, bulk actions, version history, exports, and approvals." />
-      <EmptyState icon={Icon} title={`${title} workspace is ready`} description="Connect the API to start listing real records here. Loading, empty, and action states are already in place." cta={cta} onAction={() => onAction(cta)} />
+      <SectionIntro eyebrow="Sales Workspace" title={title} description="Create and track records for this workspace. New entries appear instantly below." />
+      {documents.length ? (
+        <>
+          <DataToolbar cta={cta} onAction={() => onAction(cta)} />
+          <SalesTable
+            rows={documents.map((doc) => ({
+              id: doc.id,
+              name: doc.title,
+              company: doc.clientName || "—",
+              status: doc.status,
+              owner: doc.owner || "—",
+              value: doc.amount ? formatINR(doc.amount) : "—",
+              next: `Created ${timeAgo(doc.createdAt)}`,
+            }))}
+          />
+        </>
+      ) : (
+        <EmptyState icon={Icon} title={`No ${title.toLowerCase()} yet`} description={`Create your first entry with "${cta}" and it will be listed here.`} cta={cta} onAction={() => onAction(cta)} />
+      )}
     </div>
   );
 }
@@ -713,6 +1169,14 @@ function Panel({ title, action, children, className = "" }) {
   );
 }
 
+function PanelEmpty({ message }) {
+  return (
+    <div className="flex min-h-[180px] items-center justify-center rounded-xl bg-[#F8FAFC] p-6 text-center">
+      <p className="max-w-xs text-sm font-medium text-[#98A2B3]">{message}</p>
+    </div>
+  );
+}
+
 function ProgressRow({ label, value }) {
   return (
     <div>
@@ -730,8 +1194,8 @@ function ProgressRow({ label, value }) {
 function StackedList({ items }) {
   return (
     <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item} className="flex min-h-14 gap-3 rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] p-4">
+      {items.map((item, index) => (
+        <div key={`${item}-${index}`} className="flex min-h-14 gap-3 rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] p-4">
           <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#22C55E]" />
           <p className="text-sm font-medium text-[#333333]">{item}</p>
         </div>
@@ -753,7 +1217,7 @@ function EmptyState({ icon: Icon, title, description, cta, onAction }) {
   return (
     <div className="rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] px-5 py-14 text-center">
       <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB]">
-        <Icon className="h-8 w-8" />
+        {React.createElement(Icon, { className: "h-8 w-8" })}
       </div>
       <h2 className="text-xl font-semibold text-[#333333]">{title}</h2>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#667085]">{description}</p>
@@ -809,8 +1273,354 @@ function NumberField({ label, value, onChange }) {
   );
 }
 
-function SalesActionModal({ action, section, onClose, onSubmit }) {
+const leadSources = ["Website", "Referral", "LinkedIn", "Outbound", "Event", "Partner"];
+const leadOwners = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
+const leadStages = ["New", "Contacted", "Qualified", "Proposal", "Won", "Lost"];
+const leadModules = ["Attendance", "Payroll", "Leave & Shifts", "Recruitment", "Performance", "Employee Self-Service"];
+const accountManagers = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
+const renewalStatuses = ["Active", "Renewal Due", "At Risk", "Paused", "Closed"];
+const industries = ["Finance", "Technology", "Healthcare", "Manufacturing", "Retail", "Education"];
+const plans = ["Starter", "Growth", "Professional", "Enterprise"];
+const competitors = ["Darwinbox", "Keka", "Zoho People", "GreytHR", "BambooHR", "None"];
+
+function SalesModalShell({ icon: Icon, title, description, closeLabel, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 px-3 py-6">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-[#D9D9D9] bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#E5E7EB] bg-white px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB] sm:h-12 sm:w-12">
+              {React.createElement(Icon, { className: "h-5 w-5 sm:h-6 sm:w-6" })}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold leading-tight text-[#333333] sm:text-xl">{title}</h2>
+              <p className="mt-1 text-sm font-medium leading-5 text-[#667085]">{description}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#333333]"
+            aria-label={closeLabel}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AddLeadModal({ submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+
+  return (
+    <SalesModalShell
+      icon={UserPlus}
+      title="Add lead"
+      description="Keep the pipeline current for conversion tracking and revenue forecasting."
+      closeLabel="Close add lead form"
+      onClose={onClose}
+    >
+        <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+          <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+            <LeadTextField label="Lead name" name="leadName" placeholder="e.g. Grace Morgan" required fieldClass={fieldClass} />
+            <LeadTextField label="Contact" name="contact" type="email" placeholder="grace@bluepeak.io" required fieldClass={fieldClass} />
+            <LeadTextField label="Company" name="company" placeholder="e.g. Bluepeak Technologies" fieldClass={fieldClass} />
+            <LeadTextField label="Phone" name="phone" type="tel" placeholder="+91" fieldClass={fieldClass} />
+            <LeadSelectField label="Source" name="source" options={leadSources} fieldClass={fieldClass} />
+            <LeadSelectField label="Lead owner" name="leadOwner" options={leadOwners} fieldClass={fieldClass} />
+            <LeadSelectField label="Stage" name="stage" options={leadStages} defaultValue="New" fieldClass={fieldClass} />
+            <LeadTextField label="Estimated value (₹)" name="estimatedValue" type="number" placeholder="0" fieldClass={fieldClass} />
+            <LeadTextField label="Acquisition cost (₹)" name="acquisitionCost" type="number" placeholder="0" fieldClass={fieldClass} />
+            <LeadTextField label="Expected close date" name="expectedCloseDate" type="date" fieldClass={fieldClass} />
+            <LeadTextField label="Last contact" name="lastContact" type="date" fieldClass={fieldClass} />
+            <LeadTextField
+              label="Employees"
+              name="employees"
+              type="number"
+              placeholder="300"
+              hint="drives pricing & scoring"
+              fieldClass={fieldClass}
+            />
+          </div>
+
+          <fieldset className="mt-6">
+            <legend className="text-sm font-semibold text-[#333333]">Interested modules</legend>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {leadModules.map((module, index) => (
+                <LeadModulePill key={module} module={module} defaultChecked={index < 2} />
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="mt-6 block space-y-2 text-sm font-semibold text-[#333333]">
+            Notes
+            <textarea
+              name="notes"
+              rows={4}
+              placeholder="Context from the first conversation - pain points, current tools, urgency..."
+              className="min-h-[120px] w-full resize-none rounded-lg border border-[#D9D9D9] bg-white px-4 py-3 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15"
+            />
+          </label>
+
+          <div className="mt-6 rounded-lg border border-[#D9D9D9] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#667085]">
+            Current status will be saved as <strong className="text-[#333333]">Not Converted</strong> based on the selected stage. Won stores the converted date and Lost stores the close-lost date for reports.
+          </div>
+
+          <div className="mt-4 rounded-lg border border-[#C7A3F4] bg-[#F4ECFF] px-4 py-3 text-sm font-semibold text-[#7D1EDB]">
+            <Sparkles className="mr-2 inline h-4 w-4" />
+            Co-Pilot will score this lead and suggest an opening email as soon as it's saved.
+          </div>
+
+          <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? "Saving..." : "Save lead"}
+            </button>
+          </div>
+        </form>
+    </SalesModalShell>
+  );
+}
+
+function AddClientModal({ submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+
+  return (
+    <SalesModalShell
+      icon={Building2}
+      title="Add client"
+      description="Maintain client details, billing value, and relationship ownership."
+      closeLabel="Close add client form"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Primary contact" name="primaryContact" placeholder="e.g. Isabella Ward" required fieldClass={fieldClass} />
+          <LeadTextField label="Company" name="company" placeholder="e.g. Northstar Finance" required fieldClass={fieldClass} />
+          <LeadTextField label="Email" name="email" type="email" placeholder="hello@company.com" required fieldClass={fieldClass} />
+          <LeadTextField label="Phone" name="phone" type="tel" placeholder="+91" fieldClass={fieldClass} />
+          <div className="md:col-span-2">
+            <LeadTextField label="Monthly revenue (₹)" name="monthlyRevenue" type="number" placeholder="0" fieldClass={fieldClass} />
+          </div>
+          <LeadSelectField label="Account manager" name="accountManager" options={accountManagers} fieldClass={fieldClass} />
+          <LeadSelectField label="Renewal status" name="renewalStatus" options={renewalStatuses} defaultValue="Active" fieldClass={fieldClass} />
+          <LeadTextField label="Contract start" name="contractStart" type="date" fieldClass={fieldClass} />
+          <LeadTextField label="Contract end" name="contractEnd" type="date" fieldClass={fieldClass} />
+          <LeadSelectField label="Industry" name="industry" options={industries} fieldClass={fieldClass} />
+          <LeadSelectField label="Plan" name="plan" options={plans} fieldClass={fieldClass} />
+          <LeadTextField label="Employees" name="employees" type="number" placeholder="850" fieldClass={fieldClass} />
+          <LeadTextField label="GSTIN" name="gstin" placeholder="22AAAAA0000A1Z5" fieldClass={fieldClass} />
+        </div>
+
+        <label className="mt-6 block space-y-2 text-sm font-semibold text-[#333333]">
+          Billing address
+          <textarea
+            name="billingAddress"
+            rows={4}
+            placeholder="Registered office address for invoices..."
+            className="min-h-[120px] w-full resize-none rounded-lg border border-[#D9D9D9] bg-white px-4 py-3 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15"
+          />
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "Saving..." : "Save client"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function NewOpportunityModal({ submitting = false, onClose, onSubmit }) {
+  const [winProbability, setWinProbability] = useState(60);
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+
+  return (
+    <SalesModalShell
+      icon={Target}
+      title="New opportunity"
+      description="Appears on the pipeline board in the stage you pick."
+      closeLabel="Close new opportunity form"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Company" name="company" placeholder="e.g. Bluewave Fintech" required fieldClass={fieldClass} />
+          <LeadTextField label="Primary contact" name="primaryContact" placeholder="Name - designation" fieldClass={fieldClass} />
+          <LeadTextField label="Deal value (₹)" name="dealValue" type="number" placeholder="620000" required fieldClass={fieldClass} />
+          <LeadTextField label="Employees" name="employees" type="number" placeholder="300" fieldClass={fieldClass} />
+          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"]} defaultValue="Discovery" required fieldClass={fieldClass} />
+          <LeadTextField label="Expected close" name="expectedClose" type="date" fieldClass={fieldClass} />
+          <LeadSelectField label="Owner" name="owner" options={leadOwners} fieldClass={fieldClass} />
+          <LeadSelectField label="Competitor in deal" name="competitor" options={competitors} fieldClass={fieldClass} />
+        </div>
+
+        <fieldset className="mt-6">
+          <legend className="text-sm font-semibold text-[#333333]">Modules in scope</legend>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {leadModules.map((module, index) => (
+              <LeadModulePill key={module} module={module} defaultChecked={index < 2} />
+            ))}
+          </div>
+        </fieldset>
+
+        <label className="mt-6 block space-y-3 text-sm font-semibold text-[#333333]">
+          <span>Win probability - {winProbability}%</span>
+          <input type="hidden" name="winProbability" value={winProbability} />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={winProbability}
+            onChange={(event) => setWinProbability(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#E9D7FE] accent-[#7D1EDB]"
+          />
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "Saving..." : "Save opportunity"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function LeadModulePill({ module, defaultChecked = false }) {
+  const [checked, setChecked] = useState(defaultChecked);
+
+  return (
+    <label className="cursor-pointer">
+      <input
+        type="checkbox"
+        name="modules"
+        value={module}
+        checked={checked}
+        onChange={(event) => setChecked(event.target.checked)}
+        className="sr-only"
+      />
+      <span
+        className={cx(
+          "inline-flex h-10 items-center justify-center gap-2 rounded-full border px-4 text-sm font-semibold transition",
+          checked
+            ? "border-[#7D1EDB] bg-[#F4ECFF] text-[#7D1EDB]"
+            : "border-[#D9D9D9] bg-white text-[#667085] hover:border-[#C7A3F4] hover:text-[#7D1EDB]",
+        )}
+      >
+        {checked && <Check className="h-4 w-4" />}
+        {module}
+      </span>
+    </label>
+  );
+}
+
+function LeadTextField({ label, name, placeholder, type = "text", required = false, hint, fieldClass }) {
+  return (
+    <label className="space-y-2 text-sm font-semibold text-[#333333]">
+      <span className="flex items-center justify-between gap-4">
+        <span>{label}{required && <span className="text-[#7D1EDB]"> *</span>}</span>
+        {hint && <span className="text-sm font-medium text-[#667085]">{hint}</span>}
+      </span>
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        required={required}
+        className={fieldClass}
+      />
+    </label>
+  );
+}
+
+function LeadSelectField({ label, name, options, defaultValue = "", required = false, fieldClass }) {
+  return (
+    <label className="space-y-2 text-sm font-semibold text-[#333333]">
+      <span>{label}{required && <span className="text-[#7D1EDB]"> *</span>}</span>
+      <select name={name} defaultValue={defaultValue} required={required} className={fieldClass}>
+        <option value="" />
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function SalesActionModal({ action, section, submitting = false, onClose, onSubmit }) {
+  if (action === "Add Lead") {
+    return (
+      <AddLeadModal
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
+
+  if (action === "Import Clients") {
+    return (
+      <AddClientModal
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
+
+  if (action === "New Opportunity") {
+    return (
+      <NewOpportunityModal
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
+
   const title = action || "New Deal";
+  const defaultStage = action?.includes(" - ")
+    ? action.split(" - ")[1]
+    : section === "pipeline" || action === "New Deal"
+      ? "Discovery"
+      : "New";
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 px-4 py-6">
@@ -822,7 +1632,7 @@ function SalesActionModal({ action, section, onClose, onSubmit }) {
             </p>
             <h2 className="mt-1 text-xl font-semibold text-[#333333]">{title}</h2>
             <p className="mt-1 text-sm text-[#667085]">
-              Fill the details below. This form is ready to connect with the backend API.
+              Fill the details below and save to create the record.
             </p>
           </div>
           <button
@@ -844,10 +1654,11 @@ function SalesActionModal({ action, section, onClose, onSubmit }) {
               Stage
               <select
                 name="stage"
-                defaultValue={section === "pipeline" ? "Discovery" : "New"}
+                defaultValue={defaultStage}
                 className="h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-[#333333] outline-none focus:border-[#7D1EDB]"
               >
                 <option>New</option>
+                <option>Contacted</option>
                 <option>Discovery</option>
                 <option>Qualified</option>
                 <option>Proposal</option>
@@ -880,9 +1691,10 @@ function SalesActionModal({ action, section, onClose, onSubmit }) {
             </button>
             <button
               type="submit"
-              className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF]"
+              disabled={submitting}
+              className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Create
+              {submitting ? "Saving..." : "Create"}
             </button>
           </div>
         </form>
@@ -915,5 +1727,4 @@ function SummaryLine({ label, value }) {
   );
 }
 
-export { salesSections };
 export default SalesCRM;
