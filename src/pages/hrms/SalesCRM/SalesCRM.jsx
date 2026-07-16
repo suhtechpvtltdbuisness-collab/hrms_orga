@@ -109,6 +109,8 @@ const parseAmount = (raw) => {
   return isNaN(numeric) ? undefined : numeric;
 };
 
+const OPPORTUNITY_VALUE_THRESHOLD = 100000;
+
 const buildLeadNotes = (form) => {
   const baseNotes = form.notes?.trim();
   const detailRows = [
@@ -194,6 +196,9 @@ const recordTypeForAction = (action, section) => {
   return "deal";
 };
 
+const isDealOpportunityAction = (action) =>
+  action === "New Deal" || action === "New Opportunity" || action?.startsWith("Add Deal");
+
 const submitSalesAction = async (action, section, form) => {
   const normalizedForm = (() => {
     if (action === "Add Lead") {
@@ -219,7 +224,7 @@ const submitSalesAction = async (action, section, form) => {
       };
     }
 
-    if (action === "New Opportunity") {
+    if (isDealOpportunityAction(action)) {
       return {
         ...form,
         name: form.company || form.name,
@@ -268,7 +273,9 @@ const submitSalesAction = async (action, section, form) => {
     });
   }
 
-  const recordType = recordTypeForAction(action, section);
+  const recordType = isDealOpportunityAction(action)
+    ? value >= OPPORTUNITY_VALUE_THRESHOLD ? "opportunity" : "deal"
+    : recordTypeForAction(action, section);
   let status = normalizedForm.stage;
   if (recordType === "deal" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].includes(status)) {
     status = "Discovery";
@@ -1456,16 +1463,18 @@ function AddClientModal({ submitting = false, onClose, onSubmit }) {
   );
 }
 
-function NewOpportunityModal({ submitting = false, onClose, onSubmit }) {
+function DealOpportunityModal({ action, submitting = false, onClose, onSubmit }) {
   const [winProbability, setWinProbability] = useState(60);
   const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+  const isNewDeal = action === "New Deal" || action?.startsWith("Add Deal");
+  const defaultStage = action?.includes(" - ") ? action.split(" - ")[1] : "Discovery";
 
   return (
     <SalesModalShell
       icon={Target}
-      title="New opportunity"
-      description="Appears on the pipeline board in the stage you pick."
-      closeLabel="Close new opportunity form"
+      title={isNewDeal ? "New deal" : "New opportunity"}
+      description={isNewDeal ? "Capture company, value, ownership, scope, and probability." : "Appears on the pipeline board in the stage you pick."}
+      closeLabel={isNewDeal ? "Close new deal form" : "Close new opportunity form"}
       onClose={onClose}
     >
       <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
@@ -1474,7 +1483,7 @@ function NewOpportunityModal({ submitting = false, onClose, onSubmit }) {
           <LeadTextField label="Primary contact" name="primaryContact" placeholder="Name - designation" fieldClass={fieldClass} />
           <LeadTextField label="Deal value (₹)" name="dealValue" type="number" placeholder="620000" required fieldClass={fieldClass} />
           <LeadTextField label="Employees" name="employees" type="number" placeholder="300" fieldClass={fieldClass} />
-          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"]} defaultValue="Discovery" required fieldClass={fieldClass} />
+          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"]} defaultValue={defaultStage} required fieldClass={fieldClass} />
           <LeadTextField label="Expected close" name="expectedClose" type="date" fieldClass={fieldClass} />
           <LeadSelectField label="Owner" name="owner" options={leadOwners} fieldClass={fieldClass} />
           <LeadSelectField label="Competitor in deal" name="competitor" options={competitors} fieldClass={fieldClass} />
@@ -1516,7 +1525,7 @@ function NewOpportunityModal({ submitting = false, onClose, onSubmit }) {
             disabled={submitting}
             className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Saving..." : "Save opportunity"}
+            {submitting ? "Saving..." : isNewDeal ? "Save deal" : "Save opportunity"}
           </button>
         </div>
       </form>
@@ -1605,9 +1614,10 @@ function SalesActionModal({ action, section, submitting = false, onClose, onSubm
     );
   }
 
-  if (action === "New Opportunity") {
+  if (isDealOpportunityAction(action)) {
     return (
-      <NewOpportunityModal
+      <DealOpportunityModal
+        action={action}
         submitting={submitting}
         onClose={onClose}
         onSubmit={onSubmit}
