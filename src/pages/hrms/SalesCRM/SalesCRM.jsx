@@ -10,6 +10,7 @@ import {
   BriefcaseBusiness,
   Building2,
   Calculator,
+  Check,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
@@ -31,6 +32,7 @@ import {
   Target,
   TrendingUp,
   Trophy,
+  UserPlus,
   Users,
   X,
 } from "lucide-react";
@@ -107,6 +109,58 @@ const parseAmount = (raw) => {
   return isNaN(numeric) ? undefined : numeric;
 };
 
+const OPPORTUNITY_VALUE_THRESHOLD = 100000;
+
+const buildLeadNotes = (form) => {
+  const baseNotes = form.notes?.trim();
+  const detailRows = [
+    ["Contact", form.contact],
+    ["Phone", form.phone],
+    ["Source", form.source],
+    ["Acquisition cost", form.acquisitionCost],
+    ["Expected close date", form.expectedCloseDate],
+    ["Last contact", form.lastContact],
+    ["Employees", form.employees],
+    ["Interested modules", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return [baseNotes, ...detailRows].filter(Boolean).join("\n");
+};
+
+const buildClientNotes = (form) => {
+  const detailRows = [
+    ["Email", form.email],
+    ["Phone", form.phone],
+    ["Contract start", form.contractStart],
+    ["Contract end", form.contractEnd],
+    ["Industry", form.industry],
+    ["Plan", form.plan],
+    ["Employees", form.employees],
+    ["GSTIN", form.gstin],
+    ["Billing address", form.billingAddress],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return detailRows.join("\n");
+};
+
+const buildOpportunityNotes = (form) => {
+  const detailRows = [
+    ["Primary contact", form.primaryContact],
+    ["Employees", form.employees],
+    ["Competitor in deal", form.competitor],
+    ["Modules in scope", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
+    ["Win probability", form.winProbability ? `${form.winProbability}%` : ""],
+  ]
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(([label, value]) => `${label}: ${value}`);
+
+  return detailRows.join("\n");
+};
+
 const toTableRow = (record) => ({
   id: record.id,
   name: record.name,
@@ -140,6 +194,105 @@ const recordTypeForAction = (action, section) => {
   if (section === "clients") return "client";
   if (section === "opportunities") return "opportunity";
   return "deal";
+};
+
+const isDealOpportunityAction = (action) =>
+  action === "New Deal" || action === "New Opportunity" || action?.startsWith("Add Deal");
+
+const submitSalesAction = async (action, section, form) => {
+  const normalizedForm = (() => {
+    if (action === "Add Lead") {
+      return {
+        ...form,
+        name: form.leadName || form.name,
+        owner: form.leadOwner || form.owner,
+        value: form.estimatedValue || form.value,
+        followUp: form.expectedCloseDate || form.followUp,
+        notes: buildLeadNotes(form),
+      };
+    }
+
+    if (action === "Import Clients") {
+      return {
+        ...form,
+        name: form.primaryContact || form.name,
+        owner: form.accountManager || form.owner,
+        value: form.monthlyRevenue || form.value,
+        stage: form.renewalStatus || "Active",
+        followUp: form.contractEnd || form.followUp,
+        notes: buildClientNotes(form),
+      };
+    }
+
+    if (isDealOpportunityAction(action)) {
+      return {
+        ...form,
+        name: form.company || form.name,
+        value: form.dealValue || form.value,
+        followUp: form.expectedClose || form.followUp,
+        notes: buildOpportunityNotes(form),
+      };
+    }
+
+    return form;
+  })();
+
+  const name = normalizedForm.name?.trim();
+  const company = normalizedForm.company?.trim();
+  const value = parseAmount(normalizedForm.value);
+  const notes = normalizedForm.notes?.trim();
+  const owner = normalizedForm.owner?.trim();
+
+  if (action === "New Article") {
+    return salesCrmService.createKnowledge({
+      title: name,
+      category: company || "Services",
+      owner,
+      content: notes,
+    });
+  }
+
+  if (action === "Add Product") {
+    return salesCrmService.createProduct({
+      name,
+      category: company || "Subscription",
+      team: owner,
+      priceLabel: form.value?.trim(),
+      note: notes,
+    });
+  }
+
+  if (DOC_ACTION_TYPES[action]) {
+    return salesCrmService.createDocument({
+      docType: DOC_ACTION_TYPES[action],
+      title: name,
+      clientName: company,
+      owner,
+      amount: value,
+      notes,
+    });
+  }
+
+  const recordType = isDealOpportunityAction(action)
+    ? value >= OPPORTUNITY_VALUE_THRESHOLD ? "opportunity" : "deal"
+    : recordTypeForAction(action, section);
+  let status = normalizedForm.stage;
+  if (recordType === "deal" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].includes(status)) {
+    status = "Discovery";
+  }
+
+  return salesCrmService.createRecord({
+    recordType,
+    name,
+    company,
+    status,
+    owner,
+    value,
+    followUpAt: normalizedForm.followUp || undefined,
+    notes,
+  });
+};
+
 };
 
 const submitSalesAction = async (action, section, form) => {
@@ -258,6 +411,12 @@ function SalesCRM() {
     event.preventDefault();
     if (submitting) return;
 
+    const rawFormData = new FormData(event.currentTarget);
+    const formData = Object.fromEntries(rawFormData.entries());
+    const modules = rawFormData.getAll("modules");
+    if (modules.length) {
+      formData.modules = modules;
+    }
     const formData = Object.fromEntries(new FormData(event.currentTarget).entries());
     setSubmitting(true);
     try {
@@ -1123,7 +1282,7 @@ function EmptyState({ icon: Icon, title, description, cta, onAction }) {
   return (
     <div className="rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] px-5 py-14 text-center">
       <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB]">
-        <Icon className="h-8 w-8" />
+        {React.createElement(Icon, { className: "h-8 w-8" })}
       </div>
       <h2 className="text-xl font-semibold text-[#333333]">{title}</h2>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#667085]">{description}</p>
@@ -1178,6 +1337,351 @@ function NumberField({ label, value, onChange }) {
     </label>
   );
 }
+
+const leadSources = ["Website", "Referral", "LinkedIn", "Outbound", "Event", "Partner"];
+const leadOwners = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
+const leadStages = ["New", "Contacted", "Qualified", "Proposal", "Won", "Lost"];
+const leadModules = ["Attendance", "Payroll", "Leave & Shifts", "Recruitment", "Performance", "Employee Self-Service"];
+const accountManagers = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
+const renewalStatuses = ["Active", "Renewal Due", "At Risk", "Paused", "Closed"];
+const industries = ["Finance", "Technology", "Healthcare", "Manufacturing", "Retail", "Education"];
+const plans = ["Starter", "Growth", "Professional", "Enterprise"];
+const competitors = ["Darwinbox", "Keka", "Zoho People", "GreytHR", "BambooHR", "None"];
+
+function SalesModalShell({ icon: Icon, title, description, closeLabel, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 px-3 py-6">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-[#D9D9D9] bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#E5E7EB] bg-white px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#F4ECFF] text-[#7D1EDB] sm:h-12 sm:w-12">
+              {React.createElement(Icon, { className: "h-5 w-5 sm:h-6 sm:w-6" })}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold leading-tight text-[#333333] sm:text-xl">{title}</h2>
+              <p className="mt-1 text-sm font-medium leading-5 text-[#667085]">{description}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#333333]"
+            aria-label={closeLabel}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AddLeadModal({ submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+
+  return (
+    <SalesModalShell
+      icon={UserPlus}
+      title="Add lead"
+      description="Keep the pipeline current for conversion tracking and revenue forecasting."
+      closeLabel="Close add lead form"
+      onClose={onClose}
+    >
+        <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+          <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+            <LeadTextField label="Lead name" name="leadName" placeholder="e.g. Grace Morgan" required fieldClass={fieldClass} />
+            <LeadTextField label="Contact" name="contact" type="email" placeholder="grace@bluepeak.io" required fieldClass={fieldClass} />
+            <LeadTextField label="Company" name="company" placeholder="e.g. Bluepeak Technologies" fieldClass={fieldClass} />
+            <LeadTextField label="Phone" name="phone" type="tel" placeholder="+91" fieldClass={fieldClass} />
+            <LeadSelectField label="Source" name="source" options={leadSources} fieldClass={fieldClass} />
+            <LeadSelectField label="Lead owner" name="leadOwner" options={leadOwners} fieldClass={fieldClass} />
+            <LeadSelectField label="Stage" name="stage" options={leadStages} defaultValue="New" fieldClass={fieldClass} />
+            <LeadTextField label="Estimated value (₹)" name="estimatedValue" type="number" placeholder="0" fieldClass={fieldClass} />
+            <LeadTextField label="Acquisition cost (₹)" name="acquisitionCost" type="number" placeholder="0" fieldClass={fieldClass} />
+            <LeadTextField label="Expected close date" name="expectedCloseDate" type="date" fieldClass={fieldClass} />
+            <LeadTextField label="Last contact" name="lastContact" type="date" fieldClass={fieldClass} />
+            <LeadTextField
+              label="Employees"
+              name="employees"
+              type="number"
+              placeholder="300"
+              hint="drives pricing & scoring"
+              fieldClass={fieldClass}
+            />
+          </div>
+
+          <fieldset className="mt-6">
+            <legend className="text-sm font-semibold text-[#333333]">Interested modules</legend>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {leadModules.map((module, index) => (
+                <LeadModulePill key={module} module={module} defaultChecked={index < 2} />
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="mt-6 block space-y-2 text-sm font-semibold text-[#333333]">
+            Notes
+            <textarea
+              name="notes"
+              rows={4}
+              placeholder="Context from the first conversation - pain points, current tools, urgency..."
+              className="min-h-[120px] w-full resize-none rounded-lg border border-[#D9D9D9] bg-white px-4 py-3 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15"
+            />
+          </label>
+
+          <div className="mt-6 rounded-lg border border-[#D9D9D9] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#667085]">
+            Current status will be saved as <strong className="text-[#333333]">Not Converted</strong> based on the selected stage. Won stores the converted date and Lost stores the close-lost date for reports.
+          </div>
+
+          <div className="mt-4 rounded-lg border border-[#C7A3F4] bg-[#F4ECFF] px-4 py-3 text-sm font-semibold text-[#7D1EDB]">
+            <Sparkles className="mr-2 inline h-4 w-4" />
+            Co-Pilot will score this lead and suggest an opening email as soon as it's saved.
+          </div>
+
+          <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? "Saving..." : "Save lead"}
+            </button>
+          </div>
+        </form>
+    </SalesModalShell>
+  );
+}
+
+function AddClientModal({ submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+
+  return (
+    <SalesModalShell
+      icon={Building2}
+      title="Add client"
+      description="Maintain client details, billing value, and relationship ownership."
+      closeLabel="Close add client form"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Primary contact" name="primaryContact" placeholder="e.g. Isabella Ward" required fieldClass={fieldClass} />
+          <LeadTextField label="Company" name="company" placeholder="e.g. Northstar Finance" required fieldClass={fieldClass} />
+          <LeadTextField label="Email" name="email" type="email" placeholder="hello@company.com" required fieldClass={fieldClass} />
+          <LeadTextField label="Phone" name="phone" type="tel" placeholder="+91" fieldClass={fieldClass} />
+          <div className="md:col-span-2">
+            <LeadTextField label="Monthly revenue (₹)" name="monthlyRevenue" type="number" placeholder="0" fieldClass={fieldClass} />
+          </div>
+          <LeadSelectField label="Account manager" name="accountManager" options={accountManagers} fieldClass={fieldClass} />
+          <LeadSelectField label="Renewal status" name="renewalStatus" options={renewalStatuses} defaultValue="Active" fieldClass={fieldClass} />
+          <LeadTextField label="Contract start" name="contractStart" type="date" fieldClass={fieldClass} />
+          <LeadTextField label="Contract end" name="contractEnd" type="date" fieldClass={fieldClass} />
+          <LeadSelectField label="Industry" name="industry" options={industries} fieldClass={fieldClass} />
+          <LeadSelectField label="Plan" name="plan" options={plans} fieldClass={fieldClass} />
+          <LeadTextField label="Employees" name="employees" type="number" placeholder="850" fieldClass={fieldClass} />
+          <LeadTextField label="GSTIN" name="gstin" placeholder="22AAAAA0000A1Z5" fieldClass={fieldClass} />
+        </div>
+
+        <label className="mt-6 block space-y-2 text-sm font-semibold text-[#333333]">
+          Billing address
+          <textarea
+            name="billingAddress"
+            rows={4}
+            placeholder="Registered office address for invoices..."
+            className="min-h-[120px] w-full resize-none rounded-lg border border-[#D9D9D9] bg-white px-4 py-3 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15"
+          />
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "Saving..." : "Save client"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function DealOpportunityModal({ action, submitting = false, onClose, onSubmit }) {
+  const [winProbability, setWinProbability] = useState(60);
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+  const isNewDeal = action === "New Deal" || action?.startsWith("Add Deal");
+  const defaultStage = action?.includes(" - ") ? action.split(" - ")[1] : "Discovery";
+
+  return (
+    <SalesModalShell
+      icon={Target}
+      title={isNewDeal ? "New deal" : "New opportunity"}
+      description={isNewDeal ? "Capture company, value, ownership, scope, and probability." : "Appears on the pipeline board in the stage you pick."}
+      closeLabel={isNewDeal ? "Close new deal form" : "Close new opportunity form"}
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Company" name="company" placeholder="e.g. Bluewave Fintech" required fieldClass={fieldClass} />
+          <LeadTextField label="Primary contact" name="primaryContact" placeholder="Name - designation" fieldClass={fieldClass} />
+          <LeadTextField label="Deal value (₹)" name="dealValue" type="number" placeholder="620000" required fieldClass={fieldClass} />
+          <LeadTextField label="Employees" name="employees" type="number" placeholder="300" fieldClass={fieldClass} />
+          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"]} defaultValue={defaultStage} required fieldClass={fieldClass} />
+          <LeadTextField label="Expected close" name="expectedClose" type="date" fieldClass={fieldClass} />
+          <LeadSelectField label="Owner" name="owner" options={leadOwners} fieldClass={fieldClass} />
+          <LeadSelectField label="Competitor in deal" name="competitor" options={competitors} fieldClass={fieldClass} />
+        </div>
+
+        <fieldset className="mt-6">
+          <legend className="text-sm font-semibold text-[#333333]">Modules in scope</legend>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {leadModules.map((module, index) => (
+              <LeadModulePill key={module} module={module} defaultChecked={index < 2} />
+            ))}
+          </div>
+        </fieldset>
+
+        <label className="mt-6 block space-y-3 text-sm font-semibold text-[#333333]">
+          <span>Win probability - {winProbability}%</span>
+          <input type="hidden" name="winProbability" value={winProbability} />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={winProbability}
+            onChange={(event) => setWinProbability(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#E9D7FE] accent-[#7D1EDB]"
+          />
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333] transition hover:bg-[#F9FAFB]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white transition hover:bg-[#6916BF] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "Saving..." : isNewDeal ? "Save deal" : "Save opportunity"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function LeadModulePill({ module, defaultChecked = false }) {
+  const [checked, setChecked] = useState(defaultChecked);
+
+  return (
+    <label className="cursor-pointer">
+      <input
+        type="checkbox"
+        name="modules"
+        value={module}
+        checked={checked}
+        onChange={(event) => setChecked(event.target.checked)}
+        className="sr-only"
+      />
+      <span
+        className={cx(
+          "inline-flex h-10 items-center justify-center gap-2 rounded-full border px-4 text-sm font-semibold transition",
+          checked
+            ? "border-[#7D1EDB] bg-[#F4ECFF] text-[#7D1EDB]"
+            : "border-[#D9D9D9] bg-white text-[#667085] hover:border-[#C7A3F4] hover:text-[#7D1EDB]",
+        )}
+      >
+        {checked && <Check className="h-4 w-4" />}
+        {module}
+      </span>
+    </label>
+  );
+}
+
+function LeadTextField({ label, name, placeholder, type = "text", required = false, hint, fieldClass }) {
+  return (
+    <label className="space-y-2 text-sm font-semibold text-[#333333]">
+      <span className="flex items-center justify-between gap-4">
+        <span>{label}{required && <span className="text-[#7D1EDB]"> *</span>}</span>
+        {hint && <span className="text-sm font-medium text-[#667085]">{hint}</span>}
+      </span>
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        required={required}
+        className={fieldClass}
+      />
+    </label>
+  );
+}
+
+function LeadSelectField({ label, name, options, defaultValue = "", required = false, fieldClass }) {
+  return (
+    <label className="space-y-2 text-sm font-semibold text-[#333333]">
+      <span>{label}{required && <span className="text-[#7D1EDB]"> *</span>}</span>
+      <select name={name} defaultValue={defaultValue} required={required} className={fieldClass}>
+        <option value="" />
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function SalesActionModal({ action, section, submitting = false, onClose, onSubmit }) {
+  if (action === "Add Lead") {
+    return (
+      <AddLeadModal
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
+
+  if (action === "Import Clients") {
+    return (
+      <AddClientModal
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
+
+  if (isDealOpportunityAction(action)) {
+    return (
+      <DealOpportunityModal
+        action={action}
+        submitting={submitting}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      />
+    );
+  }
 
 function SalesActionModal({ action, section, submitting = false, onClose, onSubmit }) {
   const title = action || "New Deal";
@@ -1292,5 +1796,4 @@ function SummaryLine({ label, value }) {
   );
 }
 
-export { salesSections };
 export default SalesCRM;
