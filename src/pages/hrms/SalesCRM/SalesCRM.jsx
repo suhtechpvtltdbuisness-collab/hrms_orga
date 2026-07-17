@@ -109,67 +109,118 @@ const parseAmount = (raw) => {
   return isNaN(numeric) ? undefined : numeric;
 };
 
-const OPPORTUNITY_VALUE_THRESHOLD = 100000;
+const LOSS_REASONS = ["Price", "Timeline", "Competitor", "No decision", "Other"];
 
-const buildLeadNotes = (form) => {
-  const baseNotes = form.notes?.trim();
-  const detailRows = [
-    ["Contact", form.contact],
-    ["Phone", form.phone],
-    ["Source", form.source],
-    ["Acquisition cost", form.acquisitionCost],
-    ["Expected close date", form.expectedCloseDate],
-    ["Last contact", form.lastContact],
-    ["Employees", form.employees],
-    ["Interested modules", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
-  ]
-    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
-    .map(([label, value]) => `${label}: ${value}`);
-
-  return [baseNotes, ...detailRows].filter(Boolean).join("\n");
+const leadStageLabel = (record) => {
+  if (record.conversionStatus === "Converted") return "Converted";
+  if (record.conversionStatus === "Closed Lost") return "Closed Lost";
+  return record.status;
 };
 
-const buildClientNotes = (form) => {
-  const detailRows = [
-    ["Email", form.email],
-    ["Phone", form.phone],
-    ["Contract start", form.contractStart],
-    ["Contract end", form.contractEnd],
-    ["Industry", form.industry],
-    ["Plan", form.plan],
-    ["Employees", form.employees],
-    ["GSTIN", form.gstin],
-    ["Billing address", form.billingAddress],
-  ]
-    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
-    .map(([label, value]) => `${label}: ${value}`);
+const toLeadRow = (record) => ({
+  id: record.id,
+  name: record.name,
+  company: record.company || "—",
+  status: leadStageLabel(record),
+  owner: record.owner || "—",
+  value: formatINR(record.value),
+  source: record.source || "—",
+  next: record.followUpAt
+    ? new Date(record.followUpAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : "—",
+  conversionStatus: record.conversionStatus,
+  isReadOnly: record.isReadOnly,
+  rawStatus: record.status,
+});
 
-  return detailRows.join("\n");
+const toClientRow = (record) => ({
+  id: record.id,
+  name: record.name,
+  company: record.company || "—",
+  status: record.renewalStatus || record.status || "—",
+  owner: record.owner || "—",
+  value: formatINR(record.value),
+  source: meta(record).plan || "—",
+  next: meta(record).contractEnd
+    ? new Date(meta(record).contractEnd).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : "—",
+  clientLifecycle: record.clientLifecycle,
+  clientSource: record.clientSource,
+});
+
+const meta = (record) => record.metadata || {};
+
+const buildLeadMetadata = (form) => {
+  const metadata = {
+    contact: form.contact?.trim(),
+    phone: form.phone?.trim(),
+    acquisitionCost: parseAmount(form.acquisitionCost),
+    lastContact: form.lastContact || undefined,
+    employees: form.employees ? Number(form.employees) : undefined,
+    modules: Array.isArray(form.modules) ? form.modules : form.modules ? [form.modules] : undefined,
+  };
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) => value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && !value.length)),
+  );
 };
 
-const buildOpportunityNotes = (form) => {
-  const detailRows = [
-    ["Primary contact", form.primaryContact],
-    ["Employees", form.employees],
-    ["Competitor in deal", form.competitor],
-    ["Modules in scope", Array.isArray(form.modules) ? form.modules.join(", ") : form.modules],
-    ["Win probability", form.winProbability ? `${form.winProbability}%` : ""],
-  ]
-    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
-    .map(([label, value]) => `${label}: ${value}`);
-
-  return detailRows.join("\n");
+const buildClientMetadata = (form) => {
+  const metadata = {
+    email: form.email?.trim(),
+    phone: form.phone?.trim(),
+    contractStart: form.contractStart || undefined,
+    contractEnd: form.contractEnd || undefined,
+    industry: form.industry?.trim(),
+    plan: form.plan?.trim(),
+    employees: form.employees ? Number(form.employees) : undefined,
+    gstin: form.gstin?.trim(),
+    billingAddress: form.billingAddress?.trim(),
+  };
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) => value !== undefined && value !== null && value !== ""),
+  );
 };
 
-const toTableRow = (record) => ({
+const buildDealMetadata = (form) => {
+  const metadata = {
+    primaryContact: form.primaryContact?.trim(),
+    employees: form.employees ? Number(form.employees) : undefined,
+    competitor: form.competitor?.trim(),
+    modules: Array.isArray(form.modules) ? form.modules : form.modules ? [form.modules] : undefined,
+    winProbability: form.winProbability ? Number(form.winProbability) : undefined,
+  };
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) => value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && !value.length)),
+  );
+};
+
+const toOpportunityRow = (record) => ({
   id: record.id,
   name: record.name,
   company: record.company || "—",
   status: record.status,
   owner: record.owner || "—",
   value: formatINR(record.value),
-  next: record.nextAction || (record.followUpAt ? `Follow-up ${formatDateTime(record.followUpAt)}` : "—"),
+  source: `${record.health ?? meta(record).winProbability ?? 0}% win`,
+  next: record.followUpAt
+    ? new Date(record.followUpAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : "—",
 });
+
+const RECORD_TABLE_CONFIG = {
+  leads: {
+    columns: ["Lead", "Company", "Stage", "Owner", "Est. Value", "Source", "Expected Close"],
+    mapRow: toLeadRow,
+  },
+  clients: {
+    columns: ["Contact", "Company", "Status", "Account Manager", "MRR", "Plan", "Contract End"],
+    mapRow: toClientRow,
+  },
+  opportunities: {
+    columns: ["Opportunity", "Company", "Stage", "Owner", "Value", "Win %", "Expected Close"],
+    mapRow: toOpportunityRow,
+  },
+};
 
 // ---------- Action → API mapping ----------
 
@@ -186,110 +237,113 @@ const DOC_ACTION_TYPES = {
 };
 
 const recordTypeForAction = (action, section) => {
-  if (action === "New Deal" || action.startsWith("Add Deal")) return "deal";
+  if (action === "New Deal" || action.startsWith("Add Deal") || action === "New Opportunity") return "opportunity";
   if (action === "Add Lead" || action === "Schedule Follow-up") return "lead";
   if (action === "Import Clients") return "client";
-  if (action === "New Opportunity") return "opportunity";
   if (section === "leads") return "lead";
   if (section === "clients") return "client";
-  if (section === "opportunities") return "opportunity";
-  return "deal";
+  if (section === "opportunities" || section === "pipeline") return "opportunity";
+  return "opportunity";
 };
 
 const isDealOpportunityAction = (action) =>
   action === "New Deal" || action === "New Opportunity" || action?.startsWith("Add Deal");
 
 const submitSalesAction = async (action, section, form) => {
-  const normalizedForm = (() => {
-    if (action === "Add Lead") {
-      return {
-        ...form,
-        name: form.leadName || form.name,
-        owner: form.leadOwner || form.owner,
-        value: form.estimatedValue || form.value,
-        followUp: form.expectedCloseDate || form.followUp,
-        notes: buildLeadNotes(form),
-      };
-    }
-
-    if (action === "Import Clients") {
-      return {
-        ...form,
-        name: form.primaryContact || form.name,
-        owner: form.accountManager || form.owner,
-        value: form.monthlyRevenue || form.value,
-        stage: form.renewalStatus || "Active",
-        followUp: form.contractEnd || form.followUp,
-        notes: buildClientNotes(form),
-      };
-    }
-
-    if (isDealOpportunityAction(action)) {
-      return {
-        ...form,
-        name: form.company || form.name,
-        value: form.dealValue || form.value,
-        followUp: form.expectedClose || form.followUp,
-        notes: buildOpportunityNotes(form),
-      };
-    }
-
-    return form;
-  })();
-
-  const name = normalizedForm.name?.trim();
-  const company = normalizedForm.company?.trim();
-  const value = parseAmount(normalizedForm.value);
-  const notes = normalizedForm.notes?.trim();
-  const owner = normalizedForm.owner?.trim();
-
   if (action === "New Article") {
     return salesCrmService.createKnowledge({
-      title: name,
-      category: company || "Services",
-      owner,
-      content: notes,
+      title: form.title || form.name,
+      category: form.category || form.company || "Services",
+      owner: form.owner,
+      content: form.notes?.trim(),
     });
   }
 
   if (action === "Add Product") {
     return salesCrmService.createProduct({
-      name,
-      category: company || "Subscription",
-      team: owner,
-      priceLabel: form.value?.trim(),
-      note: notes,
+      name: form.name,
+      category: form.category || form.company || "Subscription",
+      team: form.owner || form.team,
+      priceLabel: form.priceLabel || form.value,
+      note: form.notes?.trim(),
+      status: form.status || "Active",
     });
   }
 
   if (DOC_ACTION_TYPES[action]) {
     return salesCrmService.createDocument({
       docType: DOC_ACTION_TYPES[action],
-      title: name,
-      clientName: company,
-      owner,
-      amount: value,
-      notes,
+      title: form.name || form.title,
+      clientName: form.company,
+      owner: form.owner,
+      amount: parseAmount(form.value),
+      notes: form.notes?.trim(),
     });
   }
 
-  const recordType = isDealOpportunityAction(action)
-    ? value >= OPPORTUNITY_VALUE_THRESHOLD ? "opportunity" : "deal"
-    : recordTypeForAction(action, section);
-  let status = normalizedForm.stage;
-  if (recordType === "deal" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].includes(status)) {
+  if (action === "Add Lead") {
+    return salesCrmService.createRecord({
+      recordType: "lead",
+      name: form.leadName?.trim(),
+      company: form.company?.trim(),
+      status: form.stage || "New",
+      owner: form.leadOwner?.trim(),
+      value: parseAmount(form.estimatedValue),
+      source: form.source?.trim(),
+      followUpAt: form.expectedCloseDate || undefined,
+      nextAction: form.lastContact ? `Last contact ${form.lastContact}` : undefined,
+      notes: form.notes?.trim(),
+      metadata: buildLeadMetadata(form),
+    });
+  }
+
+  if (action === "Import Clients") {
+    return salesCrmService.createRecord({
+      recordType: "client",
+      name: form.primaryContact?.trim(),
+      company: form.company?.trim(),
+      clientLifecycle: "Onboarding",
+      renewalStatus: form.renewalStatus || "On Track",
+      clientSource: "direct",
+      owner: form.accountManager?.trim(),
+      value: parseAmount(form.monthlyRevenue),
+      notes: form.notes?.trim(),
+      metadata: buildClientMetadata(form),
+    });
+  }
+
+  if (isDealOpportunityAction(action)) {
+    const winProbability = form.winProbability ? Number(form.winProbability) : 50;
+    const defaultStage = action?.includes(" - ") ? action.split(" - ")[1] : "Discovery";
+
+    return salesCrmService.createRecord({
+      recordType: "opportunity",
+      name: form.company?.trim(),
+      company: form.company?.trim(),
+      status: form.stage || defaultStage,
+      owner: form.owner?.trim(),
+      value: parseAmount(form.dealValue),
+      health: winProbability,
+      followUpAt: form.expectedClose || undefined,
+      metadata: buildDealMetadata({ ...form, winProbability }),
+    });
+  }
+
+  const recordType = recordTypeForAction(action, section);
+  let status = form.stage;
+  if (recordType === "opportunity" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Closed Won", "Closed Lost"].includes(status)) {
     status = "Discovery";
   }
 
   return salesCrmService.createRecord({
     recordType,
-    name,
-    company,
+    name: form.name?.trim(),
+    company: form.company?.trim(),
     status,
-    owner,
-    value,
-    followUpAt: normalizedForm.followUp || undefined,
-    notes,
+    owner: form.owner?.trim(),
+    value: parseAmount(form.value),
+    followUpAt: form.followUp || undefined,
+    notes: form.notes?.trim(),
   });
 };
 
@@ -343,6 +397,20 @@ function SalesCRM() {
   const [submitting, setSubmitting] = useState(false);
 
   const openActionModal = (action = "New Deal") => {
+    if (action.startsWith("Convert Lead - ") && data?.rows?.leads) {
+      const leadId = Number(action.split(" - ")[1]);
+      const lead = data.rows.leads.find((item) => item.id === leadId);
+      setActionModal({ action, section: activeSection, lead });
+      return;
+    }
+    if (action.startsWith("Activate Client - ")) {
+      const oppId = Number(action.split(" - ")[1]);
+      const opportunity =
+        data?.awaitingPayment?.find((item) => item.id === oppId) ||
+        data?.rows?.opportunities?.find((item) => item.id === oppId);
+      setActionModal({ action, section: activeSection, opportunity });
+      return;
+    }
     setActionModal({ action, section: activeSection });
   };
 
@@ -362,7 +430,33 @@ function SalesCRM() {
     }
     setSubmitting(true);
     try {
-      const result = await submitSalesAction(actionModal.action, actionModal.section, formData);
+      let result;
+      if (actionModal.action?.startsWith("Convert Lead - ")) {
+        const leadId = Number(actionModal.action.split(" - ")[1]);
+        result = await salesCrmService.convertLead(leadId, {
+          company: formData.company?.trim(),
+          stage: formData.stage || "Discovery",
+          owner: formData.owner?.trim(),
+          value: parseAmount(formData.dealValue),
+          followUpAt: formData.expectedClose || undefined,
+          primaryContact: formData.primaryContact?.trim(),
+          winProbability: formData.winProbability ? Number(formData.winProbability) : undefined,
+        });
+      } else if (actionModal.action?.startsWith("Activate Client - ")) {
+        const oppId = Number(actionModal.action.split(" - ")[1]);
+        result = await salesCrmService.activateClient(oppId, {
+          accountManager: formData.accountManager?.trim(),
+          monthlyRevenue: parseAmount(formData.monthlyRevenue),
+          plan: formData.plan?.trim(),
+          contractStart: formData.contractStart || undefined,
+          contractEnd: formData.contractEnd || undefined,
+          gstin: formData.gstin?.trim(),
+          billingAddress: formData.billingAddress?.trim(),
+          industry: formData.industry?.trim(),
+        });
+      } else {
+        result = await submitSalesAction(actionModal.action, actionModal.section, formData);
+      }
       if (result.success) {
         toast.success(`${actionModal?.action || "Sales item"} saved successfully`);
         closeActionModal();
@@ -394,6 +488,7 @@ function SalesCRM() {
             section={activeSection}
             data={data}
             onAction={openActionModal}
+            onRefresh={refresh}
           />
         )}
       </div>
@@ -401,6 +496,8 @@ function SalesCRM() {
         <SalesActionModal
           action={actionModal.action}
           section={actionModal.section}
+          lead={actionModal.lead}
+          opportunity={actionModal.opportunity}
           submitting={submitting}
           onClose={closeActionModal}
           onSubmit={handleActionSubmit}
@@ -477,13 +574,20 @@ const LIBRARY_SECTIONS = {
   "objection-playbooks": { title: "Objection Playbooks", cta: "Add Objection", icon: MessageSquareText, docType: "objection-playbook" },
 };
 
-function SalesContent({ section, data, onAction }) {
-  if (section === "overview") return <Overview data={data} onAction={onAction} />;
-  if (section === "pipeline") return <Pipeline deals={data.deals} onAction={onAction} />;
+function SalesContent({ section, data, onAction, onRefresh }) {
+  if (section === "overview") return <Overview data={data} onAction={onAction} onRefresh={onRefresh} />;
+  if (section === "pipeline") return <Pipeline opportunities={data.pipeline} onAction={onAction} />;
   if (section === "sales-ai-co-pilot") return <CoPilot />;
   if (section === "knowledge-hub") return <KnowledgeHub items={data.knowledge} onAction={onAction} />;
   if (["leads", "clients", "opportunities"].includes(section)) {
-    return <RecordsPage section={section} records={data.rows[section] || []} onAction={onAction} />;
+    return (
+      <RecordsPage
+        section={section}
+        records={data.rows[section] || []}
+        onAction={onAction}
+        onRefresh={onRefresh}
+      />
+    );
   }
   if (section === "proposal-builder") return <ProposalBuilder documents={data.documents?.proposal || []} onAction={onAction} />;
   if (section === "pricing-calculator") return <PricingCalculator />;
@@ -504,27 +608,25 @@ function SalesContent({ section, data, onAction }) {
   return <StatePanel title="Sales page not found" description="Choose a Sales workspace section from the navigation." />;
 }
 
-function Overview({ data, onAction }) {
+function Overview({ data, onAction, onRefresh }) {
   const metrics = useMemo(() => {
     const summary = data.metrics || {};
-    const openPipelineValue = (data.deals || [])
-      .filter((deal) => !["Won", "Lost"].includes(deal.status))
-      .reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
+    const openPipelineValue = summary.opportunityValue ?? 0;
     const leadQuality = summary.totalLeads > 0
       ? Math.round((summary.qualifiedLeads / summary.totalLeads) * 100)
       : 0;
 
     return [
-      { title: "Today's Revenue", value: formatINR(summary.todayRevenue), trend: "Won today", icon: CircleDollarSign },
+      { title: "Today's Revenue", value: formatINR(summary.todayRevenue), trend: "Closed Won today", icon: CircleDollarSign },
       { title: "Monthly Revenue", value: formatINR(summary.monthlyRevenue), trend: "This month", icon: TrendingUp },
       { title: "Total Leads", value: String(summary.totalLeads ?? 0), trend: "All time", icon: Users },
-      { title: "Qualified Leads", value: String(summary.qualifiedLeads ?? 0), trend: `${leadQuality}% quality`, icon: Trophy },
-      { title: "Lost Leads", value: String(summary.lostLeads ?? 0), trend: "All time", icon: Activity },
-      { title: "Won Deals", value: String(summary.wonDeals ?? 0), trend: "All time", icon: Handshake },
-      { title: "Active Opportunities", value: String(summary.activeOpportunities ?? 0), trend: formatINR(summary.opportunityValue), icon: Target },
-      { title: "Conversion Rate", value: `${summary.conversionRate ?? 0}%`, trend: "Won vs closed", icon: BarChart3 },
-      { title: "Average Deal Size", value: formatINR(summary.averageDealSize), trend: "Per won deal", icon: BriefcaseBusiness },
-      { title: "Open Pipeline", value: formatINR(openPipelineValue), trend: "Across active deals", icon: ClipboardList },
+      { title: "Lead → Opp Rate", value: `${summary.leadToOpportunityRate ?? 0}%`, trend: `${summary.convertedLeads ?? 0} converted`, icon: Trophy },
+      { title: "Weighted Forecast", value: formatINR(summary.weightedForecast), trend: "Open pipeline", icon: Target },
+      { title: "Win Rate", value: `${summary.winRate ?? summary.conversionRate ?? 0}%`, trend: "Opportunity → Closed Won", icon: Handshake },
+      { title: "Active Opportunities", value: String(summary.activeOpportunities ?? 0), trend: formatINR(summary.opportunityValue), icon: BarChart3 },
+      { title: "Awaiting Payment", value: String(data.awaitingPayment?.length ?? 0), trend: "Won — pending activation", icon: ClipboardList },
+      { title: "Idle Leads (7d+)", value: String(data.idleLeads?.length ?? 0), trend: "No recent activity", icon: Activity },
+      { title: "Average Deal Size", value: formatINR(summary.averageDealSize), trend: "Per closed won", icon: BriefcaseBusiness },
     ];
   }, [data]);
 
@@ -604,6 +706,29 @@ function Overview({ data, onAction }) {
             <PanelEmpty message="No follow-ups scheduled. Add one from any record." />
           )}
         </Panel>
+        <Panel title="Won — Awaiting Payment" className="min-h-[280px]">
+          {data.awaitingPayment?.length ? (
+            <div className="space-y-3">
+              {data.awaitingPayment.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#E4E0E0] bg-[#F9FAFB] p-4">
+                  <div>
+                    <p className="font-semibold text-[#333333]">{item.company || item.name}</p>
+                    <p className="mt-1 text-sm text-[#667085]">{formatINR(item.value)} · {item.owner || "Unassigned"}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onAction(`Activate Client - ${item.id}`)}
+                    className="shrink-0 rounded-lg bg-[#7D1EDB] px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    Activate client
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <PanelEmpty message="Closed-won deals awaiting payment or contract will appear here." />
+          )}
+        </Panel>
         <Panel title="Quick Actions" className="min-h-[280px]">
           <div className="grid gap-3">
             {["Add Lead", "Create Proposal", "Schedule Follow-up", "Import Clients"].map((label) => (
@@ -646,28 +771,65 @@ function MetricCard({ metric }) {
   );
 }
 
-function RecordsPage({ section, records, onAction }) {
+function RecordsPage({ section, records, onAction, onRefresh }) {
   const [search, setSearch] = useState("");
   const title = section.charAt(0).toUpperCase() + section.slice(1);
   const cta = section === "leads" ? "Add Lead" : section === "clients" ? "Import Clients" : "New Opportunity";
+  const tableConfig = RECORD_TABLE_CONFIG[section] || {
+    columns: ["Name", "Company", "Status", "Owner", "Value", "Extra", "Next Action"],
+    mapRow: toLeadRow,
+  };
 
   const rows = useMemo(() => {
-    const mapped = records.map(toTableRow);
+    const mapped = records.map(tableConfig.mapRow);
     if (!search.trim()) return mapped;
     const term = search.trim().toLowerCase();
     return mapped.filter((row) =>
-      [row.name, row.company, row.owner, row.status].some((field) =>
-        String(field).toLowerCase().includes(term),
-      ),
+      Object.values(row).some((field) => String(field).toLowerCase().includes(term)),
     );
-  }, [records, search]);
+  }, [records, search, tableConfig]);
+
+  const showLeadActions = section === "leads";
 
   return (
     <div className="space-y-6">
-      <SectionIntro eyebrow="Sales Workspace" title={title} description="Search, filter, assign owners, track activities, and keep follow-ups moving." />
+      <SectionIntro
+        eyebrow="Sales Workspace"
+        title={title}
+        description={
+          section === "leads"
+            ? "Qualify leads, then convert to opportunities in one click — data carries over automatically."
+            : section === "clients"
+              ? "Paying accounts only. Clients created via conversion inherit full pre-sale history."
+              : "Track qualified deals through Discovery → Closed Won. Closed Won requires an accepted quotation."
+        }
+      />
       <DataToolbar cta={cta} search={search} onSearch={setSearch} onAction={() => onAction(cta)} />
       {rows.length ? (
-        <SalesTable rows={rows} />
+        <SalesTable
+          rows={rows}
+          columns={showLeadActions ? [...tableConfig.columns, "Actions"] : tableConfig.columns}
+          renderActions={
+            showLeadActions
+              ? (row) => {
+                  const canConvert =
+                    row.rawStatus === "Qualified" &&
+                    row.conversionStatus === "Not Converted" &&
+                    !row.isReadOnly;
+                  if (!canConvert) return "—";
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => onAction(`Convert Lead - ${row.id}`)}
+                      className="rounded-lg border border-[#7D1EDB] px-3 py-1.5 text-xs font-semibold text-[#7D1EDB] transition hover:bg-[#F4ECFF]"
+                    >
+                      Convert
+                    </button>
+                  );
+                }
+              : undefined
+          }
+        />
       ) : (
         <EmptyState
           icon={Users}
@@ -715,14 +877,17 @@ function DataToolbar({ cta, search = "", onSearch, onAction }) {
   );
 }
 
-function SalesTable({ rows }) {
+function SalesTable({ rows, columns = ["Name", "Company", "Status", "Owner", "Value", "Next Action"], renderActions }) {
+  const cellKeys = ["name", "company", "status", "owner", "value", "source", "next"];
+  const dataColumnCount = renderActions ? columns.length - 1 : columns.length;
+
   return (
     <div className="overflow-hidden rounded-lg border border-[#E4E0E0]">
       <div className="overflow-x-auto">
         <table className="min-w-[880px] w-full text-left text-sm">
           <thead className="bg-[#F9FAFB] text-xs uppercase tracking-[0.08em] text-[#667085]">
             <tr>
-              {["Name", "Company", "Status", "Owner", "Value", "Next Action"].map((head) => (
+              {columns.map((head) => (
                 <th key={head} className="px-5 py-4 font-semibold">{head}</th>
               ))}
             </tr>
@@ -730,12 +895,20 @@ function SalesTable({ rows }) {
           <tbody className="divide-y divide-[#E5E7EB]">
             {rows.map((row) => (
               <tr key={row.id ?? `${row.name}-${row.company}`} className="bg-white text-[#667085]">
-                <td className="px-5 py-4 font-semibold text-[#333333]">{row.name}</td>
-                <td className="px-5 py-4">{row.company}</td>
-                <td className="px-5 py-4"><StatusBadge label={row.status} /></td>
-                <td className="px-5 py-4">{row.owner}</td>
-                <td className="px-5 py-4 font-semibold text-[#333333]">{row.value}</td>
-                <td className="px-5 py-4">{row.next}</td>
+                {cellKeys.slice(0, dataColumnCount).map((key) => (
+                  <td
+                    key={`${row.id}-${key}`}
+                    className={cx(
+                      "px-5 py-4",
+                      (key === "name" || key === "value") && "font-semibold text-[#333333]",
+                    )}
+                  >
+                    {key === "status" ? <StatusBadge label={row.status} /> : row[key] ?? "—"}
+                  </td>
+                ))}
+                {renderActions && (
+                  <td className="px-5 py-4">{renderActions(row)}</td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -745,15 +918,15 @@ function SalesTable({ rows }) {
   );
 }
 
-const PIPELINE_STAGES = ["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
+const PIPELINE_STAGES = ["Discovery", "Qualified", "Proposal", "Negotiation"];
 
-function Pipeline({ deals, onAction }) {
+function Pipeline({ opportunities, onAction }) {
   const grouped = useMemo(() => {
     return PIPELINE_STAGES.map((stage) => ({
       stage,
-      deals: (deals || []).filter((deal) => deal.status === stage),
+      deals: (opportunities || []).filter((deal) => deal.status === stage),
     }));
-  }, [deals]);
+  }, [opportunities]);
 
   return (
     <div className="space-y-6">
@@ -774,7 +947,7 @@ function Pipeline({ deals, onAction }) {
               onClick={() => onAction(`Add Deal - ${column.stage}`)}
               className="flex h-12 w-full items-center justify-center rounded-lg border border-dashed border-[#D9D9D9] text-sm font-semibold text-[#667085] transition hover:border-[#7D1EDB] hover:text-[#7D1EDB]"
             >
-              + Add Deal
+              + Add opportunity
             </button>
           </div>
         ))}
@@ -784,11 +957,13 @@ function Pipeline({ deals, onAction }) {
 }
 
 function DealCard({ deal }) {
+  const contact = meta(deal).primaryContact;
   return (
     <article className="min-h-[178px] rounded-lg border border-[#E4E0E0] bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="font-semibold text-[#333333]">{deal.name}</h4>
+          {contact && <p className="mt-1 text-xs font-medium text-[#667085]">{contact}</p>}
           <p className="mt-4 text-lg font-semibold text-[#333333]">{formatINR(deal.value)}</p>
         </div>
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F4ECFF] text-xs font-semibold text-[#7D1EDB]">
@@ -1013,6 +1188,8 @@ function KnowledgeHub({ items, onAction }) {
   );
 }
 
+const DOC_TABLE_COLUMNS = ["Title", "Client", "Status", "Owner", "Amount", "Created"];
+
 function ProposalBuilder({ documents, onAction }) {
   return (
     <div className="space-y-6">
@@ -1021,6 +1198,7 @@ function ProposalBuilder({ documents, onAction }) {
         <Panel title="Recent Proposals">
           {documents.length ? (
             <SalesTable
+              columns={DOC_TABLE_COLUMNS}
               rows={documents.map((doc) => ({
                 id: doc.id,
                 name: doc.title,
@@ -1028,7 +1206,7 @@ function ProposalBuilder({ documents, onAction }) {
                 status: doc.status,
                 owner: doc.owner || "—",
                 value: doc.amount ? formatINR(doc.amount) : "—",
-                next: `Created ${timeAgo(doc.createdAt)}`,
+                next: timeAgo(doc.createdAt),
               }))}
             />
           ) : (
@@ -1114,7 +1292,10 @@ function ProductsServices({ products, onAction }) {
       <SectionIntro eyebrow="Sales Workspace" title="Products & Services" description="Manage product categories, pricing, taxes, discount rules, service packages, images, and descriptions." />
       <DataToolbar cta="Add Product" search={search} onSearch={setSearch} onAction={() => onAction("Add Product")} />
       {rows.length ? (
-        <SalesTable rows={rows} />
+        <SalesTable
+          rows={rows}
+          columns={["Product", "Category", "Status", "Team", "Price", "Note"]}
+        />
       ) : (
         <EmptyState
           icon={Package}
@@ -1136,6 +1317,7 @@ function WorkspaceLibrary({ title, cta, icon: Icon, documents, onAction }) {
         <>
           <DataToolbar cta={cta} onAction={() => onAction(cta)} />
           <SalesTable
+            columns={DOC_TABLE_COLUMNS}
             rows={documents.map((doc) => ({
               id: doc.id,
               name: doc.title,
@@ -1143,7 +1325,7 @@ function WorkspaceLibrary({ title, cta, icon: Icon, documents, onAction }) {
               status: doc.status,
               owner: doc.owner || "—",
               value: doc.amount ? formatINR(doc.amount) : "—",
-              next: `Created ${timeAgo(doc.createdAt)}`,
+              next: timeAgo(doc.createdAt),
             }))}
           />
         </>
@@ -1212,9 +1394,14 @@ function StackedList({ items }) {
 }
 
 function StatusBadge({ label }) {
-  const positive = ["Qualified", "Active", "Expansion", "Won"].includes(label);
+  const positive = ["Qualified", "Active", "Onboarding", "Renewed", "Converted", "Closed Won", "On Track"].includes(label);
+  const warning = ["Renewal Due", "At Risk", "Pending Activation"].includes(label);
+  const negative = ["Lost", "Closed Lost", "Churned"].includes(label);
   return (
-    <span className={cx("inline-flex rounded-full px-3 py-1 text-xs font-semibold", positive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#F4ECFF] text-[#7D1EDB]")}>
+    <span className={cx(
+      "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+      positive ? "bg-[#DCFCE7] text-[#16A34A]" : warning ? "bg-[#FEF3C7] text-[#D97706]" : negative ? "bg-[#FEE2E2] text-[#DC2626]" : "bg-[#F4ECFF] text-[#7D1EDB]",
+    )}>
       {label}
     </span>
   );
@@ -1280,14 +1467,15 @@ function NumberField({ label, value, onChange }) {
   );
 }
 
-const leadSources = ["Website", "Referral", "LinkedIn", "Outbound", "Event", "Partner"];
+const leadSources = ["Website", "Referral", "LinkedIn", "Cold outreach", "Event", "Partner"];
 const leadOwners = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
-const leadStages = ["New", "Contacted", "Qualified", "Proposal", "Won", "Lost"];
+const leadStages = ["New", "Contacted", "Qualified", "Lost"];
 const leadModules = ["Attendance", "Payroll", "Leave & Shifts", "Recruitment", "Performance", "Employee Self-Service"];
 const accountManagers = ["Anaya Mehta", "Rohan Sharma", "Priya Nair", "Arjun Verma"];
-const renewalStatuses = ["Active", "Renewal Due", "At Risk", "Paused", "Closed"];
+const renewalStatuses = ["On Track", "At Risk", "Renewal Due", "Churned"];
 const industries = ["Finance", "Technology", "Healthcare", "Manufacturing", "Retail", "Education"];
-const plans = ["Starter", "Growth", "Professional", "Enterprise"];
+const plans = ["Growth", "Professional", "Enterprise"];
+const opportunityStages = ["Discovery", "Qualified", "Proposal", "Negotiation", "Closed Won", "Closed Lost"];
 const competitors = ["Darwinbox", "Keka", "Zoho People", "GreytHR", "BambooHR", "None"];
 
 function SalesModalShell({ icon: Icon, title, description, closeLabel, onClose, children }) {
@@ -1373,7 +1561,7 @@ function AddLeadModal({ submitting = false, onClose, onSubmit }) {
           </label>
 
           <div className="mt-6 rounded-lg border border-[#D9D9D9] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#667085]">
-            Current status will be saved as <strong className="text-[#333333]">Not Converted</strong> based on the selected stage. Won stores the converted date and Lost stores the close-lost date for reports.
+            Status saves as <strong className="text-[#333333]">Not Converted</strong> until the lead converts to an opportunity or is marked Lost. Qualified leads can be converted in one click from the Leads table.
           </div>
 
           <div className="mt-4 rounded-lg border border-[#C7A3F4] bg-[#F4ECFF] px-4 py-3 text-sm font-semibold text-[#7D1EDB]">
@@ -1423,7 +1611,7 @@ function AddClientModal({ submitting = false, onClose, onSubmit }) {
             <LeadTextField label="Monthly revenue (₹)" name="monthlyRevenue" type="number" placeholder="0" fieldClass={fieldClass} />
           </div>
           <LeadSelectField label="Account manager" name="accountManager" options={accountManagers} fieldClass={fieldClass} />
-          <LeadSelectField label="Renewal status" name="renewalStatus" options={renewalStatuses} defaultValue="Active" fieldClass={fieldClass} />
+          <LeadSelectField label="Renewal status" name="renewalStatus" options={renewalStatuses} defaultValue="On Track" fieldClass={fieldClass} />
           <LeadTextField label="Contract start" name="contractStart" type="date" fieldClass={fieldClass} />
           <LeadTextField label="Contract end" name="contractEnd" type="date" fieldClass={fieldClass} />
           <LeadSelectField label="Industry" name="industry" options={industries} fieldClass={fieldClass} />
@@ -1483,7 +1671,7 @@ function DealOpportunityModal({ action, submitting = false, onClose, onSubmit })
           <LeadTextField label="Primary contact" name="primaryContact" placeholder="Name - designation" fieldClass={fieldClass} />
           <LeadTextField label="Deal value (₹)" name="dealValue" type="number" placeholder="620000" required fieldClass={fieldClass} />
           <LeadTextField label="Employees" name="employees" type="number" placeholder="300" fieldClass={fieldClass} />
-          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"]} defaultValue={defaultStage} required fieldClass={fieldClass} />
+          <LeadSelectField label="Stage" name="stage" options={opportunityStages} defaultValue={defaultStage} required fieldClass={fieldClass} />
           <LeadTextField label="Expected close" name="expectedClose" type="date" fieldClass={fieldClass} />
           <LeadSelectField label="Owner" name="owner" options={leadOwners} fieldClass={fieldClass} />
           <LeadSelectField label="Competitor in deal" name="competitor" options={competitors} fieldClass={fieldClass} />
@@ -1561,7 +1749,7 @@ function LeadModulePill({ module, defaultChecked = false }) {
   );
 }
 
-function LeadTextField({ label, name, placeholder, type = "text", required = false, hint, fieldClass }) {
+function LeadTextField({ label, name, placeholder, type = "text", required = false, hint, fieldClass, defaultValue, readOnly = false }) {
   return (
     <label className="space-y-2 text-sm font-semibold text-[#333333]">
       <span className="flex items-center justify-between gap-4">
@@ -1573,7 +1761,9 @@ function LeadTextField({ label, name, placeholder, type = "text", required = fal
         type={type}
         placeholder={placeholder}
         required={required}
-        className={fieldClass}
+        defaultValue={defaultValue}
+        readOnly={readOnly}
+        className={cx(fieldClass, readOnly && "bg-[#F9FAFB] text-[#667085]")}
       />
     </label>
   );
@@ -1593,7 +1783,87 @@ function LeadSelectField({ label, name, options, defaultValue = "", required = f
   );
 }
 
-function SalesActionModal({ action, section, submitting = false, onClose, onSubmit }) {
+function ConvertLeadModal({ lead, submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+  const leadMeta = meta(lead || {});
+  const primaryContact = [lead?.name, leadMeta.contact].filter(Boolean).join(" — ");
+
+  return (
+    <SalesModalShell
+      icon={Target}
+      title="Convert lead to opportunity"
+      description="All lead details carry over — confirm deal value and stage. The lead becomes read-only after conversion."
+      closeLabel="Close convert lead form"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Company" name="company" defaultValue={lead?.company} required fieldClass={fieldClass} />
+          <LeadTextField label="Primary contact" name="primaryContact" defaultValue={primaryContact} fieldClass={fieldClass} />
+          <LeadTextField label="Deal value (₹)" name="dealValue" type="number" defaultValue={lead?.value} required fieldClass={fieldClass} />
+          <LeadSelectField label="Stage" name="stage" options={["Discovery", "Qualified"]} defaultValue="Discovery" fieldClass={fieldClass} />
+          <LeadTextField label="Expected close" name="expectedClose" type="date" defaultValue={lead?.followUpAt?.slice(0, 10)} fieldClass={fieldClass} />
+          <LeadSelectField label="Owner" name="owner" options={leadOwners} defaultValue={lead?.owner} fieldClass={fieldClass} />
+        </div>
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333]">Cancel</button>
+          <button type="submit" disabled={submitting} className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white disabled:opacity-60">
+            {submitting ? "Converting..." : "Convert to opportunity"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function ActivateClientModal({ opportunity, submitting = false, onClose, onSubmit }) {
+  const fieldClass = "h-12 w-full rounded-lg border border-[#D9D9D9] bg-white px-4 text-sm font-medium text-[#333333] outline-none placeholder:text-[#98A2B3] focus:border-[#7D1EDB] focus:ring-2 focus:ring-[#7D1EDB]/15";
+  const oppMeta = meta(opportunity || {});
+  const monthlyDefault = opportunity?.value ? Math.round(Number(opportunity.value) / 12) : "";
+
+  return (
+    <SalesModalShell
+      icon={Building2}
+      title="Activate client"
+      description="Payment or contract confirmed — client record is auto-created with full pre-sale history. No re-entry required."
+      closeLabel="Close activate client form"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+          <LeadTextField label="Company" name="company" defaultValue={opportunity?.company} readOnly fieldClass={fieldClass} />
+          <LeadTextField label="Monthly revenue (₹)" name="monthlyRevenue" type="number" defaultValue={monthlyDefault} fieldClass={fieldClass} />
+          <LeadSelectField label="Account manager" name="accountManager" options={accountManagers} defaultValue={opportunity?.owner} fieldClass={fieldClass} />
+          <LeadSelectField label="Plan" name="plan" options={plans} fieldClass={fieldClass} />
+          <LeadSelectField label="Industry" name="industry" options={industries} fieldClass={fieldClass} />
+          <LeadTextField label="Contract start" name="contractStart" type="date" fieldClass={fieldClass} />
+          <LeadTextField label="Contract end" name="contractEnd" type="date" fieldClass={fieldClass} />
+          <LeadTextField label="GSTIN" name="gstin" placeholder="22AAAAA0000A1Z5" fieldClass={fieldClass} />
+        </div>
+        <label className="mt-6 block space-y-2 text-sm font-semibold text-[#333333]">
+          Billing address
+          <textarea name="billingAddress" rows={3} className="min-h-[96px] w-full resize-none rounded-lg border border-[#D9D9D9] bg-white px-4 py-3 text-sm font-medium text-[#333333] outline-none focus:border-[#7D1EDB]" />
+        </label>
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-[#E5E7EB] pt-5 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="inline-flex h-12 items-center justify-center rounded-lg border border-[#D9D9D9] bg-white px-5 text-sm font-semibold text-[#333333]">Cancel</button>
+          <button type="submit" disabled={submitting} className="inline-flex h-12 items-center justify-center rounded-lg bg-[#7D1EDB] px-5 text-sm font-semibold text-white disabled:opacity-60">
+            {submitting ? "Activating..." : "Confirm & create client"}
+          </button>
+        </div>
+      </form>
+    </SalesModalShell>
+  );
+}
+
+function SalesActionModal({ action, section, lead, opportunity, submitting = false, onClose, onSubmit }) {
+  if (action?.startsWith("Convert Lead -")) {
+    return <ConvertLeadModal lead={lead} submitting={submitting} onClose={onClose} onSubmit={onSubmit} />;
+  }
+
+  if (action?.startsWith("Activate Client -")) {
+    return <ActivateClientModal opportunity={opportunity} submitting={submitting} onClose={onClose} onSubmit={onSubmit} />;
+  }
+
   if (action === "Add Lead") {
     return (
       <AddLeadModal

@@ -3811,4 +3811,49 @@ export const salesCrmService = {
       return { success: false, message: "Something went wrong" };
     }
   },
+
+  convertLead: async (leadId, payload = {}) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/leads/${leadId}/convert`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to convert lead" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  activateClient: async (opportunityId, payload = {}) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/opportunities/${opportunityId}/activate-client`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to activate client" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  checkDuplicates: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/sales/records/check-duplicates`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to check duplicates" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
 };
