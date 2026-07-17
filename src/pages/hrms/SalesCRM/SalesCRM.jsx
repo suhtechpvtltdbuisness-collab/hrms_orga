@@ -293,6 +293,63 @@ const submitSalesAction = async (action, section, form) => {
   });
 };
 
+};
+
+const submitSalesAction = async (action, section, form) => {
+  const name = form.name?.trim();
+  const company = form.company?.trim();
+  const value = parseAmount(form.value);
+  const notes = form.notes?.trim();
+  const owner = form.owner?.trim();
+
+  if (action === "New Article") {
+    return salesCrmService.createKnowledge({
+      title: name,
+      category: company || "Services",
+      owner,
+      content: notes,
+    });
+  }
+
+  if (action === "Add Product") {
+    return salesCrmService.createProduct({
+      name,
+      category: company || "Subscription",
+      team: owner,
+      priceLabel: form.value?.trim(),
+      note: notes,
+    });
+  }
+
+  if (DOC_ACTION_TYPES[action]) {
+    return salesCrmService.createDocument({
+      docType: DOC_ACTION_TYPES[action],
+      title: name,
+      clientName: company,
+      owner,
+      amount: value,
+      notes,
+    });
+  }
+
+  const recordType = recordTypeForAction(action, section);
+  let status = form.stage;
+  if (recordType === "deal" && !["Discovery", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].includes(status)) {
+    status = "Discovery";
+  }
+
+  return salesCrmService.createRecord({
+    recordType,
+    name,
+    company,
+    status,
+    owner,
+    value,
+    followUpAt: form.followUp || undefined,
+    notes,
+  });
+};
+
 // ---------- Data hook ----------
 
 function useSalesWorkspace() {
@@ -360,6 +417,7 @@ function SalesCRM() {
     if (modules.length) {
       formData.modules = modules;
     }
+    const formData = Object.fromEntries(new FormData(event.currentTarget).entries());
     setSubmitting(true);
     try {
       const result = await submitSalesAction(actionModal.action, actionModal.section, formData);
@@ -1625,6 +1683,7 @@ function SalesActionModal({ action, section, submitting = false, onClose, onSubm
     );
   }
 
+function SalesActionModal({ action, section, submitting = false, onClose, onSubmit }) {
   const title = action || "New Deal";
   const defaultStage = action?.includes(" - ")
     ? action.split(" - ")[1]
