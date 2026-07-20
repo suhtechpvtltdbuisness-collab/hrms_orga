@@ -95,7 +95,7 @@ const NewJobOpening = () => {
         toast.dismiss(loadingToast);
         if (result.success) {
             toast.success('Job opening published successfully!');
-            navigate('/hrms');
+            navigate('/hrms/hiring-and-recruitment/job-opening');
         } else {
             toast.error(result.message);
         }

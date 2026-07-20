@@ -1,163 +1,97 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, CalendarClock, Check, Clock3, Search, UserRound, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
-import CustomDatePicker from '../../../../components/ui/CustomDatePicker';
-import FilterDropdown from '../../../../components/ui/FilterDropdown';
+import toast from 'react-hot-toast';
+import Spinner from '../../../../components/ui/Spinner';
+import { attendanceService } from '../../../../service';
+
+const STATUS_STYLE = {
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  rejected: 'bg-rose-50 text-rose-700 border-rose-200',
+};
+
+const formatDate = (value) => value ? new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+const normalizeRequest = (item) => ({
+  id: item.id || item._id,
+  employeeName: item.employeeName || item.employee?.name || item.user?.name || 'Employee',
+  employeeId: item.employeeCode || item.empId || item.employee?.employeeId || '—',
+  department: item.departmentName || item.department?.name || item.employee?.department?.name || '—',
+  fromDate: item.fromDate || item.date || item.attendanceDate,
+  toDate: item.toDate || item.fromDate || item.date || item.attendanceDate,
+  requestType: item.requestType || item.reason || 'Attendance correction',
+  explanation: item.explanation || item.description || item.notes || 'No explanation provided',
+  status: String(item.status || 'pending').toLowerCase(),
+  createdAt: item.createdAt,
+});
 
 const RequestAttendance = () => {
-    const navigate = useNavigate();
-    
-    // State
-    const [employeeId, setEmployeeId] = useState('HR-EMP-0123');
-    const [fromDate, setFromDate] = useState('26/01/2026');
-    const [toDate, setToDate] = useState('29/01/2026');
-    const [isHalfDay, setIsHalfDay] = useState(false);
-    const [halfDayDate, setHalfDayDate] = useState('29/01/2026');
-    const [reason, setReason] = useState('Work From Home');
-    const [explanation, setExplanation] = useState('');
+  const navigate = useNavigate();
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+  const [selected, setSelected] = useState(null);
+  const [actionLoading, setActionLoading] = useState('');
 
-    const EMPLOYEE_OPTIONS = ["HR-EMP-0123", "HR-EMP-0124", "HR-EMP-0125"];
+  const loadRequests = useCallback(async () => {
+    setLoading(true);
+    const result = await attendanceService.getAttendanceRequests();
+    if (result.success) setRequests((result.data || []).map(normalizeRequest));
+    else toast.error(result.message || 'Could not load attendance requests');
+    setLoading(false);
+  }, []);
 
-    return (
-        <div className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-            
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: '"Mulish", sans-serif' }}>
-                 <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
-                    onClick={() => navigate('/hrms')}
-                 />
-                 <span 
-                    className='cursor-pointer text-[#7D1EDB]'
-                    onClick={() => navigate('/hrms')}
-                 >
-                    HRMS Dashboard
-                 </span> 
-                 <ChevronRight size={14}/> 
-                 <span className="text-[#6B7280]">Attendance Request</span>
-            </div>
+  useEffect(() => { loadRequests(); }, [loadRequests]);
 
-            {/* Header */}
-            <div className="flex justify-between items-center mb-3 shrink-0">
-                <h1 className="text-[20px] font-semibold text-[#1E1E1E]" style={{ fontFamily: 'Poppins, sans-serif' }}>Attendance Request</h1>
-                <button 
-                    className="bg-[#7D1EDB] text-white px-4 py-2 rounded-full font-medium hover:bg-purple-700 transition-colors"
-                    style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                    Save
-                </button>
-            </div>
+  const filtered = useMemo(() => requests.filter((request) => {
+    const matchesStatus = status === 'all' || request.status === status;
+    const haystack = `${request.employeeName} ${request.employeeId} ${request.department} ${request.requestType}`.toLowerCase();
+    return matchesStatus && haystack.includes(search.toLowerCase());
+  }), [requests, search, status]);
 
-            {/* Content Container */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                
-                {/* Employee Details Section */}
-                <div className="border border-[#D6D6D6] rounded-lg p-4 mb-3">
-                    {/* Row 1: Employee, Name, Dept */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Employee</label>
-                            <FilterDropdown
-                                options={EMPLOYEE_OPTIONS}
-                                value={employeeId}
-                                onChange={setEmployeeId}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 flex items-center justify-between outline-none"
-                                dropdownWidth="150px"
-                                align="left"
-                                buttonTextClassName="text-[#1E1E1E]"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Employee Name</label>
-                            <div className="w-full bg-[#F5F5F5] border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#6B7280]" style={{ fontFamily: 'Inter, sans-serif' }}>
-                                Alice John
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Department</label>
-                            <div className="w-full bg-[#F5F5F5] border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#6B7280]" style={{ fontFamily: 'Inter, sans-serif' }}>
-                                Sales
-                            </div>
-                        </div>
-                    </div>
+  const counts = useMemo(() => ({
+    all: requests.length,
+    pending: requests.filter((item) => item.status === 'pending').length,
+    approved: requests.filter((item) => item.status === 'approved').length,
+    rejected: requests.filter((item) => item.status === 'rejected').length,
+  }), [requests]);
 
-                    {/* Row 2: Dates */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>From Date</label>
-                            <CustomDatePicker
-                                value={fromDate}
-                                onChange={setFromDate}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#1E1E1E] outline-none"
-                            />
-                        </div>
-                         <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>To Date</label>
-                            <CustomDatePicker
-                                value={toDate}
-                                onChange={setToDate}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#1E1E1E] outline-none"
-                            />
-                        </div>
-                    </div>
+  const updateRequest = async (request, nextStatus) => {
+    setActionLoading(nextStatus);
+    const result = nextStatus === 'approved'
+      ? await attendanceService.approveAttendanceRequest(request.id)
+      : await attendanceService.rejectAttendanceRequest(request.id);
+    if (result.success) {
+      toast.success(`Request ${nextStatus}`);
+      setRequests((current) => current.map((item) => item.id === request.id ? { ...item, status: nextStatus } : item));
+      setSelected((current) => current?.id === request.id ? { ...current, status: nextStatus } : current);
+    } else toast.error(result.message);
+    setActionLoading('');
+  };
 
-                    {/* Row 3: Half Day */}
-                    <div className="mb-3">
-                        <label className="flex items-center gap-2 cursor-pointer mb-2 w-fit">
-                            <input 
-                                type="checkbox" 
-                                checked={isHalfDay} 
-                                onChange={(e) => setIsHalfDay(e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 text-[#7D1EDB] focus:ring-[#7D1EDB]"
-                            />
-                            <span className="text-[14px] text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Half Day</span>
-                        </label>
-                         <div className="flex flex-col gap-2 w-full md:w-1/3">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Half Day Date</label>
-                            <CustomDatePicker
-                                value={halfDayDate}
-                                onChange={setHalfDayDate}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#1E1E1E] outline-none"
-                                disabled={!isHalfDay}
-                            />
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="mx-2 my-4 flex h-[calc(100vh-10rem)] flex-col overflow-hidden rounded-xl border border-[#D9D9D9] bg-white px-4 py-5 sm:mx-4 sm:px-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+      <button onClick={() => navigate('/hrms')} className="mb-3 flex w-fit items-center gap-2 text-sm font-medium text-[#7D1EDB]"><ArrowLeft size={16} />HRMS Dashboard</button>
+      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div><h1 className="text-xl font-semibold text-slate-900">Attendance Requests</h1><p className="mt-1 text-sm text-slate-500">Review employee attendance corrections and regularisation requests.</p></div>
+        <button onClick={loadRequests} className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Refresh</button>
+      </div>
 
-                {/* Reason Section */}
-                <div className="border border-[#D6D6D6] rounded-lg p-4">
-                    <h3 className="text-[16px] font-semibold text-[#1E1E1E] mb-2" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Reason</h3>
-                    
-                    <div className="flex flex-col gap-2">
-                        <div className="flex flex-col gap-2 w-full md:w-1/3">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Reason</label>
-                            <input
-                                type="text"
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#1E1E1E] outline-none"
-                                style={{ fontFamily: 'Inter, sans-serif' }}
-                            />
-                        </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[['all','All requests'],['pending','Pending'],['approved','Approved'],['rejected','Rejected']].map(([key, label]) => <button key={key} onClick={() => setStatus(key)} className={`rounded-xl border p-3 text-left transition ${status === key ? 'border-[#7D1EDB] bg-violet-50' : 'border-slate-200 bg-white'}`}><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-900">{counts[key]}</p></button>)}
+      </div>
 
-                         <div className="flex flex-col gap-2">
-                            <label className="text-[14px] font-normal text-[#1E1E1E]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Explanation</label>
-                            <textarea
-                                value={explanation}
-                                onChange={(e) => setExplanation(e.target.value)}
-                                placeholder="Enter explanation"
-                                className="w-full bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2 text-[#1E1E1E] outline-none resize-none h-24"
-                                style={{ fontFamily: 'Inter, sans-serif' }}
-                            />
-                        </div>
-                    </div>
-                </div>
+      <div className="relative mb-4 max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employee or request type" className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-violet-200" /></div>
 
-            </div>
-        </div>
-    );
+      <div className="flex-1 overflow-auto rounded-xl border border-slate-200">
+        {loading ? <div className="flex h-52 items-center justify-center"><Spinner size={28} /></div> : filtered.length === 0 ? <div className="flex h-52 flex-col items-center justify-center text-center text-slate-400"><CalendarClock size={38} className="mb-3 text-violet-300" /><p className="font-semibold text-slate-600">No attendance requests found</p><p className="mt-1 text-sm">New employee requests will appear here.</p></div> : <table className="w-full min-w-[850px] text-left text-sm"><thead className="sticky top-0 bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Employee</th><th className="px-4 py-3">Request</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th></tr></thead><tbody>{filtered.map((request) => <tr key={request.id} className="border-t border-slate-100 hover:bg-violet-50/30"><td className="px-4 py-3"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-violet-700"><UserRound size={16} /></span><div><p className="font-semibold text-slate-800">{request.employeeName}</p><p className="text-xs text-slate-500">{request.employeeId} · {request.department}</p></div></div></td><td className="px-4 py-3 font-medium text-slate-700">{request.requestType}</td><td className="px-4 py-3 text-slate-600">{formatDate(request.fromDate)}{request.toDate !== request.fromDate ? ` – ${formatDate(request.toDate)}` : ''}</td><td className="px-4 py-3 text-slate-500">{formatDate(request.createdAt)}</td><td className="px-4 py-3"><span className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[request.status] || STATUS_STYLE.pending}`}>{request.status}</span></td><td className="px-4 py-3 text-right"><button onClick={() => setSelected(request)} className="font-semibold text-[#7D1EDB] hover:underline">View details</button></td></tr>)}</tbody></table>}
+      </div>
+
+      {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={() => setSelected(null)}><div onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-violet-600">Attendance request</p><h2 className="mt-1 text-xl font-bold text-slate-900">{selected.employeeName}</h2><p className="text-sm text-slate-500">{selected.employeeId} · {selected.department}</p></div><button onClick={() => setSelected(null)} className="rounded-lg p-1 hover:bg-slate-100"><X size={20} /></button></div><div className="my-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">Request type</p><p className="mt-1 font-semibold text-slate-700">{selected.requestType}</p></div><div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">Requested dates</p><p className="mt-1 font-semibold text-slate-700">{formatDate(selected.fromDate)} – {formatDate(selected.toDate)}</p></div></div><div className="rounded-xl border border-slate-200 p-4"><p className="text-xs font-semibold uppercase text-slate-400">Employee explanation</p><p className="mt-2 text-sm leading-6 text-slate-700">{selected.explanation}</p></div>{selected.status === 'pending' && <div className="mt-6 flex justify-end gap-3"><button disabled={!!actionLoading} onClick={() => updateRequest(selected, 'rejected')} className="flex items-center gap-2 rounded-full border border-rose-200 px-5 py-2.5 font-semibold text-rose-600 disabled:opacity-50"><X size={16} />Reject</button><button disabled={!!actionLoading} onClick={() => updateRequest(selected, 'approved')} className="flex items-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-2.5 font-semibold text-white disabled:opacity-50">{actionLoading === 'approved' ? <Spinner size={16} color="#fff" /> : <Check size={16} />}Approve</button></div>}{selected.status !== 'pending' && <div className={`mt-5 flex items-center gap-2 rounded-xl border p-3 text-sm font-semibold capitalize ${STATUS_STYLE[selected.status]}`}><Clock3 size={16} />This request is {selected.status}.</div>}</div></div>}
+    </div>
+  );
 };
 
 export default RequestAttendance;

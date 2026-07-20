@@ -50,6 +50,7 @@ import OrganizationTree from "./pages/hrms/Organization/OrganizationTree/Organiz
 import NodeDetails from "./pages/hrms/Organization/OrganizationTree/NodeDetails";
 import Notifications from "./pages/hrms/Notifications/Notifications";
 import NewJobOpening from "./pages/hrms/HiringAndRecruitment/NewJobOpening/NewJobOpening";
+import JobOpeningList from "./pages/hrms/HiringAndRecruitment/JobOpeningList/JobOpeningList";
 import TeamList from "./pages/hrms/OnboardedEmployeeList/ReportingManager/TeamList";
 import OnboardedEmployeeList from "./pages/hrms/OnboardedEmployeeList/OnboardedEmployeeList";
 import NewHiring from "./pages/hrms/HiringAndRecruitment/NewHiring/NewHiring";
@@ -212,6 +213,7 @@ function App() {
 
           {/* Hiring and Recruitment */}
           <Route path="hiring-and-recruitment">
+            <Route path="job-opening" element={<JobOpeningList />} />
             <Route path="job-opening/new" element={<NewJobOpening />} />
             <Route path="new-hiring" element={<NewHiring />} />
             <Route path="new-hiring/ats-screening" element={<ATSScreening />} />
