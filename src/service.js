@@ -1951,6 +1951,58 @@ export const attendanceUtils = {
 
 // ─── Attendance Service ──────────────────────────────────────────────────────────
 export const attendanceService = {
+  getAttendanceRequests: async (filters = {}) => {
+    try {
+      const query = new URLSearchParams(
+        Object.fromEntries(Object.entries(filters).filter(([, value]) => value != null && value !== "")),
+      ).toString();
+      const response = await apiFetch(`${BASE_URL}/attendance-requests${query ? `?${query}` : ""}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || data.error || "Failed to fetch attendance requests" };
+      const payload = data.data ?? data;
+      const requests = Array.isArray(payload) ? payload : payload.requests || payload.records || [];
+      return { success: true, data: requests };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  createAttendanceRequest: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance-requests`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || data.error || "Failed to submit attendance request" };
+      return { success: true, data: data.data ?? data, message: data.message };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  approveAttendanceRequest: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance-requests/${id}/approve`, { method: "PATCH", headers: getAuthHeaders() });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || data.error || "Failed to approve request" };
+      return { success: true, data: data.data ?? data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  rejectAttendanceRequest: async (id, rejectionReason = "") => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/attendance-requests/${id}/reject`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ rejectionReason }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || data.error || "Failed to reject request" };
+      return { success: true, data: data.data ?? data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
   getAttendances: async (filters = {}) => {
     try {
       const apiFilters = {};

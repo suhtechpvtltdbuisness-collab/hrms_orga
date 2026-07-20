@@ -8,6 +8,9 @@ import {
   ChevronRight,
   Loader2,
   ArrowRight,
+  CalendarPlus,
+  Send,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService, authService, shiftAssignmentService, shiftService } from '../../../service';
@@ -400,6 +403,15 @@ const EmployeeAttendance = () => {
 
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [checkOutLoading, setCheckOutLoading] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    fromDate: toDateKey(new Date()),
+    toDate: toDateKey(new Date()),
+    requestType: 'Missed check-in',
+    isHalfDay: false,
+    explanation: '',
+  });
 
   const shiftLoadLock = useRef(false);
   const attendanceLoadLock = useRef(false);
@@ -777,6 +789,26 @@ const EmployeeAttendance = () => {
     }
   };
 
+  const handleAttendanceRequest = async (event) => {
+    event.preventDefault();
+    if (!requestForm.fromDate || !requestForm.toDate || !requestForm.explanation.trim()) {
+      toast.error('Please select dates and enter an explanation.');
+      return;
+    }
+    if (requestForm.toDate < requestForm.fromDate) {
+      toast.error('To date cannot be before from date.');
+      return;
+    }
+    setRequestSubmitting(true);
+    const result = await attendanceService.createAttendanceRequest(requestForm);
+    if (result.success) {
+      toast.success('Attendance request submitted for approval.');
+      setShowRequestModal(false);
+      setRequestForm({ fromDate: todayKey, toDate: todayKey, requestType: 'Missed check-in', isHalfDay: false, explanation: '' });
+    } else toast.error(result.message || 'Could not submit attendance request.');
+    setRequestSubmitting(false);
+  };
+
   const selectedRecordCheckIn = selectedRecord?.checkIn ? formatTime(selectedRecord.checkIn) : '--';
   const selectedRecordCheckOut = selectedRecord?.checkOut ? formatTime(selectedRecord.checkOut) : '--';
   const selectedRecordHours =
@@ -888,11 +920,16 @@ const EmployeeAttendance = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Attendance</h1>
           <p className="mt-0.5 text-sm text-slate-500">Shift-based check-in and check-out with live status tracking</p>
         </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={() => setShowRequestModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#756FCC] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#655FC0]">
+            <CalendarPlus className="h-4 w-4" />
+            Request correction
+          </button>
         <div className="rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-slate-200">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <Clock className="h-4 w-4 text-violet-600" />
@@ -902,6 +939,7 @@ const EmployeeAttendance = () => {
               {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           </div>
+        </div>
         </div>
       </div>
 
@@ -1188,6 +1226,30 @@ const EmployeeAttendance = () => {
           </div>
         )}
       </div>
+
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={() => !requestSubmitting && setShowRequestModal(false)}>
+          <form onSubmit={handleAttendanceRequest} onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="bg-gradient-to-r from-[#756FCC] to-[#A276DB] px-6 py-5 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-100">Attendance</p><h2 className="mt-1 text-xl font-bold">Request correction</h2><p className="mt-1 text-sm text-violet-100">Submit a missed or incorrect attendance entry for admin approval.</p></div>
+                <button type="button" onClick={() => setShowRequestModal(false)} className="rounded-lg bg-white/10 p-2 hover:bg-white/20"><X className="h-5 w-5" /></button>
+              </div>
+            </div>
+            <div className="space-y-5 p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-semibold text-slate-700">From date<input type="date" max={todayKey} value={requestForm.fromDate} onChange={(event) => setRequestForm((form) => ({ ...form, fromDate: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" /></label>
+                <label className="text-sm font-semibold text-slate-700">To date<input type="date" max={todayKey} value={requestForm.toDate} onChange={(event) => setRequestForm((form) => ({ ...form, toDate: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" /></label>
+              </div>
+              <label className="block text-sm font-semibold text-slate-700">Request type<select value={requestForm.requestType} onChange={(event) => setRequestForm((form) => ({ ...form, requestType: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"><option>Missed check-in</option><option>Missed check-out</option><option>Incorrect working hours</option><option>Work from home</option><option>On-duty correction</option><option>Other</option></select></label>
+              <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={requestForm.isHalfDay} onChange={(event) => setRequestForm((form) => ({ ...form, isHalfDay: event.target.checked }))} className="h-4 w-4 accent-violet-600" />This is a half-day request</label>
+              <label className="block text-sm font-semibold text-slate-700">Explanation<textarea rows={4} value={requestForm.explanation} onChange={(event) => setRequestForm((form) => ({ ...form, explanation: event.target.value }))} placeholder="Explain what needs to be corrected and why..." className="mt-2 block w-full resize-none rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" /></label>
+              <div className="rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-xs leading-5 text-violet-700">Your request will remain pending until an administrator reviews it. Approved corrections will be reflected in your attendance history.</div>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4"><button type="button" disabled={requestSubmitting} onClick={() => setShowRequestModal(false)} className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50">Cancel</button><button disabled={requestSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-[#756FCC] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{requestSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Submit request</button></div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

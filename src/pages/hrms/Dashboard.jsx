@@ -137,6 +137,26 @@ const Skeleton = ({ className }) => (
   <div className={`bg-gray-100 animate-pulse rounded-lg ${className}`} />
 );
 
+const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const numberValue = (...values) => {
+  const value = values.find((item) => item !== undefined && item !== null && item !== "");
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeAttendance = (items = []) => items.map((item, index) => ({
+  day: item.day || item.label || item.weekDay || WEEK_DAYS[index] || `Day ${index + 1}`,
+  Present: numberValue(item.Present, item.present, item.presentPercentage, item.presentPercent),
+  Absent: numberValue(item.Absent, item.absent, item.absentPercentage, item.absentPercent),
+  Leave: numberValue(item.Leave, item.leave, item.leavePercentage, item.leavePercent),
+}));
+
+const normalizeTimeTracking = (items = []) => items.map((item, index) => ({
+  day: item.day || item.label || item.weekDay || WEEK_DAYS[index] || `Day ${index + 1}`,
+  hours: numberValue(item.hours, item.totalHours, item.workedHours, item.duration),
+}));
+
 // ─── HRMS Dashboard ────────────────────────────────────────────────────────────
 const HRMSDashboard = () => {
   const navigate = useNavigate();
@@ -180,8 +200,6 @@ const HRMSDashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
       const response = await dashboardService.getAdminDashboard();
       if (!response.success) throw new Error(response.message);
       const data = response.data || {};
@@ -195,7 +213,21 @@ const HRMSDashboard = () => {
         totalTasks: data.stats?.totalTasks ?? 0,
       });
       setTrends(data.trends || {});
-      setWeeklyAttendance(Array.isArray(data.weeklyAttendance) ? data.weeklyAttendance : []);
+      const attendanceData = Array.isArray(data.weeklyAttendance)
+        ? data.weeklyAttendance
+        : Array.isArray(data.dailyAttendance)
+          ? data.dailyAttendance
+          : [];
+      setWeeklyAttendance(normalizeAttendance(attendanceData));
+
+      const trackingData = Array.isArray(data.timeTracker)
+        ? data.timeTracker
+        : Array.isArray(data.timeTracking)
+          ? data.timeTracking
+          : Array.isArray(data.weeklyTimeTracking)
+            ? data.weeklyTimeTracking
+            : [];
+      setTimeTracker(normalizeTimeTracking(trackingData));
       setActiveJobs(data.stats?.activeJobs ?? 0);
       setRecentJobs(Array.isArray(data.recentJobs) ? data.recentJobs : []);
       setRecentActivity(
@@ -212,14 +244,6 @@ const HRMSDashboard = () => {
             : "Recently",
         })),
       );
-
-      setTimeTracker(
-        days.map((day) => ({
-          day,
-          hours: 3 + Math.floor(Math.random() * 7),
-        }))
-      );
-
     } catch (err) {
       console.error("Dashboard data fetch error:", err);
     } finally {
@@ -329,7 +353,7 @@ const HRMSDashboard = () => {
           <div className="flex-1 min-h-[230px]">
             {loading ? (
               <Skeleton className="h-full w-full" />
-            ) : (
+            ) : timeTracker.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
               <BarChart data={timeTracker} barSize={16} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <CartesianGrid vertical={false} stroke="#F5F5F5" />
@@ -339,6 +363,12 @@ const HRMSDashboard = () => {
                 <Bar dataKey="hours" name="Hours" unit="h" fill="#7D1EDB" radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-[#9B9B9B] text-center">
+              <Clock size={30} className="mb-2 text-[#C9A7F3]" />
+              <p className="text-sm font-medium">No time tracking data available</p>
+              <p className="text-xs mt-1">Tracked working hours will appear here.</p>
+            </div>
           )}
           </div>
         </div>
@@ -361,7 +391,7 @@ const HRMSDashboard = () => {
           <div className="flex-1 min-h-[230px]">
             {loading ? (
               <Skeleton className="h-full w-full" />
-            ) : (
+            ) : weeklyAttendance.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyAttendance} barSize={7} barGap={2} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                 <CartesianGrid vertical={false} stroke="#F5F5F5" />
@@ -373,6 +403,12 @@ const HRMSDashboard = () => {
                 <Bar dataKey="Leave" name="Leave%" fill="#E9D5FF" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-[#9B9B9B] text-center">
+              <UserCheck size={30} className="mb-2 text-[#C9A7F3]" />
+              <p className="text-sm font-medium">No attendance statistics available</p>
+              <p className="text-xs mt-1">Attendance percentages will appear after records are marked.</p>
+            </div>
           )}
           </div>
         </div>
@@ -416,7 +452,7 @@ const HRMSDashboard = () => {
           <div className="flex items-center justify-between mb-2 shrink-0">
             <h2 className="text-base font-semibold text-[#1E1E1E]">Job Openings</h2>
             <button
-              onClick={() => navigate("/hrms/hiring")}
+              onClick={() => navigate("/hrms/hiring-and-recruitment/job-opening")}
               className="text-xs text-[#7D1EDB] hover:underline font-medium"
             >
               View all
