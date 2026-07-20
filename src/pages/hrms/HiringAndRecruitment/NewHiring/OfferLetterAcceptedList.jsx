@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ChevronRight,
@@ -7,6 +7,17 @@ import {
   Pencil,
   Send,
   CheckCircle,
+  Search,
+  Users,
+  Clock3,
+  UserCheck,
+  CalendarDays,
+  Building2,
+  ClipboardCheck,
+  Laptop,
+  Landmark,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────
@@ -1604,6 +1615,89 @@ const CandidateView = ({ offer, onBack, onStartOnboarding }) => {
   );
 };
 
+const CandidateAvatar = ({ name, size = 'large' }) => (
+  <div className={`flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-400 font-bold text-white shadow-sm ${size === 'large' ? 'h-16 w-16 text-xl' : 'h-12 w-12 text-base'}`}>
+    {name.split(' ').map((part) => part[0]).join('').slice(0, 2)}
+  </div>
+);
+
+const PolishedCandidateView = ({ offer, onBack, onStartOnboarding }) => {
+  const milestones = [
+    { label: 'Offer sent', date: '15 Jul, 2024', Icon: Send },
+    { label: 'Offer viewed', date: '16 Jul, 2024', Icon: Eye },
+    { label: 'Offer accepted', date: offer.date, Icon: CheckCircle },
+  ];
+  const setupTasks = [
+    { label: 'Document submission', Icon: ClipboardCheck },
+    { label: 'Bank details', Icon: Landmark },
+    { label: 'IT setup', Icon: Laptop },
+    { label: 'ID card', Icon: UserCheck },
+    { label: 'System access', Icon: ShieldCheck },
+  ];
+
+  return <div className="flex h-full flex-col">
+    <button onClick={onBack} className="mb-4 flex w-fit items-center gap-2 text-sm font-semibold text-[#7D1EDB]"><ArrowLeft size={16} />Offer Letter Accepted<ChevronRight size={15} className="text-slate-400" /><span className="font-normal text-slate-500">{offer.name}</span></button>
+    <div className="custom-scrollbar flex-1 overflow-y-auto pr-1">
+      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Candidate onboarding</p><h1 className="mt-1 text-2xl font-bold text-slate-900">{offer.name}</h1><p className="mt-1 text-sm text-slate-500">Review offer details and prepare the onboarding plan.</p></div>
+        <button onClick={onStartOnboarding} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-700"><ClipboardCheck size={18} />Start onboarding</button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-5 bg-gradient-to-r from-slate-50 to-violet-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4"><CandidateAvatar name={offer.name} /><div><h2 className="text-lg font-bold text-slate-900">{offer.name}</h2><p className="text-sm text-slate-500">Senior Product Designer</p><p className="mt-1 text-xs text-slate-400">Candidate #{offer.srNo}</p></div></div>
+          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700"><CheckCircle size={16} />Offer accepted</span>
+        </div>
+
+        <div className="grid gap-4 border-t border-slate-100 p-5 md:grid-cols-3">
+          {milestones.map(({ label, date, Icon }, index) => <div key={label} className="relative rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-700"><Icon size={17} /></span><div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-0.5 font-bold text-slate-800">{date}</p></div></div>{index < 2 && <span className="absolute -right-3 top-1/2 hidden h-px w-6 bg-violet-200 md:block" />}</div>)}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.4fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><CalendarDays size={19} className="text-violet-600" /><h2 className="font-bold text-slate-900">Onboarding setup</h2></div><div className="space-y-3">{[
+          ['Joining date', offer.joiningDate, CalendarDays],
+          ['Department', 'Product Development', Building2],
+          ['Hiring manager', 'Nisha Gupta', Users],
+        ].map(([label, value, Icon]) => <div key={label} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm"><Icon size={17} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="font-semibold text-slate-700">{value}</p></div></div>)}</div></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Assigned onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">All essentials are selected and ready for onboarding.</p></div><div className="grid gap-3 sm:grid-cols-2">{setupTasks.map(({ label, Icon }) => <div key={label} className="flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-700"><Icon size={17} /></span><span className="flex-1 text-sm font-semibold text-slate-700">{label}</span><CheckCircle size={18} className="text-emerald-500" /></div>)}</div></div>
+      </div>
+    </div>
+  </div>;
+};
+
+const PolishedOnboardingProgress = ({ offer, onBackToList, onComplete, isCompleted }) => {
+  const [checks, setChecks] = useState({ documents: true, profile: isCompleted, employee: isCompleted });
+  const allDone = Object.values(checks).every(Boolean);
+  const tasks = [
+    { name: 'Welcome kit', owner: 'HR Department', status: 'Completed', Icon: ClipboardCheck },
+    { name: 'Laptop & IT setup', owner: 'IT Department', status: 'Completed', Icon: Laptop },
+    { name: 'Product training', owner: 'Candidate', status: isCompleted ? 'Completed' : 'In Progress', Icon: Users },
+    { name: 'System access', owner: 'IT Department', status: 'Completed', Icon: ShieldCheck },
+  ];
+  const completedCount = tasks.filter((task) => task.status === 'Completed').length;
+  const progress = isCompleted ? 100 : Math.round((completedCount / tasks.length) * 100);
+  const completionItems = [
+    ['documents', 'Verify documents', 'All required documents are uploaded and verified.'],
+    ['profile', 'Approve candidate profile', 'Confirm personal and employment information.'],
+    ['employee', 'Convert to employee master', 'Create the final employee record and access.'],
+  ];
+
+  return <div className="flex h-full flex-col">
+    <button onClick={onBackToList} className="mb-4 flex w-fit items-center gap-2 text-sm font-semibold text-[#7D1EDB]"><ArrowLeft size={16} />Offer Letter Accepted<ChevronRight size={15} className="text-slate-400" /><span className="font-normal text-slate-500">Onboarding Progress</span></button>
+    <div className="custom-scrollbar flex-1 overflow-y-auto pr-1">
+      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Onboarding workspace</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Onboarding progress</h1><p className="mt-1 text-sm text-slate-500">Complete the remaining steps for {offer.name}.</p></div><button onClick={onComplete} disabled={!allDone || isCompleted} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"><CheckCircle size={18} />{isCompleted ? 'Onboarding completed' : 'Mark onboarding complete'}</button></div>
+
+      <div className="grid gap-5 xl:grid-cols-[320px_1fr]">
+        <aside className="h-fit overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="bg-gradient-to-br from-[#756FCC] to-[#A276DB] p-5 text-white"><div className="flex items-center gap-3"><CandidateAvatar name={offer.name} size="small" /><div><h2 className="font-bold">{offer.name}</h2><p className="text-xs text-violet-100">Candidate #{offer.srNo}</p></div></div><div className="mt-5 flex items-end justify-between"><div><p className="text-xs text-violet-100">Overall progress</p><p className="mt-1 text-3xl font-bold">{progress}%</p></div><CheckCircle size={30} className="text-white/80" /></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${progress}%` }} /></div></div><div className="space-y-3 p-5">{[['Joining date',offer.joiningDate,CalendarDays],['Department','Product Development',Building2],['Hiring manager','Nisha Gupta',Users]].map(([label,value,Icon]) => <div key={label} className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700"><Icon size={16} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="text-sm font-semibold text-slate-700">{value}</p></div></div>)}</div></aside>
+
+        <div className="space-y-5"><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">{completedCount} of {tasks.length} tasks completed</p></div><div className="divide-y divide-slate-100">{tasks.map(({ name, owner, status, Icon }) => <div key={name} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><Icon size={18} /></span><div className="flex-1"><p className="font-semibold text-slate-800">{name}</p><p className="text-xs text-slate-500">Assigned to {owner} · Due 10 Feb, 2026</p></div><span className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${status === 'Completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{status}</span></div>)}</div></section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Complete onboarding</h2><p className="mt-1 text-xs text-slate-500">Finish these checks to enable final completion.</p></div><div className="space-y-3">{completionItems.map(([key,title,subtitle]) => <label key={key} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${checks[key] ? 'border-violet-200 bg-violet-50/50' : 'border-slate-200 hover:bg-slate-50'}`}><input type="checkbox" checked={checks[key]} onChange={() => setChecks((current) => ({ ...current, [key]: !current[key] }))} className="mt-1 h-4 w-4 accent-violet-600" /><div><p className="text-sm font-bold text-slate-800">{title}</p><p className="mt-0.5 text-xs text-slate-500">{subtitle}</p></div></label>)}</div></section></div>
+      </div>
+    </div>
+  </div>;
+};
+
 /* ─────────────────────────────────────────
    Offer Letter Accepted List  (main page)
 ───────────────────────────────────────── */
@@ -1614,8 +1708,10 @@ const OfferLetterAcceptedList = () => {
   
   // Track completed IDs globally (or in a real app, this would be from an API)
   const [completedOnboardingIds, setCompletedOnboardingIds] = useState(new Set());
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  const [acceptedOffers] = useState([
+  const [acceptedOffers, setAcceptedOffers] = useState([
     {
       id: 1,
       srNo: "01",
@@ -1665,11 +1761,48 @@ const OfferLetterAcceptedList = () => {
       status: "Onboarding Completed",
     },
   ]);
+  const [editingOffer, setEditingOffer] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', date: '', joiningDate: '', status: '' });
+
+  const openEditModal = (offer) => {
+    setEditingOffer(offer);
+    setEditForm({ name: offer.name, date: offer.date, joiningDate: offer.joiningDate || '', status: offer.displayStatus || offer.status });
+  };
+
+  const saveOfferChanges = (event) => {
+    event.preventDefault();
+    if (!editForm.name.trim() || !editForm.date.trim() || !editForm.joiningDate.trim()) return;
+    setAcceptedOffers((current) => current.map((offer) => offer.id === editingOffer.id ? {
+      ...offer,
+      name: editForm.name.trim(),
+      date: editForm.date.trim(),
+      joiningDate: editForm.joiningDate.trim(),
+      status: editForm.status,
+    } : offer));
+    setCompletedOnboardingIds((current) => {
+      const next = new Set(current);
+      if (editForm.status === 'Onboarding Completed') next.add(editingOffer.id);
+      else next.delete(editingOffer.id);
+      return next;
+    });
+    setEditingOffer(null);
+  };
 
   const selectedOffer = id ? acceptedOffers.find(o => o.id === parseInt(id)) : null;
   const isOnboardingView = location.pathname.includes("/onboarding");
   const view = isOnboardingView ? "onboarding" : (selectedOffer ? "candidate" : "list");
   const isCompleted = id && completedOnboardingIds.has(parseInt(id));
+
+  const offersWithStatus = useMemo(() => acceptedOffers.map((offer) => ({
+    ...offer,
+    displayStatus: completedOnboardingIds.has(offer.id) ? "Onboarding Completed" : offer.status,
+  })), [acceptedOffers, completedOnboardingIds]);
+
+  const filteredOffers = useMemo(() => offersWithStatus.filter((offer) => {
+    const matchesSearch = `${offer.name} ${offer.date} ${offer.joiningDate}`.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || offer.displayStatus === statusFilter;
+    return matchesSearch && matchesStatus;
+  }), [offersWithStatus, search, statusFilter]);
 
   const handleMarkComplete = () => {
     setCompletedOnboardingIds(prev => new Set(prev).add(parseInt(id)));
@@ -1729,10 +1862,9 @@ const OfferLetterAcceptedList = () => {
         className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
       >
-        <OnboardingProgress
+        <PolishedOnboardingProgress
           offer={selectedOffer}
           isCompleted={isCompleted}
-          onBack={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}`)}
           onBackToList={() => navigate("/hrms/hiring-and-recruitment/offer-letter-accepted-list")}
           onComplete={handleMarkComplete}
         />
@@ -1747,7 +1879,7 @@ const OfferLetterAcceptedList = () => {
         className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
       >
-        <CandidateView
+        <PolishedCandidateView
           offer={selectedOffer}
           onBack={() => navigate("/hrms/hiring-and-recruitment/offer-letter-accepted-list")}
           onStartOnboarding={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}/onboarding`)}
@@ -1758,121 +1890,31 @@ const OfferLetterAcceptedList = () => {
 
   /* ── default: list view ── */
   return (
-    <div
-      className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9]"
-      style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-    >
-      {/* Breadcrumb Section */}
-      <div className="flex items-center text-sm text-[#7D1EDB] mb-3 shrink-0">
-        <div
-          className="flex items-center gap-3 cursor-pointer"
-          onClick={() => navigate("/hrms")}
-        >
-          <ArrowLeft size={14} className="text-gray-900" />
-          <span className="hover:text-purple-500"> HRMS Dashboard</span>
-        </div>
-        <ChevronRight size={16} className="mx-1 text-[#9CA3AF]" />
-        <span className="text-[#667085] text-[14px]">
-          Offer Letter Accepted List
-        </span>
+    <div className="mx-2 my-4 flex h-[calc(100vh-10rem)] flex-col overflow-hidden rounded-xl border border-[#D9D9D9] bg-white px-4 py-5 sm:mx-4 sm:px-6" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+      <button onClick={() => navigate('/hrms')} className="mb-3 flex w-fit items-center gap-2 text-sm font-medium text-[#7D1EDB]"><ArrowLeft size={16} />HRMS Dashboard<ChevronRight size={15} className="text-slate-400" /><span className="font-normal text-slate-500">Offer Letter Accepted</span></button>
+
+      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div><h1 className="text-xl font-semibold text-slate-900">Offer Letter Accepted</h1><p className="mt-1 text-sm text-slate-500">Track accepted offers and manage candidate onboarding progress.</p></div>
       </div>
 
-      {/* Header */}
-      <div style={{ marginBottom: "24px" }} className="shrink-0">
-        <h1
-          className="text-xl font-semibold text-[#494949]"
-          style={{ fontFamily: '"Nunito Sans", sans-serif' }}
-        >
-          Offer Letter Accepted List
-        </h1>
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          { label: 'Accepted Offers', value: offersWithStatus.length, Icon: Users, tone: 'bg-violet-100 text-violet-700' },
+          { label: 'Onboarding In Progress', value: offersWithStatus.filter((item) => item.displayStatus === 'Onboarding In Progress').length, Icon: Clock3, tone: 'bg-blue-100 text-blue-700' },
+          { label: 'Onboarding Completed', value: offersWithStatus.filter((item) => item.displayStatus === 'Onboarding Completed').length, Icon: UserCheck, tone: 'bg-emerald-100 text-emerald-700' },
+        ].map(({ label, value, Icon, tone }) => <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4"><span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone}`}><Icon size={20} /></span><div><p className="text-2xl font-bold text-slate-900">{value}</p><p className="text-xs font-medium text-slate-500">{label}</p></div></div>)}
       </div>
 
-      {/* Table Container */}
-      <div
-        className="bg-white flex-1 overflow-y-auto custom-scrollbar"
-        style={{
-          width: "100%",
-          borderRadius: "8px",
-          border: "1px solid #CECECE",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div className="min-w-max w-full">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="sticky top-0 bg-white z-10 border-b border-gray-300">
-              <tr className="text-gray-500">
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider">
-                  SR NO
-                </th>
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider">
-                  CANDIDATE NAME
-                </th>
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider text-center">
-                  OFFER LETTER ACCEPTED DATE
-                </th>
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider text-center">
-                  JOINING DATE
-                </th>
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider">
-                  STATUS
-                </th>
-                <th className="px-4 py-3 font-medium text-[12px] uppercase tracking-wider text-center">
-                  ACTION
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {acceptedOffers.map((offer) => (
-                <tr
-                  key={offer.id}
-                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-3 text-gray-700">{offer.srNo}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="text-[#7268FF] font-medium text-[15px] cursor-pointer hover:underline"
-                      style={{ fontFamily: "Poppins, sans-serif" }}
-                      onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)}
-                    >
-                      {offer.name}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 text-center">
-                    {offer.date}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 text-center">
-                    {offer.joiningDate || "N/A"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-flex items-center justify-center font-medium"
-                      style={getStatusStyle(completedOnboardingIds.has(offer.id) ? "Onboarding Completed" : offer.status)}
-                    >
-                      {completedOnboardingIds.has(offer.id) ? "Onboarding Completed" : offer.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-3">
-                      <Eye
-                        size={24}
-                        strokeWidth={2}
-                        className="text-[#7D1EDB] cursor-pointer hover:text-purple-700 transition-colors"
-                        onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)}
-                      />
-                      <Pencil
-                        size={18}
-                        strokeWidth={2}
-                        className="text-[#C6131B] cursor-pointer hover:text-red-700 transition-colors"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search candidate or date" className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" /></div>
+        <div className="flex gap-2 overflow-x-auto">{['All','Onboarding In Progress','Onboarding Completed'].map((item) => <button key={item} onClick={() => setStatusFilter(item)} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition ${statusFilter === item ? 'bg-[#7D1EDB] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>{item}</button>)}</div>
       </div>
+
+      <div className="flex-1 overflow-auto rounded-xl border border-slate-200">
+        {filteredOffers.length === 0 ? <div className="flex h-56 flex-col items-center justify-center text-center"><Users size={38} className="mb-3 text-violet-300" /><p className="font-semibold text-slate-700">No accepted offers found</p><p className="mt-1 text-sm text-slate-500">Try changing the search or status filter.</p></div> : <table className="w-full min-w-[900px] text-left text-sm"><thead className="sticky top-0 z-10 bg-slate-50"><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-5 py-3 font-semibold">Candidate</th><th className="px-5 py-3 font-semibold">Accepted date</th><th className="px-5 py-3 font-semibold">Joining date</th><th className="px-5 py-3 font-semibold">Status</th><th className="px-5 py-3 text-right font-semibold">Actions</th></tr></thead><tbody>{filteredOffers.map((offer) => <tr key={offer.id} className="border-b border-slate-100 transition hover:bg-violet-50/30"><td className="px-5 py-4"><button onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex items-center gap-3 text-left"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">{offer.name.split(' ').map((part) => part[0]).join('').slice(0,2)}</span><div><p className="font-semibold text-slate-800">{offer.name}</p><p className="text-xs text-slate-500">Candidate #{offer.srNo}</p></div></button></td><td className="px-5 py-4 text-slate-600">{offer.date}</td><td className="px-5 py-4 font-medium text-slate-700">{offer.joiningDate || 'Not scheduled'}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${offer.displayStatus === 'Onboarding Completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{offer.displayStatus}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button title="View candidate" onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-200 text-violet-700 transition hover:bg-violet-50"><Eye size={17} /></button><button title="Edit candidate" onClick={() => openEditModal(offer)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50"><Pencil size={16} /></button></div></td></tr>)}</tbody></table>}
+      </div>
+
+      {editingOffer && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={() => setEditingOffer(null)}><form onSubmit={saveOfferChanges} onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><div className="flex items-start justify-between bg-gradient-to-r from-[#756FCC] to-[#A276DB] px-6 py-5 text-white"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-100">Candidate offer</p><h2 className="mt-1 text-xl font-bold">Edit accepted offer</h2></div><button type="button" onClick={() => setEditingOffer(null)} className="rounded-lg bg-white/10 p-2 hover:bg-white/20"><X size={19} /></button></div><div className="space-y-4 p-6"><label className="block text-sm font-semibold text-slate-700">Candidate name<input autoFocus value={editForm.name} onChange={(event) => setEditForm((form) => ({ ...form, name: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-slate-700">Offer accepted date<input value={editForm.date} onChange={(event) => setEditForm((form) => ({ ...form, date: event.target.value }))} placeholder="e.g. 8 Jan, 2026" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label><label className="block text-sm font-semibold text-slate-700">Joining date<input value={editForm.joiningDate} onChange={(event) => setEditForm((form) => ({ ...form, joiningDate: event.target.value }))} placeholder="e.g. 15 Jan, 2026" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label></div><label className="block text-sm font-semibold text-slate-700">Onboarding status<select value={editForm.status} onChange={(event) => setEditForm((form) => ({ ...form, status: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"><option>Onboarding In Progress</option><option>Onboarding Completed</option></select></label></div><div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4"><button type="button" onClick={() => setEditingOffer(null)} className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700">Cancel</button><button className="rounded-xl bg-[#7D1EDB] px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700">Save changes</button></div></form></div>}
     </div>
   );
 };
