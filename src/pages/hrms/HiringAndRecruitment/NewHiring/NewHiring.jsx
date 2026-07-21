@@ -533,24 +533,26 @@ const NewHiring = () => {
                         <ChevronDown size={16} />
                     </button>
 
-                    <div className="flex gap-3 mb-4">
-                        <button 
-                            disabled={updatingStatus === selectedCandidate.id}
-                            className="flex-1 py-2.5 bg-[#FF3B30] text-white font-medium rounded-full hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            onClick={() => updateCandidateStatus(selectedCandidate.id, 'rejected')}
-                        >
-                            {updatingStatus === selectedCandidate.id ? <Spinner size={16} color="#fff" /> : <ThumbsDown size={16} />}
-                            Reject
-                        </button>
-                        <button 
-                            disabled={updatingStatus === selectedCandidate.id}
-                            className="flex-1 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            onClick={() => updateCandidateStatus(selectedCandidate.id, 'shortlisted')}
-                        >
-                            {updatingStatus === selectedCandidate.id ? <Spinner size={16} color="#fff" /> : <ThumbsUp size={16} />}
-                            Shortlisted
-                        </button>
-                    </div>
+                    {!['shortlisted', 'rejected'].includes(String(selectedCandidate.status || '').toLowerCase()) && (
+                        <div className="flex gap-3 mb-4">
+                            <button 
+                                disabled={updatingStatus === selectedCandidate.id}
+                                className="flex-1 py-2.5 bg-[#FF3B30] text-white font-medium rounded-full hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                onClick={() => updateCandidateStatus(selectedCandidate.id, 'rejected')}
+                            >
+                                {updatingStatus === selectedCandidate.id ? <Spinner size={16} color="#fff" /> : <ThumbsDown size={16} />}
+                                Reject
+                            </button>
+                            <button 
+                                disabled={updatingStatus === selectedCandidate.id}
+                                className="flex-1 py-2.5 bg-[#7D1EDB] text-white font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                onClick={() => updateCandidateStatus(selectedCandidate.id, 'shortlisted')}
+                            >
+                                {updatingStatus === selectedCandidate.id ? <Spinner size={16} color="#fff" /> : <ThumbsUp size={16} />}
+                                Shortlisted
+                            </button>
+                        </div>
+                    )}
 
                     <button 
                         className="w-full py-2.5 border border-[#7D1EDB] text-[#7D1EDB] font-medium rounded-full hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"

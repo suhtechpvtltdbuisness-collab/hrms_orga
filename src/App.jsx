@@ -60,6 +60,8 @@ import ScheduleInterviewList from "./pages/hrms/HiringAndRecruitment/ScheduleInt
 import ScheduledInterviewDetails from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/ScheduledInterviewDetails";
 import InterviewResult from "./pages/hrms/HiringAndRecruitment/ScheduleInterview/InterviewResult";
 import OfferLetterAcceptedList from "./pages/hrms/HiringAndRecruitment/NewHiring/OfferLetterAcceptedList";
+import ReleaseOfferLetter from "./pages/hrms/HiringAndRecruitment/OfferLetter/ReleaseOfferLetter";
+import OfferLetterList from "./pages/hrms/HiringAndRecruitment/OfferLetter/OfferLetterList";
 import NewOnboarding from "./pages/hrms/HiringAndRecruitment/NewHiring/NewOnboarding";
 import EmployeeReferral from "./pages/hrms/HiringAndRecruitment/EmployeeReferral/EmployeeReferral";
 import AttendanceList from "./pages/hrms/Attendance/AttendanceList";
@@ -139,6 +141,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminProtectedRoute from "./components/SuperAdminProtectedRoute";
 import SsoCallback from "./pages/hrms/SsoCallback";
 import AuthPage from "./pages/hrms/AuthPage";
+import AcceptOfferLetter from "./pages/public/AcceptOfferLetter";
+import CandidateDocumentUpload from "./pages/public/CandidateDocumentUpload";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import Profile from "./pages/hrms/Profile/Profile";
 import SalesCRM from "./pages/hrms/SalesCRM/SalesCRM";
@@ -152,6 +156,8 @@ function App() {
         {/* ================= AUTH PAGE ================= */}
         <Route path="/auth/sso" element={<SsoCallback />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/offer/accept" element={<AcceptOfferLetter />} />
+        <Route path="/candidate/documents" element={<CandidateDocumentUpload />} />
 
 
         {/* ================= PROTECTED HRMS ROUTES ================= */}
@@ -221,6 +227,8 @@ function App() {
             <Route path="new-hiring/ats-screening/schedule-interview/scheduled-interview-list" element={<ScheduleInterviewList />} />
             <Route path="scheduled-interview/:id" element={<ScheduledInterviewDetails />} />
             <Route path="interview-result/:id" element={<InterviewResult />} />
+            <Route path="release-offer-letter" element={<ReleaseOfferLetter />} />
+            <Route path="offer-letter-list" element={<OfferLetterList />} />
             <Route path="offer-letter-accepted-list" element={<OfferLetterAcceptedList />} />
             <Route path="offer-letter-accepted-list/:id" element={<OfferLetterAcceptedList />} />
             <Route path="offer-letter-accepted-list/:id/onboarding" element={<OfferLetterAcceptedList />} />

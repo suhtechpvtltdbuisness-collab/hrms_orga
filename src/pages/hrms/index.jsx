@@ -15,6 +15,8 @@ const HRMS = () => {
         { name: "Job Openings", path: "/hrms/hiring-and-recruitment/job-opening" },
         { name: "Schedule Interview", path: "/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview" },
         { name: "Schedule Interview List", path: "/hrms/hiring-and-recruitment/new-hiring/ats-screening/schedule-interview/scheduled-interview-list" },
+        { name: "Release Offer Letter", path: "/hrms/hiring-and-recruitment/release-offer-letter" },
+        { name: "Offer Letter List", path: "/hrms/hiring-and-recruitment/offer-letter-list" },
         { name: "Offer Letter Accepted List", path: "/hrms/hiring-and-recruitment/offer-letter-accepted-list" },
         { name: "Employee Referral", path: "/hrms/hiring-and-recruitment/employee-referral" },
       ],
