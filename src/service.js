@@ -2439,7 +2439,7 @@ export const shiftService = {
 
   deleteShiftType: async (id) => {
     try {
-      const response = await fetch(`${BASE_URL}/shift-types/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/shift-types/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
@@ -3172,6 +3172,178 @@ export const hiringService = {
       });
       const data = await response.json();
       if (!response.ok) return { success: false, message: data.message || "Failed to submit feedback" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  createOfferLetter: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create offer letter" };
+      return { success: true, message: data.message, data: data.data, emailSent: data.emailSent };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getOfferLetters: async (status = "") => {
+    try {
+      const query = status ? `?status=${encodeURIComponent(status)}` : "";
+      const response = await apiFetch(`${BASE_URL}/hiring/offers${query}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch offer letters" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getOfferLetterById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch offer letter" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  sendOfferLetter: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/send`, { method: "PATCH" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to send offer letter" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateOfferLetterStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update offer status" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getPublicOfferByToken: async (token) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/public/${encodeURIComponent(token)}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch offer letter" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  acceptPublicOffer: async (token) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/public/${encodeURIComponent(token)}/accept`, { method: "PATCH" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to accept offer letter" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  declinePublicOffer: async (token) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/public/${encodeURIComponent(token)}/decline`, { method: "PATCH" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to decline offer letter" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getOfferOnboarding: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch onboarding" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getOfferOnboardingPrefill: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding/prefill`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch offer prefill" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  startOfferOnboarding: async (id, setupTasks) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding/start`, {
+        method: "PATCH",
+        body: JSON.stringify({ setupTasks }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to start onboarding" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  updateOfferOnboardingTasks: async (id, tasks) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding/tasks`, {
+        method: "PATCH",
+        body: JSON.stringify(tasks),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update onboarding tasks" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  completeOfferOnboarding: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding/complete`, { method: "PATCH" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to complete onboarding" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  linkOfferEmployee: async (id, userId) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/offers/${id}/onboarding/link-employee`, {
+        method: "PATCH",
+        body: JSON.stringify({ userId }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to link employee" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  getPublicCandidateDocuments: async (token) => {
+    try {
+      const response = await fetch(`${BASE_URL}/hiring/candidate-documents/public/${encodeURIComponent(token)}`, { method: "GET" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to load document portal" };
+      return { success: true, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  submitPublicCandidateDocuments: async (token, formData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/hiring/candidate-documents/public/${encodeURIComponent(token)}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to submit documents" };
+      return { success: true, message: data.message, data: data.data };
+    } catch { return { success: false, message: "Something went wrong" }; }
+  },
+
+  resendCandidateDocumentEmail: async (applicationId) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/hiring/applications/${applicationId}/resend-document-email`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to send document email" };
       return { success: true, message: data.message, data: data.data };
     } catch { return { success: false, message: "Something went wrong" }; }
   },

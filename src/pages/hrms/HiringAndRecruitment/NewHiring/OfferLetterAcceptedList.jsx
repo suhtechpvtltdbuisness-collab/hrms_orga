@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ChevronRight,
@@ -17,8 +17,187 @@ import {
   Laptop,
   Landmark,
   ShieldCheck,
+  FileText,
   X,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { hiringService } from "../../../../service";
+import Spinner from "../../../../components/ui/Spinner";
+
+const formatOfferDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+};
+
+const getDisplayStatus = (offer) => {
+  if (offer?.onboardingStatus === "completed") return "Onboarding Completed";
+  if (offer?.onboardingStatus === "in_progress") return "Onboarding In Progress";
+  return "Offer Accepted";
+};
+
+const mapOfferRow = (offer, index) => ({
+  id: offer.id,
+  srNo: String(index + 1).padStart(2, "0"),
+  name: offer.candidateName,
+  email: offer.candidateEmail,
+  date: formatOfferDate(offer.acceptedAt || offer.sentAt),
+  joiningDate: formatOfferDate(offer.joiningDate),
+  jobTitle: offer.jobTitle || offer.designation,
+  department: offer.department,
+  designation: offer.designation,
+  sentAt: offer.sentAt,
+  viewedAt: offer.viewedAt,
+  acceptedAt: offer.acceptedAt,
+  onboardingStatus: offer.onboardingStatus || "not_started",
+  onboardingTasks: offer.onboardingTasks,
+  employeeUserId: offer.employeeUserId,
+  status: getDisplayStatus(offer),
+});
+
+const DOCUMENT_LABELS = {
+  idProof: "ID Proof",
+  addressProof: "Address Proof",
+  photograph: "Photograph",
+  educationCertificate: "Education Certificate",
+  bankProof: "Bank Proof",
+};
+
+const displayValue = (value) => (value ? String(value) : "—");
+
+const previewSecureFile = async (url, label = "Document") => {
+  if (!url) {
+    toast.error("File not available");
+    return;
+  }
+  const proxyUrl = `${window.location.origin}/api/upload/blob?url=${encodeURIComponent(url)}`;
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(proxyUrl, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error("Failed to fetch file");
+    const blob = await response.blob();
+    window.open(URL.createObjectURL(blob), "_blank");
+  } catch {
+    toast.error(`Unable to preview ${label}`);
+  }
+};
+
+const CandidateSubmissionReview = ({ offer }) => {
+  const profile = offer.candidateProfile || offer.candidateDocuments?.profile || {};
+  const files = offer.candidateDocuments?.files || {};
+  const submittedAt = offer.candidateDocuments?.submittedAt;
+  const fileEntries = Object.entries(files).filter(([, file]) => file?.url);
+
+  if (!submittedAt && fileEntries.length === 0 && !profile.phone) {
+    return null;
+  }
+
+  const detailGroups = [
+    {
+      title: "Personal details",
+      items: [
+        ["Phone", profile.phone || offer.candidatePhone],
+        ["Date of birth", profile.dateOfBirth],
+        ["Gender", profile.gender],
+        ["Current address", profile.currentAddress],
+        ["Permanent address", profile.permanentAddress],
+      ],
+    },
+    {
+      title: "Bank details",
+      items: [
+        ["Account holder", profile.bankAccountName],
+        ["Account number", profile.bankAccountNumber],
+        ["IFSC code", profile.bankIfsc],
+      ],
+    },
+    {
+      title: "Emergency contact",
+      items: [
+        ["Contact name", profile.emergencyContactName],
+        ["Contact phone", profile.emergencyContactPhone],
+      ],
+    },
+  ];
+
+  return (
+    <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-violet-50 to-slate-50 px-5 py-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-bold text-slate-900">Candidate submission review</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Review uploaded documents and personal details before marking verification complete.
+            </p>
+          </div>
+          {submittedAt ? (
+            <span className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Submitted {formatOfferDate(submittedAt)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="space-y-5 p-5">
+        <div className="grid gap-4 lg:grid-cols-3">
+          {detailGroups.map(({ title, items }) => (
+            <div key={title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="mb-3 text-sm font-bold text-slate-900">{title}</h3>
+              <dl className="space-y-3">
+                {items.map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</dt>
+                    <dd className="mt-1 text-sm font-medium text-slate-800 break-words">{displayValue(value)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <h3 className="mb-3 text-sm font-bold text-slate-900">Uploaded documents</h3>
+          {fileEntries.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+              No documents uploaded yet.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {fileEntries.map(([key, file]) => (
+                <div key={key} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+                      <FileText size={18} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800">{DOCUMENT_LABELS[key] || key}</p>
+                      <p className="truncate text-xs text-slate-500">{file.name || "Uploaded file"}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => previewSecureFile(file.url, DOCUMENT_LABELS[key] || key)}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                  >
+                    <Eye size={14} />
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-4 text-sm text-slate-600">
+          After reviewing everything above, use the <strong>Verify documents</strong> and <strong>Approve candidate profile</strong> checks in the Complete onboarding section below.
+        </div>
+      </div>
+    </section>
+  );
+};
 
 /* ─────────────────────────────────────────
    Onboarding Progress Page
@@ -1621,31 +1800,69 @@ const CandidateAvatar = ({ name, size = 'large' }) => (
   </div>
 );
 
-const PolishedCandidateView = ({ offer, onBack, onStartOnboarding }) => {
+const PolishedCandidateView = ({ offer, onBack, onStartOnboarding, starting, onResendDocuments, resendingDocuments }) => {
+  const defaultSetupTasks = {
+    documentSubmission: true,
+    bankDetails: true,
+    itSetup: true,
+    idCard: true,
+    systemAccess: true,
+    provideLaptop: true,
+  };
+  const [setupTasks, setSetupTasks] = useState(defaultSetupTasks);
   const milestones = [
-    { label: 'Offer sent', date: '15 Jul, 2024', Icon: Send },
-    { label: 'Offer viewed', date: '16 Jul, 2024', Icon: Eye },
-    { label: 'Offer accepted', date: offer.date, Icon: CheckCircle },
+    { label: "Offer sent", date: formatOfferDate(offer.sentAt), Icon: Send },
+    { label: "Offer viewed", date: formatOfferDate(offer.viewedAt || offer.sentAt), Icon: Eye },
+    { label: "Offer accepted", date: formatOfferDate(offer.acceptedAt || offer.date), Icon: CheckCircle },
   ];
-  const setupTasks = [
-    { label: 'Document submission', Icon: ClipboardCheck },
-    { label: 'Bank details', Icon: Landmark },
-    { label: 'IT setup', Icon: Laptop },
-    { label: 'ID card', Icon: UserCheck },
-    { label: 'System access', Icon: ShieldCheck },
+  const setupTaskItems = [
+    { key: "documentSubmission", label: "Document submission", Icon: ClipboardCheck },
+    { key: "bankDetails", label: "Bank details", Icon: Landmark },
+    { key: "itSetup", label: "IT setup", Icon: Laptop },
+    { key: "idCard", label: "ID card", Icon: UserCheck },
+    { key: "systemAccess", label: "System access", Icon: ShieldCheck },
   ];
+  const allSetupSelected = Object.entries(setupTasks)
+    .filter(([key]) => key !== "provideLaptop")
+    .every(([, value]) => value);
+  const alreadyStarted = offer.onboardingStatus === "in_progress" || offer.onboardingStatus === "completed";
 
   return <div className="flex h-full flex-col">
     <button onClick={onBack} className="mb-4 flex w-fit items-center gap-2 text-sm font-semibold text-[#7D1EDB]"><ArrowLeft size={16} />Offer Letter Accepted<ChevronRight size={15} className="text-slate-400" /><span className="font-normal text-slate-500">{offer.name}</span></button>
     <div className="custom-scrollbar flex-1 overflow-y-auto pr-1">
       <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Candidate onboarding</p><h1 className="mt-1 text-2xl font-bold text-slate-900">{offer.name}</h1><p className="mt-1 text-sm text-slate-500">Review offer details and prepare the onboarding plan.</p></div>
-        <button onClick={onStartOnboarding} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-700"><ClipboardCheck size={18} />Start onboarding</button>
+        <button onClick={() => onStartOnboarding(setupTasks)} disabled={starting || (!alreadyStarted && !allSetupSelected)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"><ClipboardCheck size={18} />{starting ? "Starting..." : alreadyStarted ? "Continue onboarding" : "Start onboarding"}</button>
       </div>
+
+      {!offer.documentsSubmitted ? (
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-amber-900">Candidate documents pending</p>
+            <p className="mt-1 text-sm text-amber-800">The candidate has not uploaded the required documents yet.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {offer.documentUploadUrl ? (
+              <a href={offer.documentUploadUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900">
+                Open upload portal
+              </a>
+            ) : null}
+            <button type="button" onClick={onResendDocuments} disabled={resendingDocuments} className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+              {resendingDocuments ? "Sending..." : "Resend upload email"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+          Candidate documents submitted and ready for verification.
+        </div>
+      )}
+
+      <CandidateSubmissionReview offer={offer} />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-5 bg-gradient-to-r from-slate-50 to-violet-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4"><CandidateAvatar name={offer.name} /><div><h2 className="text-lg font-bold text-slate-900">{offer.name}</h2><p className="text-sm text-slate-500">Senior Product Designer</p><p className="mt-1 text-xs text-slate-400">Candidate #{offer.srNo}</p></div></div>
+          <div className="flex items-center gap-4"><CandidateAvatar name={offer.name} /><div><h2 className="text-lg font-bold text-slate-900">{offer.name}</h2><p className="text-sm text-slate-500">{offer.jobTitle || offer.designation || "—"}</p><p className="mt-1 text-xs text-slate-400">Candidate #{offer.srNo}</p></div></div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700"><CheckCircle size={16} />Offer accepted</span>
         </div>
 
@@ -1656,43 +1873,106 @@ const PolishedCandidateView = ({ offer, onBack, onStartOnboarding }) => {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.4fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><CalendarDays size={19} className="text-violet-600" /><h2 className="font-bold text-slate-900">Onboarding setup</h2></div><div className="space-y-3">{[
-          ['Joining date', offer.joiningDate, CalendarDays],
-          ['Department', 'Product Development', Building2],
-          ['Hiring manager', 'Nisha Gupta', Users],
+          ["Joining date", offer.joiningDate, CalendarDays],
+          ["Department", offer.department || "To be confirmed", Building2],
+          ["Designation", offer.designation || offer.jobTitle || "To be confirmed", Users],
         ].map(([label, value, Icon]) => <div key={label} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm"><Icon size={17} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="font-semibold text-slate-700">{value}</p></div></div>)}</div></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Assigned onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">All essentials are selected and ready for onboarding.</p></div><div className="grid gap-3 sm:grid-cols-2">{setupTasks.map(({ label, Icon }) => <div key={label} className="flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-700"><Icon size={17} /></span><span className="flex-1 text-sm font-semibold text-slate-700">{label}</span><CheckCircle size={18} className="text-emerald-500" /></div>)}</div></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Assigned onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">Choose what should be assigned during onboarding.</p></div><div className="mb-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4"><label className="flex cursor-pointer items-center gap-3"><input type="checkbox" checked={setupTasks.provideLaptop} onChange={() => setSetupTasks((current) => ({ ...current, provideLaptop: !current.provideLaptop }))} className="h-4 w-4 accent-violet-600" /><span className="text-sm font-semibold text-slate-700">Provide company laptop to candidate</span></label></div><div className="grid gap-3 sm:grid-cols-2">{setupTaskItems.map(({ key, label, Icon }) => <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3"><input type="checkbox" checked={setupTasks[key]} onChange={() => setSetupTasks((current) => ({ ...current, [key]: !current[key] }))} className="h-4 w-4 accent-violet-600" /><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-700"><Icon size={17} /></span><span className="flex-1 text-sm font-semibold text-slate-700">{label}</span></label>)}</div></div>
       </div>
     </div>
   </div>;
 };
 
-const PolishedOnboardingProgress = ({ offer, onBackToList, onComplete, isCompleted }) => {
-  const [checks, setChecks] = useState({ documents: true, profile: isCompleted, employee: isCompleted });
+const PolishedOnboardingProgress = ({ offer, onBackToList, onComplete, onUpdateTasks, onConvertEmployee, onResendDocuments, completing, updating, resendingDocuments }) => {
+  const setup = offer.onboardingTasks?.setup || {};
+  const progress = offer.onboardingTasks?.progress || {};
+  const [checks, setChecks] = useState(offer.onboardingTasks?.completion || {
+    verifyDocuments: false,
+    approveProfile: false,
+    convertToEmployee: Boolean(offer.employeeUserId),
+  });
+  const isCompleted = offer.onboardingStatus === "completed";
   const allDone = Object.values(checks).every(Boolean);
+
+  const taskStatus = (assigned, done) => {
+    if (!assigned) return "Not Assigned";
+    return done ? "Completed" : "Pending";
+  };
+
   const tasks = [
-    { name: 'Welcome kit', owner: 'HR Department', status: 'Completed', Icon: ClipboardCheck },
-    { name: 'Laptop & IT setup', owner: 'IT Department', status: 'Completed', Icon: Laptop },
-    { name: 'Product training', owner: 'Candidate', status: isCompleted ? 'Completed' : 'In Progress', Icon: Users },
-    { name: 'System access', owner: 'IT Department', status: 'Completed', Icon: ShieldCheck },
-  ];
-  const completedCount = tasks.filter((task) => task.status === 'Completed').length;
-  const progress = isCompleted ? 100 : Math.round((completedCount / tasks.length) * 100);
+    { name: "Welcome kit", owner: "HR Department", status: taskStatus(true, progress.welcomeKit), progressKey: "welcomeKit", assigned: true },
+    setup.provideLaptop && setup.itSetup
+      ? { name: "Laptop & IT setup", owner: "IT Department", status: taskStatus(true, progress.laptopSetup), progressKey: "laptopSetup", assigned: true }
+      : setup.itSetup
+        ? { name: "IT setup (no laptop)", owner: "IT Department", status: taskStatus(true, progress.laptopSetup), progressKey: "laptopSetup", assigned: true }
+        : null,
+    setup.documentSubmission
+      ? { name: "Document submission", owner: "Candidate", status: taskStatus(true, progress.documentSubmission || offer.documentsSubmitted), progressKey: "documentSubmission", assigned: true, auto: true }
+      : null,
+    setup.systemAccess
+      ? { name: "System access", owner: "IT Department", status: taskStatus(true, progress.systemAccess), progressKey: "systemAccess", assigned: true }
+      : null,
+    setup.bankDetails
+      ? { name: "Bank details", owner: "Candidate / HR", status: taskStatus(true, progress.bankDetails || offer.documentsSubmitted), progressKey: "bankDetails", assigned: true, auto: true }
+      : null,
+    setup.idCard
+      ? { name: "ID card", owner: "HR Department", status: taskStatus(true, progress.idCard), progressKey: "idCard", assigned: true }
+      : null,
+  ].filter(Boolean);
+
+  const completedCount = tasks.filter((task) => task.status === "Completed").length;
+  const assignedCount = tasks.filter((task) => task.assigned).length;
+  const progressPercent = isCompleted ? 100 : assignedCount ? Math.round((completedCount / assignedCount) * 100) : 0;
   const completionItems = [
-    ['documents', 'Verify documents', 'All required documents are uploaded and verified.'],
-    ['profile', 'Approve candidate profile', 'Confirm personal and employment information.'],
-    ['employee', 'Convert to employee master', 'Create the final employee record and access.'],
+    ["verifyDocuments", "Verify documents", "All required documents are uploaded and verified."],
+    ["approveProfile", "Approve candidate profile", "Confirm personal and employment information."],
+    ["convertToEmployee", "Convert to employee master", "Create the final employee record and access."],
   ];
+
+  const handleToggle = async (key) => {
+    if (isCompleted) return;
+    if (key === "convertToEmployee" && !checks.convertToEmployee) {
+      onConvertEmployee();
+      return;
+    }
+    const next = { ...checks, [key]: !checks[key] };
+    setChecks(next);
+    await onUpdateTasks({ completion: next });
+  };
+
+  const handleProgressToggle = async (task) => {
+    if (isCompleted || task.auto || !task.progressKey) return;
+    const nextProgress = {
+      ...progress,
+      [task.progressKey]: !progress[task.progressKey],
+    };
+    await onUpdateTasks({ progress: nextProgress });
+  };
 
   return <div className="flex h-full flex-col">
     <button onClick={onBackToList} className="mb-4 flex w-fit items-center gap-2 text-sm font-semibold text-[#7D1EDB]"><ArrowLeft size={16} />Offer Letter Accepted<ChevronRight size={15} className="text-slate-400" /><span className="font-normal text-slate-500">Onboarding Progress</span></button>
     <div className="custom-scrollbar flex-1 overflow-y-auto pr-1">
-      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Onboarding workspace</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Onboarding progress</h1><p className="mt-1 text-sm text-slate-500">Complete the remaining steps for {offer.name}.</p></div><button onClick={onComplete} disabled={!allDone || isCompleted} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"><CheckCircle size={18} />{isCompleted ? 'Onboarding completed' : 'Mark onboarding complete'}</button></div>
+      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Onboarding workspace</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Onboarding progress</h1><p className="mt-1 text-sm text-slate-500">Complete the remaining steps for {offer.name}.</p></div><button onClick={onComplete} disabled={!allDone || isCompleted || completing || updating} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-6 py-3 text-sm font-bold text-white shadow-md shadow-violet-200 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"><CheckCircle size={18} />{isCompleted ? "Onboarding completed" : completing ? "Completing..." : "Mark onboarding complete"}</button></div>
+
+      {!offer.documentsSubmitted && setup.documentSubmission ? (
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-amber-900">Documents not uploaded yet</p>
+            <p className="mt-1 text-sm text-amber-800">The candidate still needs to submit documents through the secure upload portal.</p>
+          </div>
+          <button type="button" onClick={onResendDocuments} disabled={resendingDocuments} className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {resendingDocuments ? "Sending..." : "Resend upload email"}
+          </button>
+        </div>
+      ) : null}
+
+      <CandidateSubmissionReview offer={offer} />
 
       <div className="grid gap-5 xl:grid-cols-[320px_1fr]">
-        <aside className="h-fit overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="bg-gradient-to-br from-[#756FCC] to-[#A276DB] p-5 text-white"><div className="flex items-center gap-3"><CandidateAvatar name={offer.name} size="small" /><div><h2 className="font-bold">{offer.name}</h2><p className="text-xs text-violet-100">Candidate #{offer.srNo}</p></div></div><div className="mt-5 flex items-end justify-between"><div><p className="text-xs text-violet-100">Overall progress</p><p className="mt-1 text-3xl font-bold">{progress}%</p></div><CheckCircle size={30} className="text-white/80" /></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${progress}%` }} /></div></div><div className="space-y-3 p-5">{[['Joining date',offer.joiningDate,CalendarDays],['Department','Product Development',Building2],['Hiring manager','Nisha Gupta',Users]].map(([label,value,Icon]) => <div key={label} className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700"><Icon size={16} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="text-sm font-semibold text-slate-700">{value}</p></div></div>)}</div></aside>
+        <aside className="h-fit overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="bg-gradient-to-br from-[#756FCC] to-[#A276DB] p-5 text-white"><div className="flex items-center gap-3"><CandidateAvatar name={offer.name} size="small" /><div><h2 className="font-bold">{offer.name}</h2><p className="text-xs text-violet-100">Candidate #{offer.srNo}</p></div></div><div className="mt-5 flex items-end justify-between"><div><p className="text-xs text-violet-100">Overall progress</p><p className="mt-1 text-3xl font-bold">{progressPercent}%</p></div><CheckCircle size={30} className="text-white/80" /></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${progressPercent}%` }} /></div></div><div className="space-y-3 p-5">{[["Joining date", offer.joiningDate, CalendarDays], ["Department", offer.department || "To be confirmed", Building2], ["Designation", offer.designation || offer.jobTitle || "To be confirmed", Users], ["Laptop provision", setup.provideLaptop ? "Yes" : "No", Laptop]].map(([label, value, Icon]) => <div key={label} className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700"><Icon size={16} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="text-sm font-semibold text-slate-700">{value}</p></div></div>)}</div></aside>
 
-        <div className="space-y-5"><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">{completedCount} of {tasks.length} tasks completed</p></div><div className="divide-y divide-slate-100">{tasks.map(({ name, owner, status, Icon }) => <div key={name} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><Icon size={18} /></span><div className="flex-1"><p className="font-semibold text-slate-800">{name}</p><p className="text-xs text-slate-500">Assigned to {owner} · Due 10 Feb, 2026</p></div><span className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${status === 'Completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{status}</span></div>)}</div></section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Complete onboarding</h2><p className="mt-1 text-xs text-slate-500">Finish these checks to enable final completion.</p></div><div className="space-y-3">{completionItems.map(([key,title,subtitle]) => <label key={key} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${checks[key] ? 'border-violet-200 bg-violet-50/50' : 'border-slate-200 hover:bg-slate-50'}`}><input type="checkbox" checked={checks[key]} onChange={() => setChecks((current) => ({ ...current, [key]: !current[key] }))} className="mt-1 h-4 w-4 accent-violet-600" /><div><p className="text-sm font-bold text-slate-800">{title}</p><p className="mt-0.5 text-xs text-slate-500">{subtitle}</p></div></label>)}</div></section></div>
+        <div className="space-y-5"><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">{completedCount} of {assignedCount} assigned tasks completed</p></div><div className="divide-y divide-slate-100">{tasks.map((task) => <div key={task.name} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">{task.name.includes("Laptop") ? <Laptop size={18} /> : task.name.includes("Document") ? <Users size={18} /> : task.name.includes("System") ? <ShieldCheck size={18} /> : <ClipboardCheck size={18} />}</span><div className="flex-1"><p className="font-semibold text-slate-800">{task.name}</p><p className="text-xs text-slate-500">Assigned to {task.owner}</p></div><div className="flex items-center gap-2"><span className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${task.status === "Completed" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : task.status === "Pending" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{task.status}</span>{!task.auto && task.status === "Pending" && !isCompleted ? <button type="button" onClick={() => handleProgressToggle(task)} className="rounded-lg border border-violet-200 px-3 py-1 text-xs font-semibold text-violet-700">Mark done</button> : null}</div></div>)}</div></section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Complete onboarding</h2><p className="mt-1 text-xs text-slate-500">Finish these checks to enable final completion.</p></div><div className="space-y-3">{completionItems.map(([key, title, subtitle]) => <label key={key} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${checks[key] ? "border-violet-200 bg-violet-50/50" : "border-slate-200 hover:bg-slate-50"}`}><input type="checkbox" checked={Boolean(checks[key])} onChange={() => handleToggle(key)} disabled={isCompleted || updating} className="mt-1 h-4 w-4 accent-violet-600" /><div><p className="text-sm font-bold text-slate-800">{title}</p><p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>{key === "convertToEmployee" && !checks.convertToEmployee ? <p className="mt-1 text-xs font-semibold text-violet-700">Opens Add Employee with offer details prefilled.</p> : null}</div></label>)}</div></section></div>
       </div>
     </div>
   </div>;
@@ -1705,98 +1985,98 @@ const OfferLetterAcceptedList = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
-  
-  // Track completed IDs globally (or in a real app, this would be from an API)
-  const [completedOnboardingIds, setCompletedOnboardingIds] = useState(new Set());
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-
-  const [acceptedOffers, setAcceptedOffers] = useState([
-    {
-      id: 1,
-      srNo: "01",
-      name: "Olivia Rhye",
-      date: "8 Jan, 2026",
-      joiningDate: "15 Jan, 2026",
-      status: "Onboarding Completed",
-    },
-    {
-      id: 2,
-      srNo: "02",
-      name: "Olivia Rhye",
-      date: "10 Feb, 2026",
-      joiningDate: "17 Feb, 2026",
-      status: "Onboarding In Progress",
-    },
-    {
-      id: 3,
-      srNo: "03",
-      name: "Olivia Rhye",
-      date: "18 Feb, 2026",
-      joiningDate: "25 Feb, 2026",
-      status: "Onboarding Completed",
-    },
-    {
-      id: 4,
-      srNo: "04",
-      name: "Olivia Rhye",
-      date: "20 Feb, 2026",
-      joiningDate: "1 Mar, 2026",
-      status: "Onboarding In Progress",
-    },
-    {
-      id: 5,
-      srNo: "05",
-      name: "Olivia Rhye",
-      date: "1 March, 2026",
-      joiningDate: "8 Mar, 2026",
-      status: "Onboarding Completed",
-    },
-    {
-      id: 6,
-      srNo: "06",
-      name: "Olivia Rhye",
-      date: "20 March, 2026",
-      joiningDate: "27 Mar, 2026",
-      status: "Onboarding Completed",
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [updatingTasks, setUpdatingTasks] = useState(false);
+  const [resendingDocuments, setResendingDocuments] = useState(false);
+  const [acceptedOffers, setAcceptedOffers] = useState([]);
+  const [selectedOfferDetail, setSelectedOfferDetail] = useState(null);
   const [editingOffer, setEditingOffer] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', date: '', joiningDate: '', status: '' });
+  const [editForm, setEditForm] = useState({ name: "", date: "", joiningDate: "", status: "" });
+
+  const loadAcceptedOffers = useCallback(async () => {
+    setLoading(true);
+    const result = await hiringService.getOfferLetters("accepted");
+    if (result.success) {
+      setAcceptedOffers((result.data || []).map(mapOfferRow));
+    } else {
+      toast.error(result.message || "Failed to load accepted offers");
+      setAcceptedOffers([]);
+    }
+    setLoading(false);
+  }, []);
+
+  const loadOfferDetail = useCallback(async (offerId) => {
+    if (!offerId) {
+      setSelectedOfferDetail(null);
+      return;
+    }
+    setDetailLoading(true);
+    const result = await hiringService.getOfferOnboarding(Number(offerId));
+    if (result.success && result.data) {
+      const listOffer = acceptedOffers.find((item) => item.id === Number(offerId));
+        setSelectedOfferDetail({
+          ...(listOffer || {}),
+          ...result.data,
+          name: result.data.candidateName,
+          date: formatOfferDate(result.data.acceptedAt || result.data.sentAt),
+          joiningDate: formatOfferDate(result.data.joiningDate),
+          status: getDisplayStatus(result.data),
+          documentsSubmitted: result.data.documentsSubmitted,
+          documentUploadUrl: result.data.documentUploadUrl,
+          jobApplicationId: result.data.jobApplicationId,
+        });
+    } else {
+      toast.error(result.message || "Failed to load onboarding details");
+      setSelectedOfferDetail(null);
+    }
+    setDetailLoading(false);
+  }, [acceptedOffers]);
+
+  useEffect(() => {
+    loadAcceptedOffers();
+  }, [loadAcceptedOffers]);
+
+  useEffect(() => {
+    if (id) loadOfferDetail(id);
+  }, [id, loadOfferDetail]);
 
   const openEditModal = (offer) => {
     setEditingOffer(offer);
-    setEditForm({ name: offer.name, date: offer.date, joiningDate: offer.joiningDate || '', status: offer.displayStatus || offer.status });
+    setEditForm({
+      name: offer.name,
+      date: offer.date,
+      joiningDate: offer.joiningDate || "",
+      status: offer.status,
+    });
   };
 
   const saveOfferChanges = (event) => {
     event.preventDefault();
     if (!editForm.name.trim() || !editForm.date.trim() || !editForm.joiningDate.trim()) return;
-    setAcceptedOffers((current) => current.map((offer) => offer.id === editingOffer.id ? {
+    setAcceptedOffers((current) => current.map((offer) => (offer.id === editingOffer.id ? {
       ...offer,
       name: editForm.name.trim(),
       date: editForm.date.trim(),
       joiningDate: editForm.joiningDate.trim(),
       status: editForm.status,
-    } : offer));
-    setCompletedOnboardingIds((current) => {
-      const next = new Set(current);
-      if (editForm.status === 'Onboarding Completed') next.add(editingOffer.id);
-      else next.delete(editingOffer.id);
-      return next;
-    });
+    } : offer)));
     setEditingOffer(null);
   };
 
-  const selectedOffer = id ? acceptedOffers.find(o => o.id === parseInt(id)) : null;
+  const selectedOffer = selectedOfferDetail || (id ? acceptedOffers.find((o) => o.id === parseInt(id, 10)) : null);
   const isOnboardingView = location.pathname.includes("/onboarding");
   const view = isOnboardingView ? "onboarding" : (selectedOffer ? "candidate" : "list");
-  const isCompleted = id && completedOnboardingIds.has(parseInt(id));
 
   const offersWithStatus = useMemo(() => acceptedOffers.map((offer) => ({
     ...offer,
-    displayStatus: completedOnboardingIds.has(offer.id) ? "Onboarding Completed" : offer.status,
-  })), [acceptedOffers, completedOnboardingIds]);
+    displayStatus: offer.status,
+  })), [acceptedOffers]);
 
   const filteredOffers = useMemo(() => offersWithStatus.filter((offer) => {
     const matchesSearch = `${offer.name} ${offer.date} ${offer.joiningDate}`.toLowerCase().includes(search.toLowerCase());
@@ -1804,8 +2084,77 @@ const OfferLetterAcceptedList = () => {
     return matchesSearch && matchesStatus;
   }), [offersWithStatus, search, statusFilter]);
 
-  const handleMarkComplete = () => {
-    setCompletedOnboardingIds(prev => new Set(prev).add(parseInt(id)));
+  const refreshDetail = async () => {
+    await loadAcceptedOffers();
+    if (id) await loadOfferDetail(id);
+  };
+
+  const handleStartOnboarding = async (setupTasks) => {
+    if (!selectedOffer) return;
+    if (selectedOffer.onboardingStatus === "in_progress" || selectedOffer.onboardingStatus === "completed") {
+      navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}/onboarding`);
+      return;
+    }
+    setStarting(true);
+    const result = await hiringService.startOfferOnboarding(selectedOffer.id, setupTasks);
+    setStarting(false);
+    if (result.success) {
+      toast.success("Onboarding started");
+      await refreshDetail();
+      navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}/onboarding`);
+    } else {
+      toast.error(result.message || "Failed to start onboarding");
+    }
+  };
+
+  const handleUpdateTasks = async (tasks) => {
+    if (!selectedOffer) return;
+    setUpdatingTasks(true);
+    const result = await hiringService.updateOfferOnboardingTasks(selectedOffer.id, tasks);
+    setUpdatingTasks(false);
+    if (result.success) {
+      setSelectedOfferDetail((current) => current ? {
+        ...current,
+        onboardingTasks: result.data.onboardingTasks,
+        employeeUserId: result.data.employeeUserId,
+        onboardingStatus: result.data.onboardingStatus,
+        documentsSubmitted: result.data.documentsSubmitted ?? current.documentsSubmitted,
+        status: getDisplayStatus(result.data),
+      } : current);
+      await loadAcceptedOffers();
+    } else {
+      toast.error(result.message || "Failed to update onboarding tasks");
+    }
+  };
+
+  const handleMarkComplete = async () => {
+    if (!selectedOffer) return;
+    setCompleting(true);
+    const result = await hiringService.completeOfferOnboarding(selectedOffer.id);
+    setCompleting(false);
+    if (result.success) {
+      toast.success("Onboarding completed");
+      await refreshDetail();
+    } else {
+      toast.error(result.message || "Failed to complete onboarding");
+    }
+  };
+
+  const handleConvertEmployee = () => {
+    if (!selectedOffer) return;
+    navigate(`/hrms/employees/add?offerId=${selectedOffer.id}`);
+  };
+
+  const handleResendDocuments = async () => {
+    if (!selectedOffer?.jobApplicationId) return;
+    setResendingDocuments(true);
+    const result = await hiringService.resendCandidateDocumentEmail(selectedOffer.jobApplicationId);
+    setResendingDocuments(false);
+    if (result.success) {
+      toast.success(result.message || "Document upload email sent");
+    } else {
+      toast.error(result.message || "Failed to send document email");
+    }
   };
 
   const getStatusStyle = (status) => {
@@ -1855,8 +2204,14 @@ const OfferLetterAcceptedList = () => {
     return common;
   };
 
-  /* ── Onboarding Progress view ── */
   if (view === "onboarding" && selectedOffer) {
+    if (detailLoading) {
+      return (
+        <div className="mx-2 my-4 flex h-[calc(100vh-10rem)] items-center justify-center rounded-xl border border-[#D9D9D9] bg-white">
+          <Spinner size={28} color="#7D1EDB" />
+        </div>
+      );
+    }
     return (
       <div
         className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
@@ -1864,9 +2219,14 @@ const OfferLetterAcceptedList = () => {
       >
         <PolishedOnboardingProgress
           offer={selectedOffer}
-          isCompleted={isCompleted}
-          onBackToList={() => navigate("/hrms/hiring-and-recruitment/offer-letter-accepted-list")}
+          onBackToList={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}`)}
           onComplete={handleMarkComplete}
+          onUpdateTasks={handleUpdateTasks}
+          onConvertEmployee={handleConvertEmployee}
+          onResendDocuments={handleResendDocuments}
+          completing={completing}
+          updating={updatingTasks}
+          resendingDocuments={resendingDocuments}
         />
       </div>
     );
@@ -1874,6 +2234,13 @@ const OfferLetterAcceptedList = () => {
 
   /* ── Candidate Detail view ── */
   if (view === "candidate" && selectedOffer) {
+    if (detailLoading) {
+      return (
+        <div className="mx-2 my-4 flex h-[calc(100vh-10rem)] items-center justify-center rounded-xl border border-[#D9D9D9] bg-white">
+          <Spinner size={28} color="#7D1EDB" />
+        </div>
+      );
+    }
     return (
       <div
         className="bg-white px-4 sm:px-4 md:px-6 py-4 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] flex flex-col font-sans border border-[#D9D9D9] overflow-hidden"
@@ -1882,7 +2249,10 @@ const OfferLetterAcceptedList = () => {
         <PolishedCandidateView
           offer={selectedOffer}
           onBack={() => navigate("/hrms/hiring-and-recruitment/offer-letter-accepted-list")}
-          onStartOnboarding={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${id}/onboarding`)}
+          onStartOnboarding={handleStartOnboarding}
+          starting={starting}
+          onResendDocuments={handleResendDocuments}
+          resendingDocuments={resendingDocuments}
         />
       </div>
     );
@@ -1907,11 +2277,13 @@ const OfferLetterAcceptedList = () => {
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search candidate or date" className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" /></div>
-        <div className="flex gap-2 overflow-x-auto">{['All','Onboarding In Progress','Onboarding Completed'].map((item) => <button key={item} onClick={() => setStatusFilter(item)} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition ${statusFilter === item ? 'bg-[#7D1EDB] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>{item}</button>)}</div>
+        <div className="flex gap-2 overflow-x-auto">{['All','Offer Accepted','Onboarding In Progress','Onboarding Completed'].map((item) => <button key={item} onClick={() => setStatusFilter(item)} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition ${statusFilter === item ? 'bg-[#7D1EDB] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>{item}</button>)}</div>
       </div>
 
       <div className="flex-1 overflow-auto rounded-xl border border-slate-200">
-        {filteredOffers.length === 0 ? <div className="flex h-56 flex-col items-center justify-center text-center"><Users size={38} className="mb-3 text-violet-300" /><p className="font-semibold text-slate-700">No accepted offers found</p><p className="mt-1 text-sm text-slate-500">Try changing the search or status filter.</p></div> : <table className="w-full min-w-[900px] text-left text-sm"><thead className="sticky top-0 z-10 bg-slate-50"><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-5 py-3 font-semibold">Candidate</th><th className="px-5 py-3 font-semibold">Accepted date</th><th className="px-5 py-3 font-semibold">Joining date</th><th className="px-5 py-3 font-semibold">Status</th><th className="px-5 py-3 text-right font-semibold">Actions</th></tr></thead><tbody>{filteredOffers.map((offer) => <tr key={offer.id} className="border-b border-slate-100 transition hover:bg-violet-50/30"><td className="px-5 py-4"><button onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex items-center gap-3 text-left"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">{offer.name.split(' ').map((part) => part[0]).join('').slice(0,2)}</span><div><p className="font-semibold text-slate-800">{offer.name}</p><p className="text-xs text-slate-500">Candidate #{offer.srNo}</p></div></button></td><td className="px-5 py-4 text-slate-600">{offer.date}</td><td className="px-5 py-4 font-medium text-slate-700">{offer.joiningDate || 'Not scheduled'}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${offer.displayStatus === 'Onboarding Completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{offer.displayStatus}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button title="View candidate" onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-200 text-violet-700 transition hover:bg-violet-50"><Eye size={17} /></button><button title="Edit candidate" onClick={() => openEditModal(offer)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50"><Pencil size={16} /></button></div></td></tr>)}</tbody></table>}
+        {loading ? (
+          <div className="flex h-56 items-center justify-center"><Spinner size={28} color="#7D1EDB" /></div>
+        ) : filteredOffers.length === 0 ? <div className="flex h-56 flex-col items-center justify-center text-center"><Users size={38} className="mb-3 text-violet-300" /><p className="font-semibold text-slate-700">No accepted offers found</p><p className="mt-1 text-sm text-slate-500">Try changing the search or status filter.</p></div> : <table className="w-full min-w-[900px] text-left text-sm"><thead className="sticky top-0 z-10 bg-slate-50"><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-5 py-3 font-semibold">Candidate</th><th className="px-5 py-3 font-semibold">Accepted date</th><th className="px-5 py-3 font-semibold">Joining date</th><th className="px-5 py-3 font-semibold">Status</th><th className="px-5 py-3 text-right font-semibold">Actions</th></tr></thead><tbody>{filteredOffers.map((offer) => <tr key={offer.id} className="border-b border-slate-100 transition hover:bg-violet-50/30"><td className="px-5 py-4"><button onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex items-center gap-3 text-left"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">{offer.name.split(' ').map((part) => part[0]).join('').slice(0,2)}</span><div><p className="font-semibold text-slate-800">{offer.name}</p><p className="text-xs text-slate-500">Candidate #{offer.srNo}</p></div></button></td><td className="px-5 py-4 text-slate-600">{offer.date}</td><td className="px-5 py-4 font-medium text-slate-700">{offer.joiningDate || 'Not scheduled'}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${offer.displayStatus === 'Onboarding Completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{offer.displayStatus}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button title="View candidate" onClick={() => navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offer.id}`)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-200 text-violet-700 transition hover:bg-violet-50"><Eye size={17} /></button><button title="Edit candidate" onClick={() => openEditModal(offer)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50"><Pencil size={16} /></button></div></td></tr>)}</tbody></table>}
       </div>
 
       {editingOffer && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={() => setEditingOffer(null)}><form onSubmit={saveOfferChanges} onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><div className="flex items-start justify-between bg-gradient-to-r from-[#756FCC] to-[#A276DB] px-6 py-5 text-white"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-100">Candidate offer</p><h2 className="mt-1 text-xl font-bold">Edit accepted offer</h2></div><button type="button" onClick={() => setEditingOffer(null)} className="rounded-lg bg-white/10 p-2 hover:bg-white/20"><X size={19} /></button></div><div className="space-y-4 p-6"><label className="block text-sm font-semibold text-slate-700">Candidate name<input autoFocus value={editForm.name} onChange={(event) => setEditForm((form) => ({ ...form, name: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-slate-700">Offer accepted date<input value={editForm.date} onChange={(event) => setEditForm((form) => ({ ...form, date: event.target.value }))} placeholder="e.g. 8 Jan, 2026" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label><label className="block text-sm font-semibold text-slate-700">Joining date<input value={editForm.joiningDate} onChange={(event) => setEditForm((form) => ({ ...form, joiningDate: event.target.value }))} placeholder="e.g. 15 Jan, 2026" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" required /></label></div><label className="block text-sm font-semibold text-slate-700">Onboarding status<select value={editForm.status} onChange={(event) => setEditForm((form) => ({ ...form, status: event.target.value }))} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"><option>Onboarding In Progress</option><option>Onboarding Completed</option></select></label></div><div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4"><button type="button" onClick={() => setEditingOffer(null)} className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700">Cancel</button><button className="rounded-xl bg-[#7D1EDB] px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700">Save changes</button></div></form></div>}

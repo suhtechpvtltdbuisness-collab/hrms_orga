@@ -16,9 +16,12 @@ const ScheduleInterview = () => {
 
     const [activeJobs, setActiveJobs] = useState([]);
     const [selectedJobId, setSelectedJobId] = useState(null);
+    const [selectedCandidateId, setSelectedCandidateId] = useState(null);
     const [candidates, setCandidates] = useState([]);
     const [loadingJobs, setLoadingJobs] = useState(true);
     const [loadingCandidates, setLoadingCandidates] = useState(false);
+    const [loadingApplication, setLoadingApplication] = useState(false);
+    const [existingResumeUrl, setExistingResumeUrl] = useState('');
 
     const dateInputRef = useRef(null);
     const timeInputRef = useRef(null);
@@ -31,10 +34,42 @@ const ScheduleInterview = () => {
     }, []);
 
     useEffect(() => {
+        if (applicationId) {
+            preloadApplication(Number(applicationId));
+        }
+    }, [applicationId]);
+
+    useEffect(() => {
         if (selectedJobId) {
             loadCandidates(selectedJobId);
         }
     }, [selectedJobId]);
+
+    const applyApplicationToForm = (app) => {
+        setSelectedJobId(app.jobId);
+        setSelectedCandidateId(app.id);
+        setExistingResumeUrl(app.resume || '');
+        setFormData(prev => ({
+            ...prev,
+            _appId: app.id,
+            name: app.applicantName || '',
+            email: app.applicantEmail || '',
+            phone: app.applicantPhone || '',
+            experience: app.applicantExperience || '',
+        }));
+    };
+
+    const preloadApplication = async (id) => {
+        if (!Number.isInteger(id) || id <= 0) return;
+        setLoadingApplication(true);
+        const result = await hiringService.getApplicationById(id);
+        if (result.success && result.data) {
+            applyApplicationToForm(result.data);
+        } else {
+            toast.error(result.message || 'Failed to load candidate details');
+        }
+        setLoadingApplication(false);
+    };
 
     const loadActiveJobs = async () => {
         setLoadingJobs(true);
@@ -42,24 +77,68 @@ const ScheduleInterview = () => {
         if (result.success) {
             const active = (result.data || []).filter(j => j.isActive);
             setActiveJobs(active);
-            if (active.length > 0) setSelectedJobId(active[0].id);
+            if (active.length > 0 && !applicationId) setSelectedJobId(active[0].id);
         }
         setLoadingJobs(false);
     };
 
     const loadCandidates = async (jobId) => {
         setLoadingCandidates(true);
-        const result = await hiringService.getApplicationsByJobId(jobId);
-        if (result.success) {
-            setCandidates(result.data || []);
+        const [appsResult, interviewsResult] = await Promise.all([
+            hiringService.getApplicationsByJobId(jobId),
+            hiringService.getAllInterviews(),
+        ]);
+
+        if (appsResult.success) {
+            const postInterviewStatuses = new Set([
+                'selected',
+                'offer_sent',
+                'offer_accepted',
+                'offer_declined',
+                'onboarding_started',
+                'onboarded',
+                'employee_created',
+                'rejected',
+            ]);
+
+            const selectedApplicationIds = new Set(
+                (interviewsResult.success ? interviewsResult.data : [])
+                    .filter((interview) => String(interview.status || '').toLowerCase().includes('selected'))
+                    .map((interview) => interview.jobApplicationId)
+                    .filter(Boolean),
+            );
+
+            const eligible = (appsResult.data || []).filter((app) => {
+                const status = String(app.status || '').toLowerCase();
+                if (postInterviewStatuses.has(status)) return false;
+                if (selectedApplicationIds.has(app.id)) return false;
+                return true;
+            });
+
+            setCandidates(eligible);
+
+            if (selectedCandidateId && !eligible.some((app) => app.id === selectedCandidateId)) {
+                setSelectedCandidateId(null);
+                setExistingResumeUrl('');
+                setFormData((prev) => ({
+                    ...prev,
+                    _appId: undefined,
+                    name: '',
+                    email: '',
+                    phone: '',
+                    experience: '',
+                }));
+            }
         }
         setLoadingCandidates(false);
     };
 
     const handleCandidateSelect = (e) => {
         const id = Number(e.target.value);
+        setSelectedCandidateId(id || null);
         const app = candidates.find(c => c.id === id);
         if (app) {
+            setExistingResumeUrl(app.resume || '');
             setFormData(prev => ({
                 ...prev,
                 _appId: id,
@@ -69,7 +148,49 @@ const ScheduleInterview = () => {
                 experience: app.applicantExperience || '',
             }));
         } else {
-            setFormData(prev => ({ ...prev, _appId: undefined }));
+            setExistingResumeUrl('');
+            setFormData(prev => ({
+                ...prev,
+                _appId: undefined,
+                name: '',
+                email: '',
+                phone: '',
+                experience: '',
+            }));
+        }
+    };
+
+    const handleJobChange = (e) => {
+        const jobId = Number(e.target.value);
+        setSelectedJobId(jobId);
+        setSelectedCandidateId(null);
+        setExistingResumeUrl('');
+        setFormData(prev => ({
+            ...prev,
+            _appId: undefined,
+            name: '',
+            email: '',
+            phone: '',
+            experience: '',
+        }));
+    };
+
+    const handlePreviewExistingResume = async () => {
+        if (!existingResumeUrl) {
+            toast.error('No resume available for preview');
+            return;
+        }
+        const proxyUrl = `${window.location.origin}/api/upload/blob?url=${encodeURIComponent(existingResumeUrl)}`;
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(proxyUrl, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!response.ok) throw new Error('Failed to fetch resume');
+            const blob = await response.blob();
+            window.open(URL.createObjectURL(blob), '_blank');
+        } catch {
+            toast.error('Unable to preview resume');
         }
     };
 
@@ -116,6 +237,10 @@ const ScheduleInterview = () => {
             instruction: `${interviewType} - ${interviewMode}`,
             meetingLink: '',
             status: 'scheduled',
+            interviewType,
+            interviewMode,
+            panel,
+            candidateEmail: email,
         };
 
         const result = await hiringService.createInterview(interviewPayload);
@@ -246,8 +371,8 @@ const ScheduleInterview = () => {
                             <span style={label}>Job Opening</span>
                             <select
                                 value={selectedJobId || ''}
-                                onChange={(e) => setSelectedJobId(Number(e.target.value))}
-                                disabled={loadingJobs || isReadMode}
+                                onChange={handleJobChange}
+                                disabled={loadingJobs || loadingApplication || isReadMode}
                                 style={{
                                     ...input,
                                     width: '100%',
@@ -272,8 +397,9 @@ const ScheduleInterview = () => {
                         <div style={{ flex: '1', minWidth: '200px' }}>
                             <span style={label}>Candidate</span>
                             <select
+                                value={selectedCandidateId || ''}
                                 onChange={handleCandidateSelect}
-                                disabled={loadingCandidates || isReadMode || !selectedJobId}
+                                disabled={loadingCandidates || loadingApplication || isReadMode || !selectedJobId}
                                 style={{
                                     ...input,
                                     width: '100%',
@@ -331,7 +457,40 @@ const ScheduleInterview = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {!resumeFile ? (
+                        {!resumeFile && existingResumeUrl ? (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                backgroundColor: '#F5EEFB',
+                                borderRadius: '999px',
+                                border: '1px solid #7D1EDB',
+                            }}>
+                                <span
+                                    style={{
+                                        fontSize: '14px',
+                                        color: '#7D1EDB',
+                                        fontWeight: 500,
+                                        cursor: 'pointer',
+                                        maxWidth: '200px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        fontFamily: 'Poppins, sans-serif',
+                                    }}
+                                    onClick={handlePreviewExistingResume}
+                                    title="Click to view resume"
+                                >
+                                    Candidate Resume
+                                </span>
+                                <X
+                                    size={16}
+                                    style={{ color: '#7D1EDB', cursor: 'pointer', marginLeft: '4px' }}
+                                    onClick={() => setExistingResumeUrl('')}
+                                />
+                            </div>
+                        ) : !resumeFile ? (
                             <>
                                 <input
                                     type="file"
@@ -610,14 +769,12 @@ const ScheduleInterview = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: '"Nunito Sans", sans-serif', fontSize: '13px', color: '#374151' }}>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Date:</span> <strong>{formData.date || "10/01/2026"}</strong></p>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Time:</span> <strong>{formData.time || "10:00 AM"}</strong></p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Panel:</span> <strong>{formData.panel || "HR"}</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Type:</span> <strong>{interviewType}</strong></p>
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Panel:</span> <strong>{formData.panel === 'Tech' ? 'Tech Panel' : formData.panel ? 'HR Panel' : 'HR Panel'}</strong></p>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Mode:</span> <strong>{interviewMode}</strong></p>
                         <p style={{ margin: 0 }}>
-                            <span style={{ color: '#000000', opacity: 0.7 }}>Zoom meet link: </span>
-                            <a href="#" style={{ color: '#7D1EDB', textDecoration: 'none' }}
-                                onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
-                            >https://hiuhe.h..</a>
+                            <span style={{ color: '#000000', opacity: 0.7 }}>Meeting Link: </span>
+                            <strong>The meet link will be shared soon.</strong>
                         </p>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Instructions:</span> <strong>Please be on time</strong></p>
                     </div>

@@ -160,6 +160,11 @@ const getOutcomeFromStatus = (status) => {
     return '';
 };
 
+const isResultSubmitted = (status) => {
+    const normalized = String(status || '').toLowerCase();
+    return normalized.includes('selected') || normalized.includes('reject') || normalized.includes('hold');
+};
+
 const getCandidatePhoto = (interview, application) => {
     const raw =
         interview?.candidatePhoto ||
@@ -301,6 +306,7 @@ const InterviewResult = () => {
     const [outcome, setOutcome] = useState('');
     const [remarks, setRemarks] = useState({ strengths: '', weaknesses: '', finalComments: '' });
     const [submitting, setSubmitting] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     useEffect(() => {
         const loadInterview = async () => {
@@ -327,6 +333,7 @@ const InterviewResult = () => {
             setInterview(selectedInterview);
             setOutcome(getOutcomeFromStatus(selectedInterview.status));
             setRemarks(getRemarks(selectedInterview));
+            setIsSubmitted(isResultSubmitted(selectedInterview.status));
 
             if (selectedInterview.jobApplicationId) {
                 const applicationResult = await hiringService.getApplicationById(selectedInterview.jobApplicationId);
@@ -368,6 +375,7 @@ const InterviewResult = () => {
         if (result.success) {
             toast.success('Interview result submitted');
             setInterview((current) => ({ ...current, ...(result.data || {}), status: outcome }));
+            setIsSubmitted(true);
         } else {
             toast.error(result.message || 'Failed to submit result');
         }
@@ -435,14 +443,23 @@ const InterviewResult = () => {
                         <p className="mt-1 text-sm text-slate-500">Interview ID: {details.id}</p>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        {isSubmitted && outcome === 'selected' && (
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/hrms/hiring-and-recruitment/release-offer-letter?applicationId=${interview.jobApplicationId}&interviewId=${id}`)}
+                                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-[#7D1EDB] hover:bg-violet-50"
+                            >
+                                Issue Offer Letter
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={handleSubmitResult}
-                            disabled={submitting}
-                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
+                            disabled={submitting || isSubmitted}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#7D1EDB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {submitting ? <Spinner size={16} color="#fff" /> : null}
-                            Submit Result
+                            {isSubmitted ? 'Submitted' : submitting ? 'Submitting...' : 'Submit Result'}
                         </button>
                     </div>
                 </div>

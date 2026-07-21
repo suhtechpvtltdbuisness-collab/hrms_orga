@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -28,6 +28,7 @@ import {
     departmentService,
     designationService,
     employeeService,
+    hiringService,
     subscriptionService,
 } from '../../../../service';
 import { isOrgAdmin } from '../../../../utils/authMode';
@@ -52,6 +53,11 @@ const splitAddressParts = (address = '') => {
 };
 
 const getStringId = (value) => (value === null || value === undefined ? '' : String(value));
+
+const pickPrefill = (value, fallback = '') => {
+    if (value === null || value === undefined || value === '') return fallback;
+    return value;
+};
 
 const initialForm = {
     name: '',
@@ -170,6 +176,7 @@ const AddEmployee = () => {
     const [searchParams] = useSearchParams();
     const isEditMode = searchParams.get('mode') === 'edit';
     const editEmployeeId = searchParams.get('id');
+    const offerId = searchParams.get('offerId');
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState(initialForm);
     const [errors, setErrors] = useState({});
@@ -184,6 +191,7 @@ const AddEmployee = () => {
     const [loadingEmployee, setLoadingEmployee] = useState(Boolean(isEditMode && editEmployeeId));
     const [editEmployee, setEditEmployee] = useState(null);
     const [originalEmail, setOriginalEmail] = useState('');
+    const offerPrefillAppliedRef = useRef(null);
     const draftKey = isEditMode ? `${DRAFT_KEY}:${editEmployeeId || 'current'}` : DRAFT_KEY;
 
     const getCurrentUser = () => {
@@ -224,7 +232,7 @@ const AddEmployee = () => {
     }, []);
 
     useEffect(() => {
-        if (isEditMode) return;
+        if (isEditMode || offerId) return;
         const savedDraft = localStorage.getItem(draftKey);
         if (!savedDraft) return;
         try {
@@ -248,11 +256,78 @@ const AddEmployee = () => {
         } catch {
             localStorage.removeItem(draftKey);
         }
-    }, [draftKey, isEditMode]);
+    }, [draftKey, isEditMode, offerId]);
 
     useEffect(() => {
         loadOptions();
     }, [loadOptions]);
+
+    useEffect(() => {
+        if (isEditMode || !offerId || loadingOptions) return;
+        if (offerPrefillAppliedRef.current === offerId) return;
+
+        let isMounted = true;
+        const loadOfferPrefill = async () => {
+            localStorage.removeItem(draftKey);
+            const result = await hiringService.getOfferOnboardingPrefill(Number(offerId));
+            if (!isMounted || !result.success || !result.data) return;
+
+            const prefill = result.data;
+            const matchedDepartment = (departments || []).find(
+                (item) => item.name?.toLowerCase() === String(prefill.employmentDepartmentName || '').toLowerCase(),
+            );
+            const matchedDesignation = (designations || []).find(
+                (item) => item.title?.toLowerCase() === String(prefill.employmentJobTitle || '').toLowerCase()
+                    || item.name?.toLowerCase() === String(prefill.employmentJobTitle || '').toLowerCase(),
+            );
+
+            setFormData((current) => ({
+                ...initialForm,
+                name: pickPrefill(prefill.name, current.name),
+                email: pickPrefill(prefill.email, current.email),
+                phone: pickPrefill(prefill.phone, current.phone),
+                dob: pickPrefill(prefill.dob, current.dob),
+                gender: pickPrefill(prefill.gender, current.gender),
+                employmentJobTitle: pickPrefill(prefill.employmentJobTitle, current.employmentJobTitle),
+                employmentDepartmentId: matchedDepartment ? String(matchedDepartment.id) : current.employmentDepartmentId,
+                employmentDepartmentName: matchedDepartment?.name || pickPrefill(prefill.employmentDepartmentName, current.employmentDepartmentName),
+                employmentDesignationId: matchedDesignation ? String(matchedDesignation.id) : current.employmentDesignationId,
+                employmentJoiningDate: prefill.employmentJoiningDate
+                    ? String(prefill.employmentJoiningDate).slice(0, 10)
+                    : current.employmentJoiningDate,
+                employmentWorkLocation: pickPrefill(prefill.employmentWorkLocation, current.employmentWorkLocation),
+                address: pickPrefill(prefill.address, current.address),
+                city: pickPrefill(prefill.city, current.city),
+                state: pickPrefill(prefill.state, current.state),
+                postalCode: pickPrefill(prefill.postalCode, current.postalCode),
+                contactName: pickPrefill(prefill.contactName, current.contactName),
+                contactNumber: pickPrefill(prefill.contactNumber, current.contactNumber),
+                ctc: pickPrefill(prefill.ctc, current.ctc),
+                monthlyGross: pickPrefill(prefill.monthlyGross, current.monthlyGross),
+                monthlyPay: pickPrefill(prefill.monthlyPay, current.monthlyPay),
+                baseSalary: pickPrefill(prefill.baseSalary, current.baseSalary),
+                bankName: pickPrefill(prefill.bankName, current.bankName),
+                accountNumber: pickPrefill(prefill.accountNumber, current.accountNumber),
+                ifscCode: pickPrefill(prefill.ifscCode, current.ifscCode),
+                profilePic: pickPrefill(prefill.profilePic, current.profilePic),
+                documents: Array.isArray(prefill.documents) && prefill.documents.length
+                    ? prefill.documents
+                    : current.documents,
+            }));
+            offerPrefillAppliedRef.current = offerId;
+            setIsDirty(true);
+            setToast({
+                type: 'success',
+                title: 'Offer details loaded',
+                message: 'Candidate onboarding details have been prefilled from the accepted offer and document submission.',
+            });
+        };
+
+        loadOfferPrefill();
+        return () => {
+            isMounted = false;
+        };
+    }, [offerId, isEditMode, loadingOptions, draftKey]);
 
     useEffect(() => {
         if (!isEditMode) return;
@@ -585,6 +660,11 @@ const AddEmployee = () => {
                 const uploadResponse = await employeeService.uploadImage(formData.profilePicFile);
                 if (!uploadResponse.success) throw new Error(uploadResponse.message || 'Profile photo upload failed.');
                 profilePicUrl = uploadResponse.url;
+            } else if (
+                formData.profilePic
+                && !String(formData.profilePic).startsWith('blob:')
+            ) {
+                profilePicUrl = formData.profilePic;
             }
 
             let uploadedDocuments = [];
@@ -711,6 +791,11 @@ const AddEmployee = () => {
 
             localStorage.removeItem(draftKey);
             setIsDirty(false);
+
+            if (!isEditMode && offerId && savedUser.id) {
+                await hiringService.linkOfferEmployee(Number(offerId), savedUser.id);
+            }
+
             setToast({
                 type: 'success',
                 title: isEditMode ? 'Employee updated' : 'Employee created',
@@ -718,7 +803,13 @@ const AddEmployee = () => {
                     ? `${formData.name} was updated successfully.`
                     : `${formData.name} is now part of your organization.`,
             });
-            window.setTimeout(() => navigate('/hrms/employees'), 900);
+            window.setTimeout(() => {
+                if (!isEditMode && offerId) {
+                    navigate(`/hrms/hiring-and-recruitment/offer-letter-accepted-list/${offerId}/onboarding`);
+                    return;
+                }
+                navigate('/hrms/employees');
+            }, 900);
             return true;
         } catch (error) {
             const duplicateEmail = /email|already exists|duplicate/i.test(error.message || '');
