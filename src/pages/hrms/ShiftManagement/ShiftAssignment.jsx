@@ -17,6 +17,14 @@ const compareApiDates = (left, right) => {
     return attendanceUtils.toApiDate(left).localeCompare(attendanceUtils.toApiDate(right));
 };
 
+const parseDisplayDate = (value) => {
+    if (!value) return null;
+    const [day, month, year] = String(value).split('/').map(Number);
+    if (!day || !month || !year) return null;
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
 const formatTimeLabel = (value) => {
     if (!value) return '';
     const raw = String(value).trim();
@@ -495,8 +503,8 @@ const ShiftAssignment = () => {
                 </button>
             </div>
 
-            <div className="flex items-center justify-between gap-4 mb-4 shrink-0 flex-wrap" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
-                <div className="flex-1 min-w-[240px] relative">
+            <div className="mb-4 shrink-0" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
+                <div className="relative w-full max-w-[760px]">
                     <input
                         type="text"
                         placeholder="Search by employee name, ID, department or designation..."
@@ -505,26 +513,6 @@ const ShiftAssignment = () => {
                         className="w-full h-10 pl-10 pr-4 border border-[#CECECE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#7D1EDB] text-sm"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                </div>
-
-                <div className="min-w-[210px] flex items-center gap-2">
-                    <label className="text-xs text-gray-500 font-semibold shrink-0">From:</label>
-                    <CustomDatePicker
-                        value={selectedFromDate}
-                        onChange={handleFromDateChange}
-                        placeholder="From Date"
-                        className="w-full h-10 bg-white"
-                    />
-                </div>
-
-                <div className="min-w-[210px] flex items-center gap-2">
-                    <label className="text-xs text-gray-500 font-semibold shrink-0">To:</label>
-                    <CustomDatePicker
-                        value={selectedToDate}
-                        onChange={handleToDateChange}
-                        placeholder="To Date"
-                        className="w-full h-10 bg-white"
-                    />
                 </div>
             </div>
 
@@ -653,6 +641,9 @@ const ShiftAssignment = () => {
                                                     value={row.dateTo || selectedToDate}
                                                     onChange={(value) => updateRowDate(row.employeeId, 'dateTo', value)}
                                                     placeholder="Date To"
+                                                    allowFuture
+                                                    futureYears={100}
+                                                    minDate={parseDisplayDate(row.dateFrom || selectedFromDate)}
                                                     className="w-full h-10 bg-white"
                                                 />
                                             </div>
