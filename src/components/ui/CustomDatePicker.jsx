@@ -32,6 +32,7 @@ const CustomDatePicker = ({
     className,
     disabled = false,
     allowFuture = false,
+    futureYears = 10,
     minDate = null,
     maxDate = null,
 }) => {
@@ -49,7 +50,7 @@ const CustomDatePicker = ({
     if (maxDate) {
         maxYear = maxDate.getFullYear();
     } else if (allowFuture) {
-        maxYear = currentYear + 10;
+        maxYear = currentYear + futureYears;
     }
     const years = [];
     for (let y = maxYear; y >= minYear; y--) {
