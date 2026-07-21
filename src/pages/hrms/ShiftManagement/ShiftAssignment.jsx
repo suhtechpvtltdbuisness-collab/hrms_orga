@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Loader2, Save, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Info, Loader2, Save, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceUtils, employeeService, shiftAssignmentService, shiftService } from '../../../service';
 import CustomDatePicker from '../../../components/ui/CustomDatePicker';
@@ -61,6 +61,8 @@ const normalizeRosterItem = (item) => {
         shiftTypeId: shiftTypeId ? String(shiftTypeId) : '',
         shiftTypeName: shiftType?.name || source.shiftTypeName || source.shiftName || '',
         date: source.date || source.rosterDate || source.assignmentDate || item?.date || '',
+        dateFrom: attendanceUtils.toDisplayDate(source.dateFrom || source.startDate || source.date || source.rosterDate || source.assignmentDate || item?.date || ''),
+        dateTo: attendanceUtils.toDisplayDate(source.dateTo || source.endDate || source.date || source.rosterDate || source.assignmentDate || item?.date || ''),
         isDirty: false,
         raw: source,
     };
@@ -100,6 +102,8 @@ const normalizeEmployeeRosterItem = (item, index, page, pageSize) => {
         department,
         designation,
         date: '',
+        dateFrom: '',
+        dateTo: '',
         shiftTypeId: '',
         shiftTypeName: '',
         isDirty: false,
@@ -233,6 +237,8 @@ const ShiftAssignment = () => {
                         ...row,
                         id: todayAssignment.id || row.id,
                         date: todayAssignment.date || todayAssignment.rosterDate || apiFromDate,
+                        dateFrom: attendanceUtils.toDisplayDate(todayAssignment.dateFrom || todayAssignment.startDate || todayAssignment.date || todayAssignment.rosterDate || apiFromDate),
+                        dateTo: attendanceUtils.toDisplayDate(todayAssignment.dateTo || todayAssignment.endDate || todayAssignment.date || todayAssignment.rosterDate || apiToDate),
                         shiftTypeId: shiftTypeId ? String(shiftTypeId) : '',
                         shiftTypeName: shiftType?.name || todayAssignment.shiftTypeName || todayAssignment.shiftName || '',
                         isDirty: false,
@@ -281,6 +287,16 @@ const ShiftAssignment = () => {
                     : row,
             ),
         );
+    };
+
+    const updateRowDate = (employeeId, field, value) => {
+        setRows((prev) => prev.map((row) => {
+            if (String(row.employeeId) !== String(employeeId)) return row;
+            const next = { ...row, [field]: value, isDirty: true };
+            if (field === 'dateFrom' && compareApiDates(value, next.dateTo || selectedToDate) > 0) next.dateTo = value;
+            if (field === 'dateTo' && compareApiDates(next.dateFrom || selectedFromDate, value) > 0) next.dateFrom = value;
+            return next;
+        }));
     };
 
     const handleSelectAll = (event) => {
@@ -354,6 +370,8 @@ const ShiftAssignment = () => {
                     return {
                         employeeId: employeeIdNumber,
                         shiftTypeId: row.shiftTypeId ? Number(row.shiftTypeId) : null,
+                        dateFrom: attendanceUtils.toApiDate(row.dateFrom || selectedFromDate),
+                        dateTo: attendanceUtils.toApiDate(row.dateTo || selectedToDate),
                     };
                 })
                 .filter(Boolean);
@@ -542,9 +560,9 @@ const ShiftAssignment = () => {
                 </div>
             )}
 
-            <div className="flex-1 min-h-0 overflow-hidden border border-[#CECECE] rounded-lg">
-                <div className="h-full overflow-y-auto">
-                    <table className="w-full relative border-collapse">
+            <div className="flex-1 min-h-0 overflow-hidden border border-[#CECECE] rounded-xl bg-white">
+                <div className="h-full overflow-auto custom-scrollbar">
+                    <table className="w-full min-w-[1480px] relative border-collapse">
                         <thead className="sticky top-0 z-10 bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
                             <tr className="text-left text-[13px] border-b border-[#CECECE]">
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[64px] text-center">
@@ -560,6 +578,8 @@ const ShiftAssignment = () => {
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[16%]">Department</th>
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[16%]">Designation</th>
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[22%]">Shift Assignment</th>
+                                <th className="py-3 px-5 text-[#757575] font-normal w-[190px]"><span className="flex items-center gap-1.5">Date From <Info size={14} /></span></th>
+                                <th className="py-3 px-5 text-[#757575] font-normal w-[190px]"><span className="flex items-center gap-1.5">Date To <Info size={14} /></span></th>
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[10%] text-center">Status</th>
                                 <th className="py-3 px-6 text-[#757575] font-normal w-[90px] text-right">Action</th>
                             </tr>
@@ -568,7 +588,7 @@ const ShiftAssignment = () => {
                         <tbody>
                             {(loadingRoster || loadingShifts) && (
                                 <tr>
-                                    <td colSpan={8} className="py-14 text-center text-gray-500">
+                                    <td colSpan={10} className="py-14 text-center text-gray-500">
                                         <div className="flex items-center justify-center gap-2">
                                             <Loader2 size={18} className="animate-spin text-[#7D1EDB]" />
                                             Loading shift roster...
@@ -617,6 +637,26 @@ const ShiftAssignment = () => {
                                                 ))}
                                             </select>
                                         </td>
+                                        <td className="py-3.5 px-5">
+                                            <div className="w-[175px]">
+                                                <CustomDatePicker
+                                                    value={row.dateFrom || selectedFromDate}
+                                                    onChange={(value) => updateRowDate(row.employeeId, 'dateFrom', value)}
+                                                    placeholder="Date From"
+                                                    className="w-full h-10 bg-white"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="py-3.5 px-5">
+                                            <div className="w-[175px]">
+                                                <CustomDatePicker
+                                                    value={row.dateTo || selectedToDate}
+                                                    onChange={(value) => updateRowDate(row.employeeId, 'dateTo', value)}
+                                                    placeholder="Date To"
+                                                    className="w-full h-10 bg-white"
+                                                />
+                                            </div>
+                                        </td>
                                         <td className="py-3.5 px-6 text-center">
                                             <span
                                                 className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold border ${
@@ -649,7 +689,7 @@ const ShiftAssignment = () => {
 
                             {!loadingRoster && !loadingShifts && !visibleRows.length && (
                                 <tr>
-                                    <td colSpan={8} className="py-12 text-center text-gray-400">
+                                    <td colSpan={10} className="py-12 text-center text-gray-400">
                                         No shift assignments found for this date range.
                                     </td>
                                 </tr>
