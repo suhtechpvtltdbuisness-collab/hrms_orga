@@ -2198,14 +2198,50 @@ export const attendanceService = {
         return {
           success: false,
           message: data.error || data.message || "Failed to import attendance",
+          data: data.data || null,
         };
       }
 
       return {
         success: true,
         message: data.message || "Attendance imported successfully",
-        data,
+        data: data.data ?? data,
       };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  downloadAttendanceTemplate: async ({ fromDate, toDate } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (fromDate) params.set("fromDate", fromDate);
+      if (toDate) params.set("toDate", toDate);
+      const query = params.toString();
+      const response = await apiFetch(
+        `${BASE_URL}/attendance/import/template${query ? `?${query}` : ""}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        },
+      );
+
+      if (!response.ok) {
+        let message = "Failed to download template";
+        try {
+          const data = await response.json();
+          message = data.error || data.message || message;
+        } catch {
+          // ignore json parse errors for binary responses
+        }
+        return { success: false, message };
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const fileName = match?.[1] || "attendance-template.xlsx";
+      return { success: true, blob, fileName };
     } catch {
       return { success: false, message: "Something went wrong" };
     }

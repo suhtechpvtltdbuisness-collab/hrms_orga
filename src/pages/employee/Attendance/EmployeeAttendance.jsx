@@ -9,6 +9,7 @@ import {
   Loader2,
   ArrowRight,
   CalendarPlus,
+  CalendarClock,
   Send,
   X,
 } from 'lucide-react';
@@ -29,6 +30,31 @@ const STATUS_META = {
   on_leave: { label: 'On Leave', tone: 'bg-blue-100 text-blue-700 border-blue-200' },
   weekend: { label: 'Weekend', tone: 'bg-slate-100 text-slate-500 border-slate-200' },
   holiday: { label: 'Holiday', tone: 'bg-violet-100 text-violet-700 border-violet-200' },
+};
+
+const REQUEST_STATUS_STYLE = {
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  rejected: 'bg-rose-50 text-rose-700 border-rose-200',
+};
+
+const normalizeMyRequest = (item) => ({
+  id: item.id || item._id,
+  fromDate: item.fromDate || item.date || item.attendanceDate,
+  toDate: item.toDate || item.fromDate || item.date || item.attendanceDate,
+  requestType: item.requestType || item.reason || 'Attendance correction',
+  explanation: item.explanation || item.description || item.notes || '',
+  isHalfDay: Boolean(item.isHalfDay),
+  status: String(item.status || 'pending').toLowerCase(),
+  rejectionReason: item.rejectionReason || '',
+  createdAt: item.createdAt,
+});
+
+const formatRequestDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 const pad2 = (value) => String(value).padStart(2, '0');
@@ -405,6 +431,8 @@ const EmployeeAttendance = () => {
   const [checkOutLoading, setCheckOutLoading] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [requestForm, setRequestForm] = useState({
     fromDate: toDateKey(new Date()),
     toDate: toDateKey(new Date()),
@@ -534,9 +562,22 @@ const EmployeeAttendance = () => {
     }
   }, [monthKey]);
 
+  const loadMyRequests = useCallback(async () => {
+    setLoadingRequests(true);
+    const result = await attendanceService.getAttendanceRequests();
+    if (result.success) {
+      setMyRequests((result.data || []).map(normalizeMyRequest));
+    }
+    setLoadingRequests(false);
+  }, []);
+
   useEffect(() => {
     loadShiftContext();
   }, [loadShiftContext]);
+
+  useEffect(() => {
+    loadMyRequests();
+  }, [loadMyRequests]);
 
   useEffect(() => {
     loadAttendanceState({ quiet: false });
@@ -805,6 +846,7 @@ const EmployeeAttendance = () => {
       toast.success('Attendance request submitted for approval.');
       setShowRequestModal(false);
       setRequestForm({ fromDate: todayKey, toDate: todayKey, requestType: 'Missed check-in', isHalfDay: false, explanation: '' });
+      await loadMyRequests();
     } else toast.error(result.message || 'Could not submit attendance request.');
     setRequestSubmitting(false);
   };
@@ -1074,6 +1116,81 @@ const EmployeeAttendance = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">My attendance requests</h2>
+            <p className="mt-0.5 text-sm text-slate-500">Track correction requests you submitted for admin review.</p>
+          </div>
+          <button
+            type="button"
+            onClick={loadMyRequests}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {loadingRequests ? (
+          <div className="flex h-36 items-center justify-center text-sm text-slate-500">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin text-violet-600" />
+            Loading requests...
+          </div>
+        ) : myRequests.length === 0 ? (
+          <div className="flex h-36 flex-col items-center justify-center px-5 text-center text-slate-400">
+            <CalendarClock className="mb-2 h-8 w-8 text-violet-300" />
+            <p className="font-semibold text-slate-600">No requests yet</p>
+            <p className="mt-1 text-sm">Use Request correction when you need attendance regularisation.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-5 py-3">Request</th>
+                  <th className="px-5 py-3">Dates</th>
+                  <th className="px-5 py-3">Submitted</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myRequests.map((request) => (
+                  <tr key={request.id} className="border-t border-slate-100 align-top">
+                    <td className="px-5 py-3">
+                      <p className="font-semibold text-slate-800">{request.requestType}</p>
+                      {request.isHalfDay ? (
+                        <p className="mt-1 text-xs font-medium text-violet-600">Half day</p>
+                      ) : null}
+                      {request.explanation ? (
+                        <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500 line-clamp-2">{request.explanation}</p>
+                      ) : null}
+                    </td>
+                    <td className="px-5 py-3 text-slate-600">
+                      {formatRequestDate(request.fromDate)}
+                      {request.toDate !== request.fromDate ? ` – ${formatRequestDate(request.toDate)}` : ''}
+                    </td>
+                    <td className="px-5 py-3 text-slate-500">{formatRequestDate(request.createdAt)}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${REQUEST_STATUS_STYLE[request.status] || REQUEST_STATUS_STYLE.pending}`}>
+                        {request.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs text-slate-500">
+                      {request.status === 'rejected' && request.rejectionReason
+                        ? request.rejectionReason
+                        : request.status === 'approved'
+                          ? 'Applied to your attendance history'
+                          : 'Awaiting admin review'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
