@@ -1917,14 +1917,17 @@ export const attendanceUtils = {
       null;
     const checkInTime = att.checkIn || att.checkInTime || record.checkIn || null;
     const checkOutTime = att.checkOut || att.checkOutTime || record.checkOut || null;
-    let workedDuration = att.workedDuration || record.workedDuration || null;
-    if (!workedDuration && checkInTime && checkOutTime) {
+    const isNonDuty = att.status === "absent" || att.status === "on_leave";
+    let workedDuration = isNonDuty
+      ? null
+      : att.workedDuration || record.workedDuration || null;
+    if (!isNonDuty && !workedDuration && checkInTime && checkOutTime) {
       const workedMinutes = Math.max(
         0,
         Math.floor((new Date(checkOutTime).getTime() - new Date(checkInTime).getTime()) / 60_000),
       );
       workedDuration = `${Math.floor(workedMinutes / 60)}h ${workedMinutes % 60}m`;
-    } else if (!workedDuration && checkInTime && !checkOutTime) {
+    } else if (!isNonDuty && !workedDuration && checkInTime && !checkOutTime) {
       workedDuration = "In progress";
     }
 
