@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X } from 'lucide-react';
 import Spinner from '../../../../components/ui/Spinner';
-import { hiringService } from '../../../../service';
+import { getSecureFileUrl, hiringService } from '../../../../service';
 
 const ScheduleInterview = () => {
     const navigate = useNavigate();
@@ -180,7 +180,7 @@ const ScheduleInterview = () => {
             toast.error('No resume available for preview');
             return;
         }
-        const proxyUrl = `${window.location.origin}/api/upload/blob?url=${encodeURIComponent(existingResumeUrl)}`;
+        const proxyUrl = getSecureFileUrl(existingResumeUrl);
         try {
             const token = localStorage.getItem('authToken');
             const response = await fetch(proxyUrl, {

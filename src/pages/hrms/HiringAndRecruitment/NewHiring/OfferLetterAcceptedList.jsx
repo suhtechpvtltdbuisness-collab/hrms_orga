@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { hiringService } from "../../../../service";
+import { getSecureFileUrl, hiringService } from "../../../../service";
 import Spinner from "../../../../components/ui/Spinner";
 
 const formatOfferDate = (value) => {
@@ -71,7 +71,7 @@ const previewSecureFile = async (url, label = "Document") => {
     toast.error("File not available");
     return;
   }
-  const proxyUrl = `${window.location.origin}/api/upload/blob?url=${encodeURIComponent(url)}`;
+  const proxyUrl = getSecureFileUrl(url);
   try {
     const token = localStorage.getItem("authToken");
     const response = await fetch(proxyUrl, {
