@@ -3483,6 +3483,16 @@ export const getProfilePicUrl = (url) => {
   return resolveBackendAssetUrl(url);
 };
 
+/** Resolve a stored file URL for authenticated preview (resume, docs, etc.). */
+export const getSecureFileUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+  if (url.includes("blob.vercel-storage.com") || url.includes("/uploads/")) {
+    return `${BASE_URL}/upload/blob?url=${encodeURIComponent(url)}`;
+  }
+  return resolveBackendAssetUrl(url);
+};
+
 export const organizationService = {
   getOrganizations: async (page = 1, limit = 10, search = "") => {
     try {

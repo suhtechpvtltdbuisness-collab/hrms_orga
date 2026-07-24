@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { ChevronRight, ArrowLeft, Briefcase, Mail, Phone, FileText, ChevronDown, ThumbsDown, ThumbsUp, ArrowRight, Copy, Check, X } from 'lucide-react';
 import Spinner from '../../../../components/ui/Spinner';
 import FilterDropdown from '../../../../components/ui/FilterDropdown';
-import { hiringService } from '../../../../service';
+import { getSecureFileUrl, hiringService } from '../../../../service';
 
 const NewHiring = () => {
     const navigate = useNavigate();
@@ -184,7 +184,7 @@ const NewHiring = () => {
             toast.error('No resume available for preview');
             return;
         }
-        const proxyUrl = `${window.location.origin}/api/upload/blob?url=${encodeURIComponent(selectedCandidate.resume)}`;
+        const proxyUrl = getSecureFileUrl(selectedCandidate.resume);
         setShowResumeModal(true);
         setResumeLoading(true);
         try {
@@ -198,6 +198,7 @@ const NewHiring = () => {
             setResumeBlobUrl(url);
         } catch {
             setResumeBlobUrl('');
+            toast.error('Unable to preview resume');
         }
         setResumeLoading(false);
     };
