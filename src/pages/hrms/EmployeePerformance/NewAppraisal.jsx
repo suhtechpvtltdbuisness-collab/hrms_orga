@@ -3,134 +3,231 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
 import CustomDatePicker from '../../../components/ui/CustomDatePicker';
+import {
+    appraisalService,
+    appraisalTemplateService,
+    employeeService,
+} from '../../../service';
 
 const NewAppraisal = () => {
     const navigate = useNavigate();
 
-    // State
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
-        series: 'HR-ATT-YYY',
-        template: '',
-        employee: '',
+        templateId: '',
+        empId: '',
         status: 'Draft',
-        startDate: '20/01/2026',
-        endDate: '29/01/2026',
-        remarks: ''
+        startDate: '',
+        endDate: '',
+        remarks: '',
     });
-
+    const [employeeName, setEmployeeName] = useState('');
+    const [departmentName, setDepartmentName] = useState('');
     const [goals, setGoals] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
+    const [templateOptions, setTemplateOptions] = useState([]);
+    const [employeeOptions, setEmployeeOptions] = useState([]);
+    const [employeesMap, setEmployeesMap] = useState({});
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
 
-    // Logic to handle progressive disclosure
     useEffect(() => {
-        if (formData.template && step < 2) {
-            setStep(2);
-            // Mock fetching goals based on template
-            setGoals([
-                { id: 1, srNo: "01", goal: "Accounts Payable", weightage: 30, score: 0, earned: 0 },
-                { id: 2, srNo: "01", goal: "Associate Receivables", weightage: 30, score: 0, earned: 0 },
-                { id: 3, srNo: "01", goal: "Reconciliation", weightage: 40, score: 0, earned: 0 }
+        const load = async () => {
+            const [templatesRes, userData] = await Promise.all([
+                appraisalTemplateService.getDropdown(),
+                Promise.resolve(JSON.parse(localStorage.getItem('userData') || '{}')),
             ]);
-        }
-    }, [formData.template]);
+
+            if (templatesRes.success) {
+                setTemplateOptions(
+                    (templatesRes.data || []).map((t) => ({
+                        label: t.title,
+                        value: String(t.id),
+                    })),
+                );
+            }
+
+            const adminId = userData?.id;
+            if (!adminId) return;
+            const empRes = await employeeService.getAllEmployeesByAdminId(adminId);
+            if (empRes.success && Array.isArray(empRes.data)) {
+                const map = {};
+                const options = empRes.data
+                    .map((item) => {
+                        const u = item.user || item;
+                        if (!u?.id) return null;
+                        map[String(u.id)] = {
+                            name: u.name || u.email || `EMP-${u.id}`,
+                            department:
+                                item.department?.name ||
+                                item.department?.departmentName ||
+                                '—',
+                        };
+                        return {
+                            label: u.name || u.email || `EMP-${u.id}`,
+                            value: String(u.id),
+                        };
+                    })
+                    .filter(Boolean);
+                setEmployeeOptions(options);
+                setEmployeesMap(map);
+            }
+        };
+        load();
+    }, []);
 
     useEffect(() => {
-        if (formData.employee && formData.startDate && formData.endDate && step < 3) {
+        if (!formData.templateId) return;
+        const loadGoals = async () => {
+            const res = await appraisalTemplateService.getTemplateById(formData.templateId);
+            if (res.success && res.data) {
+                setGoals(
+                    (res.data.goals || []).map((g, index) => ({
+                        id: g.id || index + 1,
+                        templateGoalId: g.id,
+                        srNo: g.srNo || String(index + 1).padStart(2, '0'),
+                        goal: g.kra || '',
+                        weightage: Number(g.weightage) || 0,
+                        score: 0,
+                        earned: 0,
+                    })),
+                );
+                if (step < 2) setStep(2);
+            }
+        };
+        loadGoals();
+    }, [formData.templateId]);
+
+    useEffect(() => {
+        if (formData.empId && formData.startDate && formData.endDate && step < 3) {
             setStep(3);
         }
-    }, [formData.employee, formData.startDate, formData.endDate]);
+    }, [formData.empId, formData.startDate, formData.endDate, step]);
 
-
-    // Handlers
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
+        if (field === 'empId') {
+            const emp = employeesMap[String(value)];
+            setEmployeeName(emp?.name || '');
+            setDepartmentName(emp?.department || '');
+        }
     };
 
     const handleGoalChange = (id, field, value) => {
         if (field === 'score') {
-            // Validate: Numeric only (regex) AND range 0-5
             if (value === '' || /^\d*\.?\d*$/.test(value)) {
                 const numVal = parseFloat(value);
                 if (value === '' || value === '.' || (numVal >= 0 && numVal <= 5)) {
-                     setGoals(goals.map(item => {
-                        if (item.id === id) {
-                            const score = (value === '' || value === '.') ? 0 : parseFloat(value);
-                            const earned = (score / 5) * item.weightage;
-                            return { ...item, score: value, earned: earned.toFixed(2) }; 
-                        }
-                        return item;
-                    }));
+                    setGoals((prev) =>
+                        prev.map((item) => {
+                            if (item.id !== id) return item;
+                            const score = value === '' || value === '.' ? 0 : parseFloat(value);
+                            const earned = (score / 5) * Number(item.weightage || 0);
+                            return { ...item, score: value, earned: earned.toFixed(2) };
+                        }),
+                    );
                 }
             }
         } else if (field === 'weightage') {
-            // Validate: Numeric only
-             if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                setGoals(goals.map(item => {
-                    if (item.id === id) {
-                         // Recalculate earned based on new weightage
-                         const score = parseFloat(item.score || 0);
-                         const newWeightage = value === '' ? 0 : parseFloat(value);
-                         const earned = (score / 5) * newWeightage;
-                         return { ...item, weightage: value, earned: earned.toFixed(2) }; 
-                    }
-                    return item;
-                }));
+            if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                setGoals((prev) =>
+                    prev.map((item) => {
+                        if (item.id !== id) return item;
+                        const score = parseFloat(item.score || 0);
+                        const newWeightage = value === '' ? 0 : parseFloat(value);
+                        const earned = (score / 5) * newWeightage;
+                        return { ...item, weightage: value, earned: earned.toFixed(2) };
+                    }),
+                );
             }
         } else if (field === 'goal') {
-             // Validate: Alphabets and spaces only
-             if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                setGoals(goals.map(item => 
-                    item.id === id ? { ...item, [field]: value } : item
-                ));
+            if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                setGoals((prev) =>
+                    prev.map((item) => (item.id === id ? { ...item, goal: value } : item)),
+                );
             }
         } else {
-             setGoals(goals.map(item => 
-                item.id === id ? { ...item, [field]: value } : item
-            ));
+            setGoals((prev) =>
+                prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+            );
         }
     };
-    
-    // Add Row Handler
-     const handleAddRow = () => {
-        const newId = goals.length > 0 ? Math.max(...goals.map(g => g.id)) + 1 : 1;
-        setGoals([...goals, { 
-            id: newId, 
-            srNo: String(goals.length + 1).padStart(2, '0'), 
-            goal: "", 
-            weightage: 0,
-            score: 0,
-            earned: 0
-        }]);
-    };
 
+    const handleAddRow = () => {
+        const newId = goals.length > 0 ? Math.max(...goals.map((g) => g.id)) + 1 : 1;
+        setGoals([
+            ...goals,
+            {
+                id: newId,
+                templateGoalId: null,
+                srNo: String(goals.length + 1).padStart(2, '0'),
+                goal: '',
+                weightage: 0,
+                score: 0,
+                earned: 0,
+            },
+        ]);
+    };
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedRows(goals.map(item => item.id));
+            setSelectedRows(goals.map((item) => item.id));
         } else {
             setSelectedRows([]);
         }
     };
 
     const handleSelectRow = (id) => {
-        setSelectedRows(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(rowId => rowId !== id);
-            } else {
-                return [...prev, id];
-            }
-        });
+        setSelectedRows((prev) =>
+            prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id],
+        );
     };
 
     const calculateTotalScore = () => {
-        return goals.reduce((acc, curr) => acc + parseFloat(curr.earned || 0), 0).toFixed(3);
+        return goals
+            .reduce((acc, curr) => acc + parseFloat(curr.earned || 0), 0)
+            .toFixed(3);
+    };
+
+    const handleSave = async () => {
+        if (!formData.templateId) {
+            setError('Please select an appraisal template');
+            return;
+        }
+        if (!formData.empId) {
+            setError('Please select an employee');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        const payload = {
+            templateId: Number(formData.templateId),
+            empId: Number(formData.empId),
+            status: formData.status || 'Draft',
+            startDate: formData.startDate || null,
+            endDate: formData.endDate || null,
+            remarks: formData.remarks || null,
+            goals: goals.map((g, index) => ({
+                templateGoalId: g.templateGoalId || null,
+                srNo: String(index + 1).padStart(2, '0'),
+                goal: g.goal,
+                weightage: Number(g.weightage) || 0,
+                score: Number(g.score) || 0,
+                earned: Number(g.earned) || 0,
+            })),
+        };
+        const res = await appraisalService.createAppraisal(payload);
+        setSaving(false);
+        if (res.success) {
+            navigate('/hrms');
+        } else {
+            setError(res.message || 'Failed to save appraisal');
+        }
     };
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-inter" style={{ fontFamily: 'Inter, sans-serif' }}>
             
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0" style={{ fontFamily: 'Mulish, sans-serif' }}>
                  <img 
                     src="/images/arrow_left_alt.svg" 
@@ -148,55 +245,54 @@ const NewAppraisal = () => {
                 <span className="text-[#6B7280]">New Appraisal</span>
             </div>
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>New Appraisal</h1>
                 
                 <button
-                    className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                    onClick={() => console.log("Save", formData, goals)}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 rounded-full py-2 px-3 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB] disabled:opacity-60"
+                    onClick={handleSave}
                 >
-                    <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>Save</span>
+                    <span className='text-[16px] font-normal text-white' style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        {saving ? 'Saving...' : 'Save'}
+                    </span>
                 </button>
             </div>
 
-            {/* Content Scroll Area */}
+            {error && <div className="mb-3 text-sm text-red-500 shrink-0">{error}</div>}
+
             <div className="flex-1 overflow-y-auto pr-2">
-                
-                {/* Details Section */}
                 <div className="border border-[#E0E0E0] rounded-lg p-4 mb-4">
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                          <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-2">Series</label>
-                            <FilterDropdown
-                                options={['HR-ATT-YYY']}
-                                value={formData.series}
-                                onChange={(val) => handleChange('series', val)}
-                                className="w-full bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-sm text-[#1E1E1E] flex items-center justify-between px-4 py-2"
-                                showArrow={true}
-                                dropdownWidth="100%"
-                                disableAllOption={true}
+                            <input
+                                type="text"
+                                value="Auto-generated on save"
+                                readOnly
+                                className="w-full bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg px-4 py-2 text-sm text-[#9CA3AF] outline-none"
                             />
                         </div>
                         <div>
                              <label className="block text-sm font-normal text-[#1E1E1E] mb-2">Appraisal Template</label>
                             <FilterDropdown
-                                options={['Associate', 'Manager', 'Lead']}
-                                value={formData.template}
-                                onChange={(val) => handleChange('template', val)}
+                                options={templateOptions}
+                                value={formData.templateId}
+                                onChange={(val) => handleChange('templateId', val)}
                                 className="w-full bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-sm text-[#1E1E1E] flex items-center justify-between px-4 py-2"
                                 showArrow={true}
                                 dropdownWidth="100%"
                                 disableAllOption={true}
+                                placeholder="Select template"
                             />
                         </div>
                         {step >= 2 && (
                              <div className="animate-fade-in-down">
                                 <label className="block text-sm font-normal text-[#1E1E1E] mb-2">For Employee</label>
                                 <FilterDropdown
-                                    options={['Mike Miller', 'John Doe', 'Jane Smith']}
-                                    value={formData.employee}
-                                    onChange={(val) => handleChange('employee', val)}
+                                    options={employeeOptions}
+                                    value={formData.empId}
+                                    onChange={(val) => handleChange('empId', val)}
                                     className="w-full bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg text-sm text-[#1E1E1E] flex items-center justify-between px-4 py-2"
                                     showArrow={true}
                                     dropdownWidth="100%"
@@ -206,7 +302,6 @@ const NewAppraisal = () => {
                             </div>
                         )}
                         
-                        {/* Row 2 */}
                         {step >= 2 && (
                             <>
                                  <div className="animate-fade-in-down">
@@ -237,24 +332,21 @@ const NewAppraisal = () => {
                             </>
                         )}
                         
-                         {/* Row 3 - Additional Info */}
-                         {step >= 2 && formData.employee && (
+                         {step >= 2 && formData.empId && (
                             <>
                                 <div className="animate-fade-in-down">
                                      <label className="block text-sm font-normal text-[#1E1E1E] mb-2">For Employee Name</label>
-                                     <input type="text" value={formData.employee} readOnly className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 text-sm text-[#1E1E1E] outline-none"/>
+                                     <input type="text" value={employeeName} readOnly className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 text-sm text-[#1E1E1E] outline-none"/>
                                 </div>
                                 <div className="animate-fade-in-down">
                                      <label className="block text-sm font-normal text-[#1E1E1E] mb-2">Department</label>
-                                     <input type="text" value="Sales" readOnly className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 text-sm text-[#1E1E1E] outline-none"/>
+                                     <input type="text" value={departmentName} readOnly className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 text-sm text-[#1E1E1E] outline-none"/>
                                 </div>
                             </>
                          )}
                      </div>
                 </div>
 
-
-                {/* Section 3: Goals Table (Revealed when employee selected) */}
                 {step >= 3 && (
                     <>
                         <div className="border border-[#E0E0E0] rounded-lg p-4 mb-4 animate-fade-in-down">
@@ -342,6 +434,7 @@ const NewAppraisal = () => {
                                                 <td className="py-3 px-6 text-center">
                                                     <button 
                                                         className="hover:scale-110 transition-transform"
+                                                        type="button"
                                                     >
                                                         <img src="/pencil.svg" alt="Edit" className="w-[18px] h-[18px]" />
                                                     </button>
@@ -369,7 +462,6 @@ const NewAppraisal = () => {
                             </div>
                         </div>
 
-                         {/* Remarks Section */}
                         <div className="border border-[#E0E0E0] rounded-lg p-4 animate-fade-in-down">
                             <h3 className="text-[16px] font-medium text-[#1E1E1E] mb-2" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>Remarks</h3>
                             <textarea 

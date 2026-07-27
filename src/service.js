@@ -1572,6 +1572,377 @@ export const performanceService = {
   },
 };
 
+// ─── Appraisal Template Service ───────────────────────────────────────────────
+export const appraisalTemplateService = {
+  getTemplates: async (filters = {}) => {
+    try {
+      const query = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(filters).filter(([, v]) => v != null && v !== ""),
+        ),
+      ).toString();
+      const response = await apiFetch(
+        `${BASE_URL}/appraisal-templates${query ? `?${query}` : ""}`,
+        { method: "GET" },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch templates" };
+      }
+      return { success: true, data: data.data || data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getDropdown: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisal-templates/dropdown`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch templates" };
+      }
+      return { success: true, data: data.data || [] };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getTemplateById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisal-templates/${id}`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch template" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createTemplate: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisal-templates`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create template" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateTemplate: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisal-templates/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to update template" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteTemplate: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisal-templates/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to delete template" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
+// ─── Appraisal Service ────────────────────────────────────────────────────────
+export const appraisalService = {
+  getAppraisals: async (filters = {}) => {
+    try {
+      const query = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(filters).filter(([, v]) => v != null && v !== ""),
+        ),
+      ).toString();
+      const response = await apiFetch(
+        `${BASE_URL}/appraisals${query ? `?${query}` : ""}`,
+        { method: "GET" },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch appraisals" };
+      }
+      return { success: true, data: data.data || data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getAppraisalById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisals/${id}`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch appraisal" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createAppraisal: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisals`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create appraisal" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateAppraisal: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisals/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to update appraisal" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteAppraisal: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/appraisals/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to delete appraisal" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
+// ─── Energy Point Service ─────────────────────────────────────────────────────
+export const energyPointService = {
+  getRules: async (filters = {}) => {
+    try {
+      const query = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(filters).filter(([, v]) => v != null && v !== ""),
+        ),
+      ).toString();
+      const response = await apiFetch(
+        `${BASE_URL}/energy-points/rules${query ? `?${query}` : ""}`,
+        { method: "GET" },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch rules" };
+      }
+      return { success: true, data: data.data || data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getRuleById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/rules/${id}`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch rule" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createRule: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/rules`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create rule" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateRule: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/rules/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to update rule" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteRule: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/rules/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to delete rule" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getLogs: async (filters = {}) => {
+    try {
+      const query = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(filters).filter(([, v]) => v != null && v !== ""),
+        ),
+      ).toString();
+      const response = await apiFetch(
+        `${BASE_URL}/energy-points/logs${query ? `?${query}` : ""}`,
+        { method: "GET" },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch logs" };
+      }
+      return { success: true, data: data.data || data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getLogById: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/logs/${id}`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch log" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createLog: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/logs`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to create log" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteLog: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/logs/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to delete log" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getSettings: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/settings`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch settings" };
+      }
+      return { success: true, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  saveSettings: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/energy-points/settings`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to save settings" };
+      }
+      return { success: true, message: data.message, data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
 // ─── Payroll Service ───────────────────────────────────────────────────────────
 export const payrollService = {
   // POST /payroll — create a payroll record

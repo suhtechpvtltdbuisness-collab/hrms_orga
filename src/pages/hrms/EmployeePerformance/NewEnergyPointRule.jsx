@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import FilterDropdown from '../../../components/ui/FilterDropdown';
+import { energyPointService } from '../../../service';
 
 const NewEnergyPointRule = () => {
     const navigate = useNavigate();
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
         enabled: true,
@@ -16,31 +19,49 @@ const NewEnergyPointRule = () => {
         userField: 'Owner',
         multiplierField: '',
         applyOnlyOnce: false,
-        condition: "doc.status== 'closed'"
+        condition: "doc.status== 'closed'",
     });
 
-    const DOCUMENT_EVENT_OPTIONS = ["Custom","New",  "Submit", "Cancel", "Update"];
-    const USER_FIELD_OPTIONS = ["Activity Name", "Owner", "User", "Modified By"];
+    const DOCUMENT_EVENT_OPTIONS = ['Custom', 'New', 'Submit', 'Cancel', 'Update'];
+    const USER_FIELD_OPTIONS = ['Activity Name', 'Owner', 'User', 'Modified By'];
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : value,
         }));
     };
 
     const handleDropdownChange = (name, value) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
+    };
+
+    const handleSave = async () => {
+        if (!formData.ruleName.trim()) {
+            setError('Rule name is required');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        const res = await energyPointService.createRule({
+            ...formData,
+            points: Number(formData.points) || 0,
+        });
+        setSaving(false);
+        if (res.success) {
+            navigate('/hrms/energy-point-rule');
+        } else {
+            setError(res.message || 'Failed to save rule');
+        }
     };
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-popins" style={{ fontFamily: 'Poppins, sans-serif' }}>
             
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
                 <img 
                     src="/images/arrow_left_alt.svg" 
@@ -58,22 +79,23 @@ const NewEnergyPointRule = () => {
                 <span className="text-[#6B7280]">Add New Energy Point Rule</span>
             </div>
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-4 shrink-0">
                 <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>New Energy Point Rule</h1>
                 
                 <button
-                    className="flex items-center justify-center gap-2 rounded-full py-2 px-4 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB]"
-                    onClick={() => navigate('/hrms/energy-point-rule')}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 rounded-full py-2 px-4 text-white font-normal hover:bg-purple-700 transition-colors bg-[#7D1EDB] disabled:opacity-60"
+                    onClick={handleSave}
                 >
-                    <span className='text-[16px] font-normal text-white font-popins'>Save</span>
+                    <span className='text-[16px] font-normal text-white font-popins'>
+                        {saving ? 'Saving...' : 'Save'}
+                    </span>
                 </button>
             </div>
 
-            {/* Content Container */}
+            {error && <div className="mb-3 text-sm text-red-500 shrink-0">{error}</div>}
+
             <div className="flex-1 w-full max-w-full overflow-y-auto">
-                
-                {/* Enabled Checkbox Card */}
                 <div className="border border-[#E0E0E0] rounded-lg p-4 mb-6">
                     <label className="flex items-center gap-2 cursor-pointer w-fit">
                         <input 
@@ -87,13 +109,8 @@ const NewEnergyPointRule = () => {
                     </label>
                 </div>
 
-                {/* Form Grid */}
                 <div className="border border-[#E0E0E0] rounded-lg p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    
-                    {/* Left Column */}
                     <div className="space-y-2">
-                        
-                        {/* Rule Name */}
                         <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">Rule Name</label>
                             <input 
@@ -106,7 +123,6 @@ const NewEnergyPointRule = () => {
                             />
                         </div>
 
-                         {/* Reference Document Type */}
                          <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">Reference Document Type</label>
                             <input 
@@ -119,7 +135,6 @@ const NewEnergyPointRule = () => {
                             />
                         </div>
 
-                        {/* For Document Event */}
                         <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">For Document Event</label>
                             <FilterDropdown
@@ -134,7 +149,6 @@ const NewEnergyPointRule = () => {
                             />
                         </div>
 
-                        {/* Points */}
                          <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">Points</label>
                             <input 
@@ -146,7 +160,6 @@ const NewEnergyPointRule = () => {
                             />
                         </div>
 
-                        {/* Allot Points Checkbox */}
                          <div>
                             <label className="flex items-center gap-2 cursor-pointer w-fit">
                                 <input 
@@ -161,7 +174,6 @@ const NewEnergyPointRule = () => {
                              <p className="text-xs text-[#757575] mt-1 ml-6">Users assigned to reference document will get points</p>
                         </div>
 
-                         {/* User Field */}
                          <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">User Filed</label>
                             <FilterDropdown
@@ -177,7 +189,6 @@ const NewEnergyPointRule = () => {
                             <p className="text-xs text-[#757575] mt-1">The user from this field will be rewarded points</p>
                         </div>
 
-                        {/* Multiplier Field */}
                         <div>
                             <label className="block text-sm font-normal text-[#1E1E1E] mb-1">Multiplier Filed</label>
                             <input 
@@ -189,12 +200,9 @@ const NewEnergyPointRule = () => {
                                 className="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 text-sm bg-[#F5F5F5] cursor-not-allowed"
                             />
                         </div>
-
                     </div>
 
-                    {/* Right Column */}
                     <div className="flex flex-col h-full">
-                         {/* Apply Only Once */}
                          <div className="mb-4">
                             <label className="flex items-center gap-2 cursor-pointer w-fit">
                                 <input 
@@ -209,7 +217,6 @@ const NewEnergyPointRule = () => {
                             <p className="text-xs text-[#757575] mt-1 ml-6">Apply this rule only once per dcument</p>
                         </div>
 
-                        {/* Condition */}
                         <div className="flex-1 flex flex-col">
                              <label className="block text-sm font-medium text-[#1E1E1E] mb-2">Condition</label>
                              <textarea 
@@ -224,7 +231,6 @@ const NewEnergyPointRule = () => {
                              </p>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
