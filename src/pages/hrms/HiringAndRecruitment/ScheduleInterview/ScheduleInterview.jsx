@@ -209,13 +209,20 @@ const ScheduleInterview = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value,
+        }));
     };
 
     const handleSave = async () => {
         const { name, email, phone, experience, date, time, panel } = formData;
         if (!name || !email || !phone || !experience || !date || !time || !panel) {
             toast.error('Please fill in all candidate and interview details.');
+            return;
+        }
+        if (!/^\d{10}$/.test(phone)) {
+            toast.error('Enter a valid 10-digit phone number.');
             return;
         }
         setSubmitting(true);
@@ -448,7 +455,7 @@ const ScheduleInterview = () => {
                         </div>
                         <div>
                             <span style={label}>Phone number</span>
-                            <input className="autofill-grey" type="text" name="phone" placeholder="Enter phone number" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.phone} onChange={handleInputChange} disabled={isReadMode} />
+                            <input className="autofill-grey" type="tel" inputMode="numeric" maxLength={10} pattern="[0-9]{10}" name="phone" placeholder="10-digit phone number" style={{ ...input, backgroundColor: '#F5F5F5', border: '1px solid #D9D9D9' }} value={formData.phone} onChange={handleInputChange} disabled={isReadMode} />
                         </div>
                         <div>
                             <span style={label}>Experience</span>

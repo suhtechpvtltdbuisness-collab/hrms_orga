@@ -21,11 +21,18 @@ const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text' })
             <input
               type={inputType}
               value={val}
-              onChange={e => setVal(e.target.value)}
+              inputMode={inputType === 'tel' ? 'numeric' : undefined}
+              maxLength={inputType === 'tel' ? 10 : undefined}
+              pattern={inputType === 'tel' ? '[0-9]{10}' : undefined}
+              onChange={e => setVal(inputType === 'tel' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value)}
               className="flex-1 text-sm text-gray-800 border border-violet-300 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-violet-100"
               autoFocus
             />
-            <button onClick={() => { onChange?.(name, val); setEditing(false); }} className="w-7 h-7 bg-violet-600 text-white rounded-lg flex items-center justify-center hover:bg-violet-700">
+            <button onClick={() => {
+              if (inputType === 'tel' && !/^\d{10}$/.test(val)) return;
+              onChange?.(name, val);
+              setEditing(false);
+            }} className="w-7 h-7 bg-violet-600 text-white rounded-lg flex items-center justify-center hover:bg-violet-700">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => { setVal(value || ''); setEditing(false); }} className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-gray-200">
@@ -233,14 +240,14 @@ export default function EmployeeProfile() {
         {/* Contact Details */}
         <SectionCard title="Contact Details" icon={Phone} iconColor="bg-blue-100 text-blue-600">
           <InfoRow label="Email" value={localData.email} />
-          <InfoRow label="Phone" value={localData.phone} editable name="phone" onChange={handleChange} />
+          <InfoRow label="Phone" value={localData.phone} editable name="phone" inputType="tel" onChange={handleChange} />
         </SectionCard>
 
         {/* Emergency Contact */}
         <SectionCard title="Emergency Contact" icon={Shield} iconColor="bg-red-100 text-red-600">
           <InfoRow label="Name" value={localData.emergencyName} editable name="emergencyName" onChange={handleChange} />
           <InfoRow label="Relation" value={localData.emergencyRelation} editable name="emergencyRelation" onChange={handleChange} />
-          <InfoRow label="Phone" value={localData.emergencyPhone} editable name="emergencyPhone" onChange={handleChange} />
+          <InfoRow label="Phone" value={localData.emergencyPhone} editable name="emergencyPhone" inputType="tel" onChange={handleChange} />
         </SectionCard>
 
         {/* Employment Information */}

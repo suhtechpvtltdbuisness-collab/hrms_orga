@@ -74,6 +74,14 @@ export default function CandidateDocumentUpload() {
       toast.error('Phone and current address are required');
       return;
     }
+    if (!/^\d{10}$/.test(profile.phone)) {
+      toast.error('Enter a valid 10-digit phone number');
+      return;
+    }
+    if (profile.emergencyContactPhone && !/^\d{10}$/.test(profile.emergencyContactPhone)) {
+      toast.error('Enter a valid 10-digit emergency contact number');
+      return;
+    }
 
     setSubmitting(true);
     const formData = new FormData();
@@ -135,7 +143,7 @@ export default function CandidateDocumentUpload() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block text-sm font-semibold text-slate-700">
                       Phone *
-                      <input required value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                      <input required type="tel" inputMode="numeric" maxLength={10} pattern="[0-9]{10}" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} placeholder="10-digit phone number" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
                     </label>
                     <label className="block text-sm font-semibold text-slate-700">
                       Date of birth
@@ -188,7 +196,7 @@ export default function CandidateDocumentUpload() {
                     </label>
                     <label className="block text-sm font-semibold text-slate-700">
                       Contact phone
-                      <input value={profile.emergencyContactPhone} onChange={(e) => setProfile({ ...profile, emergencyContactPhone: e.target.value })} className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                      <input type="tel" inputMode="numeric" maxLength={10} pattern="[0-9]{10}" value={profile.emergencyContactPhone} onChange={(e) => setProfile({ ...profile, emergencyContactPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })} placeholder="10-digit phone number" className="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-2.5 font-normal outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
                     </label>
                   </div>
                 </section>

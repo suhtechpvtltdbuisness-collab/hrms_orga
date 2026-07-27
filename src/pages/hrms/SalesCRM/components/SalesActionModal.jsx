@@ -299,6 +299,12 @@ function LeadTextField({ label, name, placeholder, type = "text", required = fal
       <input
         name={name}
         type={type}
+        inputMode={type === "tel" ? "numeric" : undefined}
+        maxLength={type === "tel" ? 10 : undefined}
+        pattern={type === "tel" ? "[0-9]{10}" : undefined}
+        onInput={type === "tel" ? (event) => {
+          event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "").slice(0, 10);
+        } : undefined}
         placeholder={placeholder}
         required={required}
         defaultValue={defaultValue}
