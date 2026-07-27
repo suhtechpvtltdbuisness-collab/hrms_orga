@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Plus } from 'lucide-react';
+import { appraisalTemplateService } from '../../../service';
 
 const AppraisalTemplate = () => {
     const navigate = useNavigate();
     const [templates, setTemplates] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    const loadTemplates = async () => {
+        setLoading(true);
+        setError('');
+        const res = await appraisalTemplateService.getTemplates({ page: 1, limit: 100 });
+        if (res.success) {
+            setTemplates(res.data?.templates || []);
+        } else {
+            setError(res.message || 'Failed to load templates');
+            setTemplates([]);
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
-        const storedTemplates = JSON.parse(localStorage.getItem('appraisalTemplates')) || [];
-        setTemplates(storedTemplates);
+        loadTemplates();
     }, []);
-
 
     return (
         <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-inter" style={{ fontFamily: 'Inter, sans-serif' }}>
             
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
                 <img 
                     src="/images/arrow_left_alt.svg" 
@@ -33,7 +46,6 @@ const AppraisalTemplate = () => {
                 <span className="text-[#6B7280]">Appraisal Template</span>
             </div>
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <h1 className="text-[20px] font-semibold text-[#494949]" style={{ fontFamily: '"Nunito Sans", sans-serif' }}>Appraisal Template</h1>
 
@@ -47,8 +59,13 @@ const AppraisalTemplate = () => {
                 </button>
             </div>
 
-            {/* Content */}
-            {templates.length === 0 ? (
+            {error && (
+                <div className="mb-4 text-sm text-red-500 shrink-0">{error}</div>
+            )}
+
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center text-[#757575]">Loading...</div>
+            ) : templates.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
                     <div className="flex flex-col items-center justify-center text-center py-4">
                         <img 
@@ -85,6 +102,7 @@ const AppraisalTemplate = () => {
                                     <button 
                                         className="text-[#7D1EDB] hover:text-purple-700 font-medium text-[14px] flex items-center transition-colors"
                                         style={{ fontFamily: '"Nunito Sans", sans-serif' }}
+                                        onClick={() => navigate(`/hrms/appraisal-template/new?id=${template.id}`)}
                                     >
                                         View Details
                                     </button>
