@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
     const [formData, setFormData] = useState({
         name: userData.name || userData.firstName || 'Testing User',
-        phone: userData.phone || userData.mobile || '+91 98765 43210',
+        phone: String(userData.phone || userData.mobile || '').replace(/\D/g, '').slice(-10),
         location: 'Head Office, Delhi',
         dob: '1995-03-15'
     });
@@ -14,11 +14,18 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value,
+        }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!/^\d{10}$/.test(formData.phone)) {
+            toast.error('Enter a valid 10-digit phone number');
+            return;
+        }
         // In a real app, you would make an API call here.
         // For now, we simulate success and update the local state.
         onSave(formData);
@@ -56,11 +63,15 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1.5">PHONE NUMBER</label>
                             <input 
-                                type="text"
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={10}
+                                pattern="[0-9]{10}"
                                 name="phone"
                                 required
                                 value={formData.phone}
                                 onChange={handleChange}
+                                placeholder="10-digit phone number"
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#7D1EDB] focus:ring-2 focus:ring-violet-100 outline-none transition-all"
                             />
                         </div>

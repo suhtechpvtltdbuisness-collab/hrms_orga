@@ -48,6 +48,10 @@ const JobOpeningList = () => {
             toast.error('Name, email and resume are required');
             return;
         }
+        if (application.phone && !/^\d{10}$/.test(application.phone)) {
+            toast.error('Enter a valid 10-digit phone number');
+            return;
+        }
         setSubmitting(true);
         const uploadResult = await hiringService.uploadFile(resume);
         if (!uploadResult.success || !uploadResult.files?.[0]?.url) {
@@ -110,7 +114,7 @@ const JobOpeningList = () => {
                 <form onSubmit={submitApplication} onMouseDown={e => e.stopPropagation()} className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 shadow-xl">
                     <div className="flex justify-between gap-4 mb-5"><div><h2 className="text-xl font-semibold text-gray-900">Apply for {selectedJob?.title}</h2><p className="text-sm text-gray-500 mt-1">Fill in your details and attach your resume.</p></div><button type="button" onClick={() => setShowApply(false)}><X size={22} /></button></div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {[['name','Full name *','Enter full name'],['email','Email *','Enter email address'],['phone','Phone number','Enter phone number'],['experience','Experience','e.g. 3 years'],['skills','Skills','e.g. React, Node.js']].map(([name,label,placeholder]) => <label key={name} className={name === 'skills' ? 'sm:col-span-2 text-sm font-medium' : 'text-sm font-medium'}>{label}<input name={name} value={application[name]} onChange={e => setApplication(prev => ({ ...prev, [name]: e.target.value }))} placeholder={placeholder} type={name === 'email' ? 'email' : 'text'} className="block w-full mt-2 px-4 py-2.5 border border-gray-300 rounded-lg font-normal outline-none focus:ring-2 focus:ring-purple-200" /></label>)}
+                        {[['name','Full name *','Enter full name'],['email','Email *','Enter email address'],['phone','Phone number','10-digit phone number'],['experience','Experience','e.g. 3 years'],['skills','Skills','e.g. React, Node.js']].map(([name,label,placeholder]) => <label key={name} className={name === 'skills' ? 'sm:col-span-2 text-sm font-medium' : 'text-sm font-medium'}>{label}<input name={name} value={application[name]} onChange={e => setApplication(prev => ({ ...prev, [name]: name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value }))} placeholder={placeholder} type={name === 'email' ? 'email' : name === 'phone' ? 'tel' : 'text'} inputMode={name === 'phone' ? 'numeric' : undefined} maxLength={name === 'phone' ? 10 : undefined} pattern={name === 'phone' ? '[0-9]{10}' : undefined} className="block w-full mt-2 px-4 py-2.5 border border-gray-300 rounded-lg font-normal outline-none focus:ring-2 focus:ring-purple-200" /></label>)}
                         <label className="sm:col-span-2 text-sm font-medium">Cover letter<textarea value={application.coverLetter} onChange={e => setApplication(prev => ({ ...prev, coverLetter: e.target.value }))} rows={3} placeholder="Tell us why you are a good fit" className="block w-full mt-2 px-4 py-2.5 border border-gray-300 rounded-lg font-normal resize-none outline-none focus:ring-2 focus:ring-purple-200" /></label>
                         <label className="sm:col-span-2 border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer flex items-center gap-3"><Upload size={20} className="text-[#7D1EDB]" /><span className="text-sm text-gray-600">{resume?.name || 'Upload resume *'}</span><input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => setResume(e.target.files?.[0] || null)} /></label>
                     </div>

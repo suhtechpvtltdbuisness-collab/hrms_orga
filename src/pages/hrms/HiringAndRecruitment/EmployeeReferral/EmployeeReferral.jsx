@@ -66,13 +66,20 @@ const EmployeeReferral = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: name === 'candidatePhone' ? value.replace(/\D/g, '').slice(0, 10) : value,
+        }));
     };
 
     const handleSubmitReferral = async (e) => {
         e.preventDefault();
         if (!formData.candidateName) {
             toast.error('Please enter candidate name');
+            return;
+        }
+        if (formData.candidatePhone && !/^\d{10}$/.test(formData.candidatePhone)) {
+            toast.error('Enter a valid 10-digit phone number');
             return;
         }
         setSubmitting(true);
@@ -172,7 +179,10 @@ const EmployeeReferral = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Candidate Name *</label>
                                 <input
-                                    type="text"
+                                    type="tel"
+                                    inputMode="numeric"
+                                    maxLength={10}
+                                    pattern="[0-9]{10}"
                                     name="candidateName"
                                     value={formData.candidateName}
                                     onChange={handleInputChange}
@@ -199,7 +209,7 @@ const EmployeeReferral = () => {
                                     name="candidatePhone"
                                     value={formData.candidatePhone}
                                     onChange={handleInputChange}
-                                    placeholder="Enter phone number"
+                                    placeholder="10-digit phone number"
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                                 />
                             </div>
