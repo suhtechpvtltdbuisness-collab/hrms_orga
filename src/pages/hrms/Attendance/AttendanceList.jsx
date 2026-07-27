@@ -336,7 +336,7 @@ const AttendanceList = () => {
       )}
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto border border-[#CECECE] rounded-lg">
-        <table className={`w-full table-fixed ${hasFaceAttendance ? 'min-w-[1300px]' : 'min-w-[950px]'}`}>
+        <table className={`w-full table-fixed ${hasFaceAttendance ? 'min-w-[1600px]' : 'min-w-[1250px]'}`}>
           <thead className="sticky top-0 bg-white z-10">
             <tr className="text-left border-b border-[#CECECE]" style={{ fontFamily: 'Poppins, sans-serif' }}>
                <th className="py-3 px-6 w-[80px] text-[12px] font-normal text-[#757575] bg-white">Sr No.</th>
@@ -344,7 +344,9 @@ const AttendanceList = () => {
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white">EMP ID</th>
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Status</th>
                <th className="py-3 px-6 w-[180px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Attendance Date</th>
-               <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Hours on Duty</th>
+               <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Check In</th>
+               <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Check Out</th>
+               <th className="py-3 px-6 w-[180px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Total Working Hours</th>
                <th className="py-3 px-6 w-[150px] text-[12px] font-normal text-[#757575] tracking-wider bg-white text-center">Leave Type</th>
                {hasFaceAttendance && (
                  <>
@@ -357,7 +359,7 @@ const AttendanceList = () => {
           <tbody style={{ fontFamily: '"Nunito Sans", sans-serif' }}>
              {isLoading ? (
                 <tr>
-                  <td colSpan={hasFaceAttendance ? 9 : 7} className="text-center py-8 text-gray-500">Loading attendance...</td>
+                  <td colSpan={hasFaceAttendance ? 11 : 9} className="text-center py-8 text-gray-500">Loading attendance...</td>
                 </tr>
              ) : currentItems.length > 0 ? (
                  currentItems.map((item, index) => (
@@ -374,6 +376,8 @@ const AttendanceList = () => {
                          </span>
                        </td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.date}</td>
+                       <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.checkInTime}</td>
+                       <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.checkOutTime}</td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.workedDuration}</td>
                        <td className="py-2 px-6 text-[14px] text-[#000000] font-medium text-center">{item.leaveType}</td>
                        {hasFaceAttendance && (
@@ -390,7 +394,7 @@ const AttendanceList = () => {
                  ))
              ) : (
                 <tr>
-                    <td colSpan={hasFaceAttendance ? 9 : 7} className="text-center py-4">
+                    <td colSpan={hasFaceAttendance ? 11 : 9} className="text-center py-4">
                         <div className="flex flex-col items-center justify-center">
                             <img
                                 src="/images/emptyAttendance.png"

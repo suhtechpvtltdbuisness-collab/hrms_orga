@@ -1863,6 +1863,17 @@ export const attendanceUtils = {
     return `${year}-${String(index + 1).padStart(2, "0")}`;
   },
 
+  toDisplayTime: (dateTime) => {
+    if (!dateTime) return "-";
+    const date = new Date(dateTime);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  },
+
   mapRecordToRow: (record, index) => {
     const att = record.attendance || record;
     const emp = record.employee || record.user || record;
@@ -1937,6 +1948,8 @@ export const attendanceUtils = {
       empId: (att.empId || emp.employeeId || emp.id) ? `EMP-${String(att.empId || emp.employeeId || emp.id).padStart(3, "0")}` : "-",
       status: att.period === "half_day" ? "Half Day" : (ATTENDANCE_STATUS_TO_UI[att.status] || att.status),
       date: attendanceUtils.toDisplayDate(att.attendanceDate || att.date),
+      checkInTime: attendanceUtils.toDisplayTime(checkInTime),
+      checkOutTime: attendanceUtils.toDisplayTime(checkOutTime),
       workedDuration: workedDuration || "-",
       leaveType: LEAVE_TYPE_TO_UI[att.leaveType] || "-",
       rawStatus: att.status,
