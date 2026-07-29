@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Clock, Calendar, TrendingUp, DollarSign, CheckSquare, Bell, ChevronRight,
   ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { attendanceService } from '../../../service';
+import { attendanceService, dashboardService, leaveService } from '../../../service';
 import {
   AttendanceSuccessModal,
   AttendanceVerificationModal,
@@ -17,6 +17,25 @@ const getGreeting = () => {
   if (h < 12) return { text: 'Good Morning', icon: '🌅' };
   if (h < 17) return { text: 'Good Afternoon', icon: '☀️' };
   return { text: 'Good Evening', icon: '🌙' };
+};
+
+const getRecordDate = (record) => record?.date || record?.attendanceDate || record?.createdAt;
+const normalizeStatus = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+const presentStatuses = new Set(['present', 'late', 'half-day', 'halfday']);
+
+const normalizeTask = (task, index) => {
+  const dueDate = task?.dueDate || task?.due || task?.deadline;
+  const status = normalizeStatus(task?.status || 'pending');
+  return {
+    id: task?.id || index,
+    title: task?.title || task?.name || task?.taskName || 'Assigned task',
+    due: dueDate
+      ? `Due ${new Date(dueDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`
+      : 'No due date',
+    dueDate,
+    priority: normalizeStatus(task?.priority || 'medium'),
+    status,
+  };
 };
 
 const StatCard = ({ icon, label, value, sub, color, onClick }) => {
@@ -58,6 +77,10 @@ export default function EmployeeDashboard() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRecord, setTodayRecord] = useState(null);
+  const [monthlyAttendance, setMonthlyAttendance] = useState([]);
+  const [leaveBalance, setLeaveBalance] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({});
   const [verificationType, setVerificationType] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [attendanceResult, setAttendanceResult] = useState(null);
@@ -65,6 +88,7 @@ export default function EmployeeDashboard() {
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
   })();
+  const userId = userData?.id;
   const displayName = userData?.name || userData?.fullName || userData?.email?.split('@')[0] || 'Employee';
   const { text: greeting, icon: greetIcon } = getGreeting();
 
@@ -73,22 +97,46 @@ export default function EmployeeDashboard() {
     return () => clearInterval(t);
   }, []);
 
-  const fetchTodayAttendance = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      const res = await attendanceService.getTodayStatus();
-      if (res.success && res.data) {
-        setTodayRecord(res.data.record || null);
+      const month = new Date().toISOString().slice(0, 7);
+      const [todayRes, attendanceRes, balanceRes, dashboardRes] = await Promise.all([
+        attendanceService.getTodayStatus(),
+        attendanceService.getMyAttendance(month),
+        userId ? leaveService.getBalance(userId) : Promise.resolve({ success: false }),
+        dashboardService.getEmployeeDashboard(),
+      ]);
+
+      if (todayRes.success && todayRes.data) {
+        setTodayRecord(todayRes.data.record || todayRes.data.attendance || todayRes.data.data || todayRes.data);
+      }
+      if (attendanceRes.success) {
+        setMonthlyAttendance(Array.isArray(attendanceRes.data) ? attendanceRes.data : []);
+      }
+      if (balanceRes.success && balanceRes.data) {
+        const balance = balanceRes.data;
+        setLeaveBalance([
+          { type: 'Casual Leave', used: Number(balance.casualLeaveTaken) || 0, total: Number(balance.casualLeave) || 0, gradFrom: '#756FCC', gradTo: '#9B7FDC' },
+          { type: 'Sick Leave', used: Number(balance.sickLeaveTaken) || 0, total: Number(balance.sickLeave) || 0, gradFrom: '#85C3C2', gradTo: '#6B74BB' },
+          { type: 'Earned Leave', used: Number(balance.paidLeaveTaken) || 0, total: Number(balance.paidLeave) || 0, gradFrom: '#B58CEC', gradTo: '#EDC0F3' },
+        ]);
+      }
+      if (dashboardRes.success) {
+        const payload = dashboardRes.data || {};
+        const taskList = payload.tasks || payload.assignedTasks || payload.recentTasks || [];
+        setTasks(Array.isArray(taskList) ? taskList.map(normalizeTask) : []);
+        setDashboardStats(payload.stats || payload.summary || payload);
       }
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     // Existing dashboard API hydration; state is updated when the request resolves.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchTodayAttendance();
-  }, []);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const formatTime = (isoString) => {
     if (!isoString) return null;
@@ -113,20 +161,35 @@ export default function EmployeeDashboard() {
   const checkInTime = todayRecord && todayRecord.checkIn ? formatTime(todayRecord.checkIn) : null;
   const checkOutTime = todayRecord && todayRecord.checkOut ? formatTime(todayRecord.checkOut) : null;
 
-  const attendance = [
-    { day: 'Mon', status: 'present' }, { day: 'Tue', status: 'present' },
-    { day: 'Wed', status: 'late' }, { day: 'Thu', status: 'present' },
-    { day: 'Fri', status: 'absent' }, { day: 'Sat', status: 'weekend' },
-    { day: 'Sun', status: 'weekend' },
-  ];
+  const attendancePercentage = monthlyAttendance.length
+    ? Math.round((monthlyAttendance.filter((record) => presentStatuses.has(normalizeStatus(record.status))).length / monthlyAttendance.length) * 100)
+    : Number(dashboardStats.attendancePercentage ?? dashboardStats.attendancePercent ?? 0);
 
-  const statusColor = { present: 'bg-green-500', absent: 'bg-red-400', late: 'bg-amber-400', weekend: 'bg-gray-200' };
+  const startOfWeek = new Date();
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7));
+  const attendance = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    const record = monthlyAttendance.find((item) => String(getRecordDate(item) || '').slice(0, 10) === key);
+    return {
+      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      status: record ? normalizeStatus(record.status) : index > 4 ? 'weekend' : 'unmarked',
+    };
+  });
 
-  const tasks = [
-    { title: 'Q2 Performance Review', due: 'Due Tomorrow', priority: 'high', status: 'In Progress' },
-    { title: 'Submit Expense Report', due: 'Due Jun 20', priority: 'medium', status: 'Pending' },
-    { title: 'Team Meeting Notes', due: 'Due Jun 22', priority: 'low', status: 'Pending' },
-  ];
+  const statusColor = { present: 'bg-green-500', absent: 'bg-red-400', late: 'bg-amber-400', 'half-day': 'bg-amber-400', weekend: 'bg-gray-200', unmarked: 'bg-gray-100' };
+  const pendingTasks = tasks.filter((task) => !['completed', 'done', 'cancelled'].includes(task.status));
+  const pendingTaskCount = Number(dashboardStats.pendingTasks ?? dashboardStats.tasksPending ?? pendingTasks.length);
+  const dueThisWeek = pendingTasks.filter((task) => {
+    if (!task.dueDate) return false;
+    const due = new Date(task.dueDate);
+    const end = new Date(startOfWeek);
+    end.setDate(end.getDate() + 7);
+    return due >= startOfWeek && due < end;
+  }).length;
+  const totalLeaveRemaining = leaveBalance.reduce((sum, item) => sum + Math.max(0, item.total - item.used), 0);
 
   const priorityColor = { high: 'text-red-600 bg-red-50', medium: 'text-amber-600 bg-amber-50', low: 'text-green-600 bg-green-50' };
 
@@ -140,12 +203,6 @@ export default function EmployeeDashboard() {
     { name: 'Independence Day', date: 'Aug 15, 2025', days: 59 },
     { name: 'Gandhi Jayanti', date: 'Oct 2, 2025', days: 107 },
     { name: 'Diwali', date: 'Oct 20, 2025', days: 125 },
-  ];
-
-  const leaveBalance = [
-    { type: 'Casual Leave', used: 3, total: 12, gradFrom: '#756FCC', gradTo: '#9B7FDC' },
-    { type: 'Sick Leave', used: 1, total: 8, gradFrom: '#85C3C2', gradTo: '#6B74BB' },
-    { type: 'Earned Leave', used: 5, total: 15, gradFrom: '#B58CEC', gradTo: '#EDC0F3' },
   ];
 
   return (
@@ -176,9 +233,9 @@ export default function EmployeeDashboard() {
 
       {/* Stats + Check-In Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock} label="Attendance" value="92%" sub="This month" color="bg-violet-100 text-violet-600" onClick={() => navigate('/employee/attendance')} />
-        <StatCard icon={Calendar} label="Leave Encashment" value="19" sub="Days remaining" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave-encashment')} />
-        <StatCard icon={CheckSquare} label="Tasks Pending" value="3" sub="2 due this week" color="bg-amber-100 text-amber-600" onClick={() => navigate('/employee/tasks')} />
+        <StatCard icon={Clock} label="Attendance" value={`${attendancePercentage}%`} sub="This month" color="bg-violet-100 text-violet-600" onClick={() => navigate('/employee/attendance')} />
+        <StatCard icon={Calendar} label="Leave Balance" value={totalLeaveRemaining} sub="Days remaining" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave')} />
+        <StatCard icon={CheckSquare} label="Tasks Pending" value={pendingTaskCount} sub={`${dueThisWeek} due this week`} color="bg-amber-100 text-amber-600" onClick={() => navigate('/employee/tasks')} />
         <StatCard icon={DollarSign} label="Last Payslip" value="₹45,000" sub="May 2025" color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
       </div>
 
@@ -306,23 +363,26 @@ export default function EmployeeDashboard() {
             </button>
           </div>
           <div className="space-y-3">
-            {tasks.map((t, i) => (
+            {pendingTasks.slice(0, 3).map((t, i) => (
               <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-violet-50/30 transition-all cursor-pointer">
                 <div className="w-1 h-full min-h-[40px] rounded-full bg-gradient-to-b from-violet-400 to-indigo-400 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{t.title}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] text-gray-500">{t.due}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${priorityColor[t.priority]}`}>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${priorityColor[t.priority] || priorityColor.medium}`}>
                       {t.priority}
                     </span>
                   </div>
                 </div>
                 <span className="text-[10px] font-medium text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded-lg whitespace-nowrap">
-                  {t.status}
+                  {t.status.replace('-', ' ')}
                 </span>
               </div>
             ))}
+            {pendingTasks.length === 0 && (
+              <p className="py-6 text-center text-xs text-gray-400">No pending tasks</p>
+            )}
           </div>
         </div>
 
