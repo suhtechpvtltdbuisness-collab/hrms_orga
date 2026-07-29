@@ -4514,3 +4514,296 @@ export const salesCrmService = {
     }
   },
 };
+
+// ======================
+// INVOICE SERVICE
+// ======================
+export const invoiceService = {
+  getSalesInvoices: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/invoices/sales${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch sales invoices" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getSalesInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/sales/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch sales invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createSalesInvoice: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/sales`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create sales invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateSalesInvoice: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/sales/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update sales invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteSalesInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/sales/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete sales invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getPurchaseInvoices: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/invoices/purchase${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch purchase invoices" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getPurchaseInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/purchase/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch purchase invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createPurchaseInvoice: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/purchase`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create purchase invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updatePurchaseInvoice: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/purchase/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update purchase invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deletePurchaseInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/purchase/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete purchase invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getRecurringInvoices: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/invoices/recurring${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch recurring invoices" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getRecurringInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/recurring/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch recurring invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createRecurringInvoice: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/recurring`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create recurring invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateRecurringInvoice: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/recurring/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update recurring invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteRecurringInvoice: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/recurring/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete recurring invoice" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getPayments: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/invoices/payments${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payments" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getPayment: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/payments/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch payment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createPayment: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/payments`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to record payment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updatePayment: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/payments/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update payment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deletePayment: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/invoices/payments/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete payment" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};

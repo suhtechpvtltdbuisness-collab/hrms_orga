@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, MoreVertical, Eye, Edit, Download } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
-import noRecords from "../../../../assets/no-records.svg";
+import { invoiceService } from "../../../../service";
 
 const InvoicePaymentAllocation = () => {
   const navigate = useNavigate();
@@ -12,56 +12,24 @@ const InvoicePaymentAllocation = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef(null);
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState("");
   const [customerFilter, setCustomerFilter] = useState("");
   const [paymentDateFilter, setPaymentDateFilter] = useState("");
   const [methodFilter, setMethodFilter] = useState("");
 
-  // Mock Data
-  const mockPayments = [
-    {
-      id: 1,
-      invoiceNumber: "INV-001",
-      customer: "Acme Corp",
-      paymentDate: "26/02/2026",
-      amount: 50000,
-      method: "Bank Transfer",
-      status: "Complete",
-    },
-    {
-      id: 2,
-      invoiceNumber: "INV-003",
-      customer: "Tech Solution",
-      paymentDate: "26/02/2026",
-      amount: 50000,
-      method: "Check",
-      status: "Pending",
-    },
-    {
-      id: 3,
-      invoiceNumber: "INV-002",
-      customer: "Digital Agency",
-      paymentDate: "26/02/2026",
-      amount: 70000,
-      method: "Cash",
-      status: "Active",
-    },
-  ];
-
   useEffect(() => {
-    const storedPayments =
-      JSON.parse(localStorage.getItem("invoicePayments")) || [];
-    if (storedPayments.length === 0) {
-      localStorage.setItem("invoicePayments", JSON.stringify(mockPayments));
-      setPayments(mockPayments);
-    } else {
-      setPayments(storedPayments);
-    }
-    setLoading(false);
+    const loadPayments = async () => {
+      setLoading(true);
+      const result = await invoiceService.getPayments();
+      setPayments(result.success ? result.data || [] : []);
+      if (!result.success) {
+        alert(result.message || "Failed to load payments");
+      }
+      setLoading(false);
+    };
+    loadPayments();
   }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -110,7 +78,7 @@ const InvoicePaymentAllocation = () => {
     });
   };
 
-  const handleDownload = (payment) => {
+  const handleDownload = () => {
     setActiveMenu(null);
   };
 
@@ -121,23 +89,27 @@ const InvoicePaymentAllocation = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Filter payments
   const filteredPayments = payments.filter((payment) => {
     if (statusFilter && payment.status !== statusFilter) return false;
     if (customerFilter && payment.customer !== customerFilter) return false;
     if (methodFilter && payment.method !== methodFilter) return false;
+    if (paymentDateFilter && payment.paymentDate !== paymentDateFilter)
+      return false;
     return true;
   });
 
-  const uniqueCustomers = [...new Set(payments.map((p) => p.customer))];
-  const uniqueMethods = [...new Set(payments.map((p) => p.method))];
+  const uniqueCustomers = [
+    ...new Set(payments.map((p) => p.customer).filter(Boolean)),
+  ];
+  const uniqueMethods = [
+    ...new Set(payments.map((p) => p.method).filter(Boolean)),
+  ];
 
   return (
     <div
       className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
-      {/* Breadcrumb */}
       <div
         className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0"
         style={{ fontFamily: "Mulish, sans-serif" }}
@@ -158,7 +130,6 @@ const InvoicePaymentAllocation = () => {
         <span className="text-[#6B7280]">Invoice Payment Allocation</span>
       </div>
 
-      {/* Header */}
       <div className="flex justify-between items-center mb-4 shrink-0">
         <h1
           className="text-[20px] font-semibold text-[#494949]"
@@ -175,7 +146,6 @@ const InvoicePaymentAllocation = () => {
         </button>
       </div>
 
-      {/* Filters - only show when data exists */}
       {payments.length > 0 && (
         <div
           className="flex gap-3 mb-4 shrink-0 flex-wrap"
@@ -208,7 +178,6 @@ const InvoicePaymentAllocation = () => {
         </div>
       )}
 
-      {/* Table Section - Border Container */}
       <div className="overflow-hidden border border-[#E4E4E7] rounded-lg">
         <div className="overflow-x-auto overflow-y-auto h-full">
           <table className="w-full table-auto">

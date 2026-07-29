@@ -2,47 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, MoreVertical } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { invoiceService } from "../../../../service";
 
 const RecurringInvoice = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-
-  // Default mock data
-  const defaultInvoices = [
-    {
-      id: 1,
-      invoiceTitle: "Monthly Retainer",
-      client: "Wholesale Supplier",
-      invoiceType: "Monthly",
-      billDate: "2026-02-28",
-      amount: "50000",
-      status: "Active",
-    },
-    {
-      id: 2,
-      invoiceTitle: "Support Services",
-      client: "Tech Solution",
-      invoiceType: "Yearly",
-      billDate: "2026-02-28",
-      amount: "50000",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      invoiceTitle: "Annual Maintenance",
-      client: "Digital Agency",
-      invoiceType: "Quarterly",
-      billDate: "2026-02-28",
-      amount: "50000",
-      status: "Active",
-    },
-  ];
-
-  const [invoices, setInvoices] = useState(defaultInvoices);
-
-  // Filters State
+  const [invoices, setInvoices] = useState([]);
   const [filters, setFilters] = useState({
     status: "",
     client: "",
@@ -50,7 +17,6 @@ const RecurringInvoice = () => {
     invoiceType: "",
   });
 
-  // Close action menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (actionMenuOpen && !event.target.closest(".action-menu-container")) {
@@ -61,24 +27,25 @@ const RecurringInvoice = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [actionMenuOpen]);
 
-  // Format date to DD/MM/YYYY (handles both YYYY-MM-DD and DD/MM/YYYY inputs)
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    // Already in DD/MM/YYYY format
     if (dateString.includes("/")) return dateString;
-    // Convert from YYYY-MM-DD
     const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
   };
 
-  useEffect(() => {
-    // Fetch invoices from localStorage and merge with default data
-    const storedInvoices =
-      JSON.parse(localStorage.getItem("recurringInvoices")) || [];
-    // Merge: new invoices on top, default data below
-    const mergedInvoices = [...storedInvoices, ...defaultInvoices];
-    setInvoices(mergedInvoices);
+  const loadInvoices = async () => {
+    setLoading(true);
+    const result = await invoiceService.getRecurringInvoices();
+    setInvoices(result.success ? result.data || [] : []);
+    if (!result.success) {
+      alert(result.message || "Failed to load recurring invoices");
+    }
     setLoading(false);
+  };
+
+  useEffect(() => {
+    loadInvoices();
   }, []);
 
   const toggleActionMenu = (id, e) => {
@@ -99,17 +66,20 @@ const RecurringInvoice = () => {
     });
   };
 
-  const handleDelete = (invoice) => {
+  const handleDelete = async (invoice) => {
     setActionMenuOpen(null);
-    // Delete invoice from state
-    const updatedInvoices = invoices.filter((inv) => inv.id !== invoice.id);
-    setInvoices(updatedInvoices);
-
-    // Update localStorage
-    const storedInvoices =
-      JSON.parse(localStorage.getItem("recurringInvoices")) || [];
-    const updatedStored = storedInvoices.filter((inv) => inv.id !== invoice.id);
-    localStorage.setItem("recurringInvoices", JSON.stringify(updatedStored));
+    const result = await invoiceService.updateRecurringInvoice(invoice.id, {
+      status: "Inactive",
+    });
+    if (!result.success) {
+      alert(result.message || "Failed to deactivate invoice");
+      return;
+    }
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv.id === invoice.id ? { ...inv, status: "Inactive" } : inv,
+      ),
+    );
   };
 
   const getStatusColor = (status) => {
@@ -123,25 +93,25 @@ const RecurringInvoice = () => {
     }
   };
 
-  // Filter Logic
   const filteredInvoices = invoices.filter((inv) => {
     return (
       (!filters.status || inv.status === filters.status) &&
       (!filters.client ||
-        inv.client.toLowerCase().includes(filters.client.toLowerCase())) &&
+        inv.client?.toLowerCase().includes(filters.client.toLowerCase())) &&
       (!filters.invoiceDate || inv.billDate === filters.invoiceDate) &&
       (!filters.invoiceType || inv.invoiceType === filters.invoiceType)
     );
   });
 
-  const uniqueClients = [...new Set(invoices.map((i) => i.client))];
+  const uniqueClients = [
+    ...new Set(invoices.map((i) => i.client).filter(Boolean)),
+  ];
 
   return (
     <div
       className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9] font-sans"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
         <img
           src="/images/arrow_left_alt.svg"
@@ -159,7 +129,6 @@ const RecurringInvoice = () => {
         <span className="text-[#6B7280]">Recurring Invoice</span>
       </div>
 
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1
           className="text-[20px] font-semibold text-[#494949]"
@@ -182,7 +151,6 @@ const RecurringInvoice = () => {
         </button>
       </div>
 
-      {/* Filters Section - only show when data exists */}
       {invoices.length > 0 && (
         <div
           className="flex flex-wrap gap-3 mb-4"
@@ -223,7 +191,6 @@ const RecurringInvoice = () => {
         </div>
       )}
 
-      {/* Table Section - Border Container */}
       <div className="overflow-hidden border border-[#E4E4E7] rounded-lg">
         <div className="overflow-x-auto overflow-y-auto h-full">
           <table className="w-full table-auto">
@@ -255,14 +222,14 @@ const RecurringInvoice = () => {
                 </th>
               </tr>
             </thead>
-            {filteredInvoices.length > 0 && (
+            {!loading && filteredInvoices.length > 0 && (
               <tbody
                 className="bg-white"
                 style={{ fontFamily: "Nunito Sans,sans-serif" }}
               >
-                {filteredInvoices.map((invoice, index) => (
+                {filteredInvoices.map((invoice) => (
                   <tr
-                    key={index}
+                    key={invoice.id}
                     className=" hover:bg-gray-50 transition-colors"
                   >
                     <td className="py-2 px-4 text-[14px] font-semibold text-[#000000]">
@@ -295,7 +262,6 @@ const RecurringInvoice = () => {
                         <MoreVertical size={18} />
                       </button>
 
-                      {/* Dropdown Menu - Fixed position to avoid scroll clipping */}
                       {actionMenuOpen === invoice.id && (
                         <div
                           className="fixed w-40 bg-white font-normal rounded-lg shadow-lg border border-gray-100 py-1 z-50"
@@ -327,7 +293,7 @@ const RecurringInvoice = () => {
               </tbody>
             )}
           </table>
-          {filteredInvoices.length === 0 && (
+          {!loading && filteredInvoices.length === 0 && (
             <div
               className="flex flex-col mt-6 mb-10 items-center justify-center"
               style={{ fontFamily: '"Nunito Sans", sans-serif' }}

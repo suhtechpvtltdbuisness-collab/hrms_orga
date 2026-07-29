@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronRight, Plus, Trash2, Calendar } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
+import { invoiceService } from "../../../../service";
 
 const AddSalesInvoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
 
-  // Detect mode: 'view', 'edit', or 'create'
   let mode = location.state?.mode;
   if (!mode) {
     if (location.pathname.includes("/view/")) mode = "view";
@@ -18,7 +18,6 @@ const AddSalesInvoice = () => {
 
   const invoiceFromState = location.state?.invoice;
 
-  // Form State
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: "",
     invoiceDate: "",
@@ -26,17 +25,17 @@ const AddSalesInvoice = () => {
     customerName: "",
     items: [],
   });
+  const [status, setStatus] = useState("Pending");
+  const [saving, setSaving] = useState(false);
 
   const [items, setItems] = useState([
     { id: 1, name: "", quantity: "", rate: "", tax: "", amount: 0 },
   ]);
 
-  // Derived State for Totals
   const [subTotal, setSubTotal] = useState(0);
   const [totalTax, setTotalTax] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
 
-  // Load invoice data for view/edit modes
   useEffect(() => {
     const loadInvoiceData = (invoice) => {
       setInvoiceData({
@@ -45,28 +44,30 @@ const AddSalesInvoice = () => {
         dueDate: invoice.dueDate || "",
         customerName: invoice.customerName || "",
       });
-
+      setStatus(invoice.status || "Pending");
       if (invoice.items && invoice.items.length > 0) {
         setItems(invoice.items);
       }
     };
 
-    if (mode !== "create") {
+    const load = async () => {
+      if (mode === "create") return;
       if (invoiceFromState) {
         loadInvoiceData(invoiceFromState);
-      } else if (id) {
-        const storedInvoices =
-          JSON.parse(localStorage.getItem("salesInvoices")) || [];
-        const foundInvoice = storedInvoices.find(
-          (inv) => String(inv.id) === String(id)
-        );
-        if (foundInvoice) {
-          loadInvoiceData(foundInvoice);
+        if (!invoiceFromState.items?.length && id) {
+          const result = await invoiceService.getSalesInvoice(id);
+          if (result.success) loadInvoiceData(result.data);
         }
+        return;
       }
-    }
+      if (id) {
+        const result = await invoiceService.getSalesInvoice(id);
+        if (result.success) loadInvoiceData(result.data);
+        else alert(result.message || "Failed to load invoice");
+      }
+    };
+    load();
   }, [mode, invoiceFromState, id]);
-
   useEffect(() => {
     const newSubTotal = items.reduce(
       (sum, item) => sum + Number(item.quantity) * Number(item.rate),
@@ -121,7 +122,16 @@ const AddSalesInvoice = () => {
     );
   };
 
-  const handleSave = () => {
+  const buildPayload = () => ({
+    invoiceNumber: invoiceData.invoiceNumber,
+    customerName: invoiceData.customerName,
+    invoiceDate: invoiceData.invoiceDate,
+    dueDate: invoiceData.dueDate || null,
+    status,
+    items,
+  });
+
+  const handleSave = async () => {
     if (
       !invoiceData.invoiceNumber ||
       !invoiceData.customerName ||
@@ -130,30 +140,17 @@ const AddSalesInvoice = () => {
       alert("Please fill in all required fields");
       return;
     }
-
-    const newInvoice = {
-      id: Date.now(),
-      invoiceNumber: invoiceData.invoiceNumber,
-      customerName: invoiceData.customerName,
-      invoiceDate: invoiceData.invoiceDate,
-      dueDate: invoiceData.dueDate,
-      amount: grandTotal,
-      status: "Pending",
-      items: items,
-    };
-
-    const existingInvoices =
-      JSON.parse(localStorage.getItem("salesInvoices")) || [];
-    localStorage.setItem(
-      "salesInvoices",
-      JSON.stringify([newInvoice, ...existingInvoices])
-    );
-
-    console.log("Saving invoice:", newInvoice);
+    setSaving(true);
+    const result = await invoiceService.createSalesInvoice(buildPayload());
+    setSaving(false);
+    if (!result.success) {
+      alert(result.message || "Failed to create invoice");
+      return;
+    }
     navigate("/hrms/sales-invoice");
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (
       !invoiceData.invoiceNumber ||
       !invoiceData.customerName ||
@@ -162,26 +159,17 @@ const AddSalesInvoice = () => {
       alert("Please fill in all required fields");
       return;
     }
-
-    const invoicePayload = {
-      id: invoiceFromState.id,
-      invoiceNumber: invoiceData.invoiceNumber,
-      customerName: invoiceData.customerName,
-      invoiceDate: invoiceData.invoiceDate,
-      dueDate: invoiceData.dueDate,
-      amount: grandTotal,
-      status: invoiceFromState.status,
-      items: items,
-    };
-
-    const existingInvoices =
-      JSON.parse(localStorage.getItem("salesInvoices")) || [];
-    const updatedInvoices = existingInvoices.map((inv) =>
-      inv.id === invoicePayload.id ? invoicePayload : inv
+    const invoiceId = invoiceFromState?.id || id;
+    setSaving(true);
+    const result = await invoiceService.updateSalesInvoice(
+      invoiceId,
+      buildPayload(),
     );
-    localStorage.setItem("salesInvoices", JSON.stringify(updatedInvoices));
-
-    console.log("Updating invoice:", invoicePayload);
+    setSaving(false);
+    if (!result.success) {
+      alert(result.message || "Failed to update invoice");
+      return;
+    }
     navigate("/hrms/sales-invoice");
   };
 
@@ -235,10 +223,11 @@ const AddSalesInvoice = () => {
           </button>
           {mode !== "view" && (
             <button
-              className="px-4 py-2 rounded-full bg-[#7D1EDB] text-white font-normal hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 rounded-full bg-[#7D1EDB] text-white font-normal hover:bg-purple-700 transition-colors disabled:opacity-60"
+              disabled={saving}
               onClick={mode === "edit" ? handleUpdate : handleSave}
             >
-              {mode === "edit" ? "Update" : "Save"}
+              {saving ? "Saving..." : mode === "edit" ? "Update" : "Save"}
             </button>
           )}
         </div>
@@ -500,11 +489,12 @@ const AddSalesInvoice = () => {
         {mode === "create" && (
           <div className="flex gap-3">
             <button
-              className="px-6 py-2 rounded-full bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 transition-colors"
+              className="px-6 py-2 rounded-full bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-60"
               onClick={handleSave}
+              disabled={saving}
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              Create Invoice
+              {saving ? "Saving..." : "Create Invoice"}
             </button>
             <button
               className="px-6 py-2 rounded-full border border-[#7D1EDB] text-[#7D1EDB] font-medium hover:bg-purple-50 transition-colors"

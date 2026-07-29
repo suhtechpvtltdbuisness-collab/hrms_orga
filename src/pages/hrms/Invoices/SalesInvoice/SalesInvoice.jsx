@@ -9,56 +9,14 @@ import {
   Download,
 } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { invoiceService } from "../../../../service";
 
 const SalesInvoice = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-
-  // Default mock data
-  const defaultInvoices = [
-    {
-      id: 1,
-      invoiceNumber: "INV-001",
-      customerName: "Acme Corp",
-      invoiceDate: "2026-02-26",
-      dueDate: "2026-03-30",
-      amount: "50000",
-      status: "Paid",
-    },
-    {
-      id: 2,
-      invoiceNumber: "INV-002",
-      customerName: "Acme Corp",
-      invoiceDate: "2026-02-26",
-      dueDate: "2026-03-30",
-      amount: "50000",
-      status: "Paid",
-    },
-    {
-      id: 3,
-      invoiceNumber: "INV-003",
-      customerName: "Acme Corp",
-      invoiceDate: "2026-02-26",
-      dueDate: "2026-03-30",
-      amount: "50000",
-      status: "Overdue",
-    },
-    {
-      id: 4,
-      invoiceNumber: "INV-004",
-      customerName: "Acme Corp",
-      invoiceDate: "2026-02-26",
-      dueDate: "2026-03-30",
-      amount: "50000",
-      status: "Pending",
-    },
-  ];
-
-  const [invoices, setInvoices] = useState(defaultInvoices);
-
-  // Filters State
+  const [invoices, setInvoices] = useState([]);
   const [filters, setFilters] = useState({
     status: "",
     customer: "",
@@ -66,7 +24,6 @@ const SalesInvoice = () => {
     invoiceNo: "",
   });
 
-  // Close action menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (actionMenuOpen && !event.target.closest(".action-menu-container")) {
@@ -77,24 +34,24 @@ const SalesInvoice = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [actionMenuOpen]);
 
-  // Format date to DD/MM/YYYY (handles both YYYY-MM-DD and DD/MM/YYYY inputs)
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    // Already in DD/MM/YYYY format
     if (dateString.includes("/")) return dateString;
-    // Convert from YYYY-MM-DD
     const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
   };
 
   useEffect(() => {
-    // Fetch invoices from localStorage and merge with default data
-    const storedInvoices =
-      JSON.parse(localStorage.getItem("salesInvoices")) || [];
-    // Merge: new invoices on top, default data below
-    const mergedInvoices = [...storedInvoices, ...defaultInvoices];
-    setInvoices(mergedInvoices);
-    setLoading(false);
+    const loadInvoices = async () => {
+      setLoading(true);
+      const result = await invoiceService.getSalesInvoices();
+      setInvoices(result.success ? result.data || [] : []);
+      if (!result.success) {
+        alert(result.message || "Failed to load sales invoices");
+      }
+      setLoading(false);
+    };
+    loadInvoices();
   }, []);
 
   const toggleActionMenu = (id, e) => {
@@ -135,30 +92,30 @@ const SalesInvoice = () => {
     }
   };
 
-  // Filter Logic
   const filteredInvoices = invoices.filter((inv) => {
     return (
       (!filters.status || inv.status === filters.status) &&
       (!filters.customer ||
         inv.customerName
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(filters.customer.toLowerCase())) &&
       (!filters.invoiceDate || inv.invoiceDate === filters.invoiceDate) &&
       (!filters.invoiceNo ||
         inv.invoiceNumber
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(filters.invoiceNo.toLowerCase()))
     );
   });
 
-  const uniqueCustomers = [...new Set(invoices.map((i) => i.customerName))];
+  const uniqueCustomers = [
+    ...new Set(invoices.map((i) => i.customerName).filter(Boolean)),
+  ];
 
   return (
     <div
       className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col border border-[#D9D9D9] font-sans"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-2 text-sm text-gray-500 shrink-0">
         <img
           src="/images/arrow_left_alt.svg"
@@ -176,7 +133,6 @@ const SalesInvoice = () => {
         <span className="text-[#6B7280]">Sales Invoice</span>
       </div>
 
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1
           className="text-[20px] font-semibold text-[#494949]"
@@ -199,7 +155,6 @@ const SalesInvoice = () => {
         </button>
       </div>
 
-      {/* Filters Section - only show when data exists */}
       {invoices.length > 0 && (
         <div
           className="flex flex-wrap gap-3 mb-4"
@@ -242,7 +197,6 @@ const SalesInvoice = () => {
         </div>
       )}
 
-      {/* Table Section - Border Container */}
       <div className="overflow-hidden border border-[#E4E4E7] rounded-lg">
         <div className="overflow-x-auto overflow-y-auto h-full">
           <table className="w-full table-auto">
@@ -274,14 +228,14 @@ const SalesInvoice = () => {
                 </th>
               </tr>
             </thead>
-            {filteredInvoices.length > 0 && (
+            {!loading && filteredInvoices.length > 0 && (
               <tbody
                 className="bg-white"
                 style={{ fontFamily: "Nunito Sans,sans-serif" }}
               >
-                {filteredInvoices.map((invoice, index) => (
+                {filteredInvoices.map((invoice) => (
                   <tr
-                    key={index}
+                    key={invoice.id}
                     className=" hover:bg-gray-50 transition-colors"
                   >
                     <td className="py-2 px-4 text-[14px] font-semibold text-[#000000]">
@@ -315,7 +269,6 @@ const SalesInvoice = () => {
                         <MoreVertical size={18} />
                       </button>
 
-                      {/* Dropdown Menu - Fixed position to avoid scroll clipping */}
                       {actionMenuOpen === invoice.id && (
                         <div
                           className="fixed w-36 bg-white font-normal rounded-lg shadow-lg border border-gray-100 py-1 z-50"
@@ -347,7 +300,7 @@ const SalesInvoice = () => {
               </tbody>
             )}
           </table>
-          {filteredInvoices.length === 0 && (
+          {!loading && filteredInvoices.length === 0 && (
             <div
               className="flex flex-col mt-6 mb-10 items-center justify-center"
               style={{ fontFamily: '"Nunito Sans", sans-serif' }}
