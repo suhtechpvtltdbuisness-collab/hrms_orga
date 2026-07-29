@@ -104,6 +104,25 @@ export const dashboardService = {
       return { success: false, message: "Something went wrong" };
     }
   },
+
+  getEmployeeDashboard: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/dashboard/employee`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || "Failed to fetch employee dashboard data",
+        };
+      }
+      return { success: true, data: data.data ?? data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
 };
 
 export const authService = {
