@@ -2002,6 +2002,25 @@ export const payrollService = {
     }
   },
 
+  getPayrollByUserId: async (userId) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/payroll/user/${userId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, message: data.message || "Failed to fetch payroll" };
+      }
+      return {
+        success: true,
+        data: data.data || [],
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   // PUT /payroll/:id — update an existing payroll record
   updatePayroll: async (id, payload) => {
     try {

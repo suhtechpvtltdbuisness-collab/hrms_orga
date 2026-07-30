@@ -4,7 +4,7 @@ import {
   ArrowUpRight, MapPin, Coffee, Zap, Award, Sun, CloudRain, Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { attendanceService, dashboardService, leaveService } from '../../../service';
+import { attendanceService, leaveService, leaveManagementService, payrollService } from '../../../service';
 import {
   AttendanceSuccessModal,
   AttendanceVerificationModal,
@@ -81,6 +81,8 @@ export default function EmployeeDashboard() {
   const [leaveBalance, setLeaveBalance] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
+  const [holidays, setHolidays] = useState([]);
+  const [salaryCard, setSalaryCard] = useState({ value: '—', sub: 'No payroll assigned' });
   const [verificationType, setVerificationType] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [attendanceResult, setAttendanceResult] = useState(null);
@@ -100,11 +102,12 @@ export default function EmployeeDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       const month = new Date().toISOString().slice(0, 7);
-      const [todayRes, attendanceRes, balanceRes, dashboardRes] = await Promise.all([
+      const [todayRes, attendanceRes, balanceRes, holidaysRes, payrollRes] = await Promise.all([
         attendanceService.getTodayStatus(),
         attendanceService.getMyAttendance(month),
         userId ? leaveService.getBalance(userId) : Promise.resolve({ success: false }),
-        dashboardService.getEmployeeDashboard(),
+        leaveManagementService.getHolidays(),
+        userId ? payrollService.getPayrollByUserId(userId) : Promise.resolve({ success: false }),
       ]);
 
       if (todayRes.success && todayRes.data) {
@@ -121,11 +124,48 @@ export default function EmployeeDashboard() {
           { type: 'Earned Leave', used: Number(balance.paidLeaveTaken) || 0, total: Number(balance.paidLeave) || 0, gradFrom: '#B58CEC', gradTo: '#EDC0F3' },
         ]);
       }
-      if (dashboardRes.success) {
-        const payload = dashboardRes.data || {};
-        const taskList = payload.tasks || payload.assignedTasks || payload.recentTasks || [];
-        setTasks(Array.isArray(taskList) ? taskList.map(normalizeTask) : []);
-        setDashboardStats(payload.stats || payload.summary || payload);
+      if (holidaysRes.success) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const upcoming = (holidaysRes.data?.holidays || [])
+          .map((item) => {
+            const raw = String(item.holidayDate || '').slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+            const [y, m, d] = raw.split('-').map(Number);
+            const holidayDate = new Date(y, m - 1, d);
+            holidayDate.setHours(0, 0, 0, 0);
+            const days = Math.ceil((holidayDate - today) / (1000 * 60 * 60 * 24));
+            if (days < 0) return null;
+            return {
+              id: item.id,
+              name: item.name,
+              date: holidayDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
+              days,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.days - b.days)
+          .slice(0, 5);
+        setHolidays(upcoming);
+      }
+      if (payrollRes.success) {
+        const latest = Array.isArray(payrollRes.data) ? payrollRes.data[0] : null;
+        const payroll = latest?.payroll || latest || null;
+        const amount = payroll?.monthlyPay ?? payroll?.monthlyGross ?? payroll?.baseSalary ?? payroll?.ctc;
+        const rawDate = payroll?.updatedAt || payroll?.createdAt;
+        const sub = rawDate
+          ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : 'Current salary';
+        setSalaryCard({
+          value: amount != null && amount !== ''
+            ? `₹${Number(amount).toLocaleString('en-IN')}`
+            : '—',
+          sub: amount != null && amount !== '' ? `Current salary · ${sub}` : 'No payroll assigned',
+        });
       }
     } catch (error) {
       console.error(error);
@@ -199,12 +239,6 @@ export default function EmployeeDashboard() {
     { title: 'Q2 All-Hands Meeting', time: '2d ago', category: 'Meeting', color: 'bg-green-100 text-green-700' },
   ];
 
-  const holidays = [
-    { name: 'Independence Day', date: 'Aug 15, 2025', days: 59 },
-    { name: 'Gandhi Jayanti', date: 'Oct 2, 2025', days: 107 },
-    { name: 'Diwali', date: 'Oct 20, 2025', days: 125 },
-  ];
-
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Welcome Banner — using Orga logo gradient colors */}
@@ -236,7 +270,7 @@ export default function EmployeeDashboard() {
         <StatCard icon={Clock} label="Attendance" value={`${attendancePercentage}%`} sub="This month" color="bg-violet-100 text-violet-600" onClick={() => navigate('/employee/attendance')} />
         <StatCard icon={Calendar} label="Leave Balance" value={totalLeaveRemaining} sub="Days remaining" color="bg-blue-100 text-blue-600" onClick={() => navigate('/employee/leave')} />
         <StatCard icon={CheckSquare} label="Tasks Pending" value={pendingTaskCount} sub={`${dueThisWeek} due this week`} color="bg-amber-100 text-amber-600" onClick={() => navigate('/employee/tasks')} />
-        <StatCard icon={DollarSign} label="Last Payslip" value="₹45,000" sub="May 2025" color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
+        <StatCard icon={DollarSign} label="Monthly Salary" value={salaryCard.value} sub={salaryCard.sub} color="bg-green-100 text-green-600" onClick={() => navigate('/employee/payroll')} />
       </div>
 
       <FaceAttendanceCard onRegister={() => setShowRegistration(true)} />
@@ -332,17 +366,20 @@ export default function EmployeeDashboard() {
             <h2 className="text-sm font-semibold text-gray-900">Upcoming Holidays</h2>
           </div>
           <div className="space-y-3">
-            {holidays.map((h, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100">
+            {holidays.map((h) => (
+              <div key={h.id || h.name} className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl border border-amber-100">
                 <div>
                   <p className="text-xs font-semibold text-gray-800">{h.name}</p>
                   <p className="text-[11px] text-gray-500 mt-0.5">{h.date}</p>
                 </div>
                 <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-lg">
-                  {h.days}d
+                  {h.days === 0 ? 'Today' : `${h.days}d`}
                 </span>
               </div>
             ))}
+            {holidays.length === 0 && (
+              <p className="py-6 text-center text-xs text-gray-400">No upcoming holidays</p>
+            )}
           </div>
         </div>
       </div>
