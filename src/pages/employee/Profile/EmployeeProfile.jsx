@@ -4,9 +4,10 @@ import {
   ChevronRight, Building2, Users, CalendarDays, Award, FileText,
   AlertCircle, CheckCircle2, Save, X, Loader2
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { employeeService, getProfilePicUrl } from '../../../service';
 
-const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text' }) => {
+const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text', forceEditing = false }) => {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value || '');
 
@@ -16,28 +17,32 @@ const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text' })
         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
       </div>
       <div className="flex-1 min-w-0">
-        {editing ? (
+        {editing || (forceEditing && editable) ? (
           <div className="flex items-center gap-2">
             <input
               type={inputType}
-              value={val}
+              value={forceEditing ? value : val}
               inputMode={inputType === 'tel' ? 'numeric' : undefined}
               maxLength={inputType === 'tel' ? 10 : undefined}
               pattern={inputType === 'tel' ? '[0-9]{10}' : undefined}
-              onChange={e => setVal(inputType === 'tel' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value)}
+              onChange={e => {
+                const nextValue = inputType === 'tel' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value;
+                if (forceEditing) onChange?.(name, nextValue);
+                else setVal(nextValue);
+              }}
               className="flex-1 text-sm text-gray-800 border border-violet-300 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-violet-100"
               autoFocus
             />
-            <button onClick={() => {
+            {!forceEditing && <button onClick={() => {
               if (inputType === 'tel' && !/^\d{10}$/.test(val)) return;
               onChange?.(name, val);
               setEditing(false);
             }} className="w-7 h-7 bg-violet-600 text-white rounded-lg flex items-center justify-center hover:bg-violet-700">
               <CheckCircle2 className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => { setVal(value || ''); setEditing(false); }} className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-gray-200">
+            </button>}
+            {!forceEditing && <button onClick={() => { setVal(value || ''); setEditing(false); }} className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-gray-200">
               <X className="w-3.5 h-3.5" />
-            </button>
+            </button>}
           </div>
         ) : (
           <div className="flex items-center gap-2 group">
@@ -54,11 +59,11 @@ const InfoRow = ({ label, value, editable, name, onChange, inputType = 'text' })
   );
 };
 
-const SectionCard = ({ title, icon: Icon, iconColor, children }) => (
+const SectionCard = ({ title, icon, iconColor, children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}>
-        <Icon className="w-4 h-4" />
+        {React.createElement(icon, { className: 'w-4 h-4' })}
       </div>
       <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
     </div>
@@ -71,6 +76,9 @@ export default function EmployeeProfile() {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const editSnapshotRef = useRef(null);
 
   const userData = (() => {
     try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
@@ -125,9 +133,9 @@ export default function EmployeeProfile() {
     dob: userData?.dob || '1995-06-15',
     gender: userData?.gender || 'Male',
     address: userData?.address || '123 Main St, Mumbai, Maharashtra',
-    emergencyName: 'Rajesh Kumar',
-    emergencyRelation: 'Father',
-    emergencyPhone: '+91 99887 76655',
+    emergencyName: userData?.eContactName || '',
+    emergencyRelation: userData?.eRelation || '',
+    emergencyPhone: userData?.eContactNumber || '',
     department: userData?.department || 'Engineering',
     designation: userData?.designation || 'Software Engineer',
     empId: userData?.empId || 'EMP-001',
@@ -138,6 +146,54 @@ export default function EmployeeProfile() {
   });
 
   const handleChange = (name, value) => setLocalData(prev => ({ ...prev, [name]: value }));
+
+  const startEditingProfile = () => {
+    editSnapshotRef.current = { ...localData };
+    setIsEditingProfile(true);
+  };
+
+  const cancelEditingProfile = () => {
+    if (editSnapshotRef.current) setLocalData(editSnapshotRef.current);
+    setIsEditingProfile(false);
+  };
+
+  const saveProfile = async () => {
+    if (!localData.name.trim()) {
+      toast.error('Full name is required');
+      return;
+    }
+    if (localData.phone && !/^\d{10}$/.test(localData.phone)) {
+      toast.error('Enter a valid 10-digit phone number');
+      return;
+    }
+    if (localData.emergencyPhone && !/^\d{10}$/.test(localData.emergencyPhone)) {
+      toast.error('Enter a valid 10-digit emergency contact number');
+      return;
+    }
+
+    setSavingProfile(true);
+    const payload = {
+      name: localData.name.trim(),
+      dob: localData.dob || null,
+      address: localData.address.trim(),
+      phone: localData.phone,
+      eContactName: localData.emergencyName.trim(),
+      eContactNumber: localData.emergencyPhone,
+      eRelation: localData.emergencyRelation.trim(),
+    };
+    const result = await employeeService.updateEmployee(userData.id, payload);
+    setSavingProfile(false);
+
+    if (!result.success) {
+      toast.error(result.message || 'Unable to update profile');
+      return;
+    }
+
+    localStorage.setItem('userData', JSON.stringify({ ...userData, ...payload }));
+    editSnapshotRef.current = null;
+    setIsEditingProfile(false);
+    toast.success('Profile updated successfully');
+  };
 
   const completionFields = ['name', 'phone', 'address', 'emergencyName', 'emergencyPhone'];
   const filled = completionFields.filter(f => localData[f]).length;
@@ -210,12 +266,29 @@ export default function EmployeeProfile() {
               </span>
             </div>
           </div>
-          {/* Profile completion */}
-          <div className="text-center bg-white/10 rounded-xl px-5 py-3 backdrop-blur">
-            <p className="text-3xl font-bold">{pct}%</p>
-            <p className="text-xs text-violet-200">Profile Complete</p>
-            <div className="w-16 h-1 bg-white/20 rounded-full mt-2 mx-auto overflow-hidden">
-              <div className="h-full bg-white rounded-full transition-all" style={{ width: `${pct}%` }} />
+          <div className="flex flex-col items-center gap-3 sm:items-end">
+            {isEditingProfile ? (
+              <div className="flex gap-2">
+                <button type="button" onClick={cancelEditingProfile} disabled={savingProfile} className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" onClick={saveProfile} disabled={savingProfile} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50">
+                  {savingProfile ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  {savingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={startEditingProfile} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-50">
+                <Edit3 className="h-3.5 w-3.5" /> Edit Profile
+              </button>
+            )}
+            {/* Profile completion */}
+            <div className="text-center bg-white/10 rounded-xl px-5 py-3 backdrop-blur">
+              <p className="text-3xl font-bold">{pct}%</p>
+              <p className="text-xs text-violet-200">Profile Complete</p>
+              <div className="w-16 h-1 bg-white/20 rounded-full mt-2 mx-auto overflow-hidden">
+                <div className="h-full bg-white rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
             </div>
           </div>
         </div>
@@ -231,23 +304,23 @@ export default function EmployeeProfile() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Personal Information */}
         <SectionCard title="Personal Information" icon={User} iconColor="bg-violet-100 text-violet-600">
-          <InfoRow label="Full Name" value={localData.name} editable name="name" onChange={handleChange} />
-          <InfoRow label="Date of Birth" value={localData.dob} editable name="dob" onChange={handleChange} inputType="date" />
+          <InfoRow label="Full Name" value={localData.name} editable name="name" onChange={handleChange} forceEditing={isEditingProfile} />
+          <InfoRow label="Date of Birth" value={localData.dob} editable name="dob" onChange={handleChange} inputType="date" forceEditing={isEditingProfile} />
           <InfoRow label="Gender" value={localData.gender} />
-          <InfoRow label="Address" value={localData.address} editable name="address" onChange={handleChange} />
+          <InfoRow label="Address" value={localData.address} editable name="address" onChange={handleChange} forceEditing={isEditingProfile} />
         </SectionCard>
 
         {/* Contact Details */}
         <SectionCard title="Contact Details" icon={Phone} iconColor="bg-blue-100 text-blue-600">
           <InfoRow label="Email" value={localData.email} />
-          <InfoRow label="Phone" value={localData.phone} editable name="phone" inputType="tel" onChange={handleChange} />
+          <InfoRow label="Phone" value={localData.phone} editable name="phone" inputType="tel" onChange={handleChange} forceEditing={isEditingProfile} />
         </SectionCard>
 
         {/* Emergency Contact */}
         <SectionCard title="Emergency Contact" icon={Shield} iconColor="bg-red-100 text-red-600">
-          <InfoRow label="Name" value={localData.emergencyName} editable name="emergencyName" onChange={handleChange} />
-          <InfoRow label="Relation" value={localData.emergencyRelation} editable name="emergencyRelation" onChange={handleChange} />
-          <InfoRow label="Phone" value={localData.emergencyPhone} editable name="emergencyPhone" inputType="tel" onChange={handleChange} />
+          <InfoRow label="Name" value={localData.emergencyName} editable name="emergencyName" onChange={handleChange} forceEditing={isEditingProfile} />
+          <InfoRow label="Relation" value={localData.emergencyRelation} editable name="emergencyRelation" onChange={handleChange} forceEditing={isEditingProfile} />
+          <InfoRow label="Phone" value={localData.emergencyPhone} editable name="emergencyPhone" inputType="tel" onChange={handleChange} forceEditing={isEditingProfile} />
         </SectionCard>
 
         {/* Employment Information */}
