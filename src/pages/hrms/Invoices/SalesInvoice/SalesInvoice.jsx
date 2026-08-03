@@ -18,7 +18,6 @@ const SalesInvoice = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [invoices, setInvoices] = useState([]);
   const [filters, setFilters] = useState({
-    status: "",
     customer: "",
     invoiceDate: "",
     invoiceNo: "",
@@ -79,22 +78,8 @@ const SalesInvoice = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Paid":
-        return "bg-[#76DB1E33] text-[#76DB1E]";
-      case "Pending":
-        return "bg-[#A245FF] text-[#B5DFFF]";
-      case "Overdue":
-        return "bg-[#FFDBCC] text-[#DB471E]";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-  };
-
   const filteredInvoices = invoices.filter((inv) => {
     return (
-      (!filters.status || inv.status === filters.status) &&
       (!filters.customer ||
         inv.customerName
           ?.toLowerCase()
@@ -161,13 +146,6 @@ const SalesInvoice = () => {
           style={{ fontFamily: '"Poppins", sans-serif' }}
         >
           <FilterDropdown
-            label="Status"
-            options={["Paid", "Pending", "Overdue"]}
-            value={filters.status}
-            onChange={(val) => setFilters((prev) => ({ ...prev, status: val }))}
-            minWidth="120px"
-          />
-          <FilterDropdown
             label="Customer"
             options={uniqueCustomers}
             value={filters.customer}
@@ -220,9 +198,6 @@ const SalesInvoice = () => {
                 <th className="py-3 px-4 text-[14px] font-normal text-[#8B8B8B]">
                   Amount
                 </th>
-                <th className="py-3 px-4 text-[14px] font-normal text-[#8B8B8B]">
-                  Status
-                </th>
                 <th className="py-3 px-4 text-[14px] font-normal text-[#8B8B8B] text-center">
                   Action
                 </th>
@@ -253,13 +228,6 @@ const SalesInvoice = () => {
                     <td className="py-2 px-4 text-[14px] font-semibold text-[#000000]">
                       {"\u20B9"}
                       {parseFloat(invoice.amount).toLocaleString()}
-                    </td>
-                    <td className="py-2 px-4">
-                      <span
-                        className={`inline-flex items-center px-1 rounded-full text[12px] font-normal ${getStatusColor(invoice.status)}`}
-                      >
-                        {invoice.status}
-                      </span>
                     </td>
                     <td className="py-2 px-4 text-center relative action-menu-container">
                       <button
