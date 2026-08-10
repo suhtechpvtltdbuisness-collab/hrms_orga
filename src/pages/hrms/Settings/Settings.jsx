@@ -1,94 +1,78 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronRight, Download, RotateCcw, Save, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import SettingsAccordion from './SettingsAccordion';
-import EmployeeIDSettings from './EmployeeIDSettings';
-import AttendanceSettings from './AttendanceSettings';
-import LeaveSettings from './LeaveSettings';
-import OnboardingSettings from './OnboardingSettings';
-import PayrollSettings from './PayrollSettings';
-import DepartmentSettings from './DepartmentSettings';
-import RecruitmentSettings from './RecruitmentSettings';
-import EmployeeDocumentSettings from './EmployeeDocumentSettings';
-import NotificationSettings from './NotificationSettings';
-import OrganizationSettings from './OrganizationSettings';
 
-const Settings = () => {
-    const navigate = useNavigate();
-
-    const [openSections, setOpenSections] = useState([]);
-
-    const settingsSections = [
-        { id: 1, title: 'Employee ID Settings', component: <EmployeeIDSettings /> },
-        { id: 2, title: 'Attendance Settings', component: <AttendanceSettings /> },
-        { id: 3, title: 'Leave And Holiday Settings', component: <LeaveSettings /> },
-        { id: 4, title: 'Onboarding Settings', component: <OnboardingSettings /> },
-        { id: 5, title: 'Payroll Settings', component: <PayrollSettings /> },
-        { id: 6, title: 'Department And Designation Settings', component: <DepartmentSettings /> },
-        { id: 7, title: 'Recruitment Settings', component: <RecruitmentSettings /> },
-        { id: 8, title: 'Employee Document Settings', component: <EmployeeDocumentSettings /> },
-        { id: 9, title: 'Notification Settings', component: <NotificationSettings /> },
-        { id: 10, title: 'Organization Settings', component: <OrganizationSettings /> },
-    ];
-
-    const toggleSection = (id) => {
-        setOpenSections(prev =>
-            prev.includes(id)
-                ? prev.filter(sectionId => sectionId !== id)
-                : [...prev, id]
-        );
-    };
-
-    return (
-        <div
-            className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] xl:h-[calc(100vh-11rem)] overflow-y-auto border border-[#D9D9D9] flex flex-col font-['Poppins',sans-serif]"
-        >
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 shrink-0 mt-2">
-                <img 
-                    src="/images/arrow_left_alt.svg" 
-                    alt="Back" 
-                    className="w-3 h-3 cursor-pointer hover:scale-110 transition-transform" 
-                    onClick={() => navigate('/hrms')}
-                />
-                <span 
-                    className='cursor-pointer text-[#7D1EDB]'
-                    onClick={() => navigate('/hrms')}
-                >
-                    HRMS Dashboard
-                </span> 
-                <ChevronRight size={14}/> 
-                <span className="text-[#6B7280]">Settings</span>
-            </div>
-
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-[20px] font-semibold text-gray-600 leading-[140%] capitalize font-['Poppins']">
-                    Settings
-                </h1>
-            </div>
-
-            {/* Settings Sections Container */}
-            <div className="bg-white rounded-[24px] border border-[#D9D9D9] p-4 flex-1 overflow-y-auto">
-                <div className="space-y-3">
-                    {settingsSections.map((section) => (
-                        <SettingsAccordion
-                            key={section.id}
-                            title={section.title}
-                            open={openSections.includes(section.id)}
-                            onClick={() => toggleSection(section.id)}
-                        >
-                            {section.component || (
-                                <p className="text-sm text-gray-600">
-                                    Content for {section.title} will be displayed here.
-                                </p>
-                            )}
-                        </SettingsAccordion>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+const defaults = {
+  employeeId: { prefix:'ORG', startNumber:'001', autoIncrement:true, format:'{PREFIX}-{DEPT}-{YY}-{AUTO}' },
+  attendance: { graceEnabled:true, lateGrace:'15', earlyGrace:'15', overtimeEnabled:true, overtimeAfter:'9', overtimeMultiplier:'1.5', remoteEnabled:true, remoteCriteria:'system_login', holidayEnabled:true, holidayCalendar:'company', attendanceThreshold:'4' },
+  leave: { defaultPolicy:'standard', carryForward:true, carryDays:'15', encashment:true, encashDays:'10', minimumBalance:'5', leaveTypes:[{id:'sick',name:'Sick Leave',days:'5'}], holidayCalendar:'india-2026' },
+  onboarding: { tasks:[{id:'documents',name:'Upload required documents',owner:'Employee'}], documents:[{id:'pan',name:'PAN Card',mandatory:true}], autoAssign:true, welcomeEmail:'Welcome to the team! Please complete your onboarding checklist before your first working day.' },
+  payroll: { frequency:'monthly', templates:[{id:'standard',name:'Standard Salary'}], tdsEnabled:true, tdsRate:'10', pfEnabled:true, employeePf:'12', employerPf:'12', reimbursements:[{id:'medical',name:'Medical',max:'1000'}] },
+  department: { departments:[{id:'engineering',name:'Engineering',code:'ENG'}], designations:[{id:'manager',name:'Engineering Manager',code:'EM',level:'4'}], hierarchyEnabled:true, levels:[{id:'l2',code:'L2',name:'Mid-Level',rank:'2'}] },
+  recruitment: { stages:[{id:'screening',name:'Screening',days:'2'}], panelRules:[], invitationSubject:'Interview Invitation', invitationBody:'We would like to invite you for an interview.', rejectionSubject:'Application update', rejectionBody:'Thank you for your interest. We will not be progressing with your application.' },
+  documents: { types:[{id:'aadhar',name:'Aadhar Card',mandatory:true,periodic:false}], reminders:[{id:'passport',name:'Passport',days:'60'}], formats:'pdf, docx, jpg, png', maxSize:'5' },
+  notifications: { emailEnabled:true, events:{newHire:true,leaveApplied:true,leaveDecision:true,attendanceMissed:true,taskAssigned:true}, digest:'instant' },
+  organization: { workingDays:['mon','tue','wed','thu','fri'], weekStarts:'monday', locations:[{id:'hq',name:'Headquarters',address:'123, Main St, Anytown, CA',shift:'general',calendar:'india'}], probationMonths:'3' },
 };
 
-export default Settings;
+const clone = value => JSON.parse(JSON.stringify(value));
+const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+const currentKey = () => {
+  try { const u=JSON.parse(localStorage.getItem('userData')||'{}'); return `orga:settings:${u.organizationId||u.companyId||u.id||'default'}`; }
+  catch { return 'orga:settings:default'; }
+};
+const mergeDefaults = saved => Object.fromEntries(Object.entries(defaults).map(([key,value]) => [key,{...clone(value),...(saved?.[key]||{})}]));
+
+const inputClass='w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:text-gray-500';
+const buttonClass='px-5 py-2.5 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed';
+
+function Toggle({checked,onChange,label}) {
+  return <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={()=>onChange(!checked)} className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${checked?'bg-purple-600':'bg-gray-300'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked?'translate-x-5':''}`}/></button>;
+}
+function Field({label,value,onChange,type='text',options,disabled,min,max,placeholder}) {
+  return <label className="block min-w-0"><span className="block text-sm text-gray-800 mb-2">{label}</span>{options?<select value={value} disabled={disabled} onChange={e=>onChange(e.target.value)} className={inputClass}>{options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select>:<input type={type} value={value} disabled={disabled} min={min} max={max} placeholder={placeholder} onChange={e=>onChange(e.target.value)} className={inputClass}/>}</label>;
+}
+function SwitchRow({title,description,value,onChange}) { return <div className="flex items-center justify-between gap-6"><div><h3 className="text-sm font-medium text-gray-800">{title}</h3><p className="text-sm text-gray-400 mt-1">{description}</p></div><Toggle checked={value} onChange={onChange} label={title}/></div>; }
+function ListEditor({title,description,items,columns,onChange,newLabel='Add item'}) {
+  const [draft,setDraft]=useState(Object.fromEntries(columns.map(c=>[c.key,c.default??(c.type==='checkbox'?false:'')])));
+  const add=()=>{ const missing=columns.find(c=>c.required!==false && c.type!=='checkbox' && !String(draft[c.key]||'').trim()); if(missing){toast.error(`${missing.label} is required`);return;} onChange([...items,{id:uid(),...draft}]); setDraft(Object.fromEntries(columns.map(c=>[c.key,c.default??(c.type==='checkbox'?false:'')]))); };
+  const update=(id,key,value)=>onChange(items.map(i=>i.id===id?{...i,[key]:value}:i));
+  return <div><h3 className="text-sm font-medium text-gray-800">{title}</h3>{description&&<p className="text-sm text-gray-400 mt-1 mb-4">{description}</p>}<div className="space-y-3 mt-4">{items.length===0&&<p className="text-sm text-gray-400 border border-dashed rounded-lg p-4">No items configured.</p>}{items.map(item=><div key={item.id} className="grid md:grid-cols-[1fr_auto] gap-3 items-end p-4 border rounded-lg"><div className={`grid gap-3 ${columns.length>1?'md:grid-cols-'+Math.min(columns.length,4):''}`}>{columns.map(c=>c.type==='checkbox'?<label key={c.key} className="flex items-center gap-2 pb-3"><input type="checkbox" checked={!!item[c.key]} onChange={e=>update(item.id,c.key,e.target.checked)}/><span className="text-sm">{c.label}</span></label>:<Field key={c.key} label={c.label} type={c.type} value={item[c.key]} onChange={v=>update(item.id,c.key,v)} options={c.options} min={c.min}/>)}</div><button type="button" aria-label={`Remove ${item.name||'item'}`} onClick={()=>onChange(items.filter(i=>i.id!==item.id))} className="p-2.5 text-red-500 border border-red-100 rounded-lg hover:bg-red-50"><X size={18}/></button></div>)}</div><div className="grid md:grid-cols-[1fr_auto] gap-3 items-end mt-3"><div className={`grid gap-3 ${columns.length>1?'md:grid-cols-'+Math.min(columns.length,4):''}`}>{columns.map(c=>c.type==='checkbox'?<label key={c.key} className="flex items-center gap-2 pb-3"><input type="checkbox" checked={!!draft[c.key]} onChange={e=>setDraft({...draft,[c.key]:e.target.checked})}/><span className="text-sm">{c.label}</span></label>:<Field key={c.key} label={`New ${c.label}`} type={c.type} value={draft[c.key]} placeholder={c.placeholder} onChange={v=>setDraft({...draft,[c.key]:v})} options={c.options} min={c.min}/>)}</div><button type="button" onClick={add} className={buttonClass}>{newLabel} +</button></div></div>;
+}
+
+function Section({id,data,setData}) {
+  const set=(key,value)=>setData({...data,[key]:value});
+  if(id==='employeeId') return <div className="space-y-6"><div className="grid md:grid-cols-2 gap-6"><Field label="Employee ID Prefix" value={data.prefix} onChange={v=>set('prefix',v.toUpperCase().replace(/[^A-Z0-9]/g,''))}/><Field label="Start From Number" type="number" min="1" value={data.startNumber} onChange={v=>set('startNumber',v)}/></div><SwitchRow title="Auto-Increment" description="Automatically number new employee records" value={data.autoIncrement} onChange={v=>set('autoIncrement',v)}/><Field label="Employee Code Format" value={data.format} onChange={v=>set('format',v)}/><p className="text-xs text-gray-500">Preview: {data.format.replace('{PREFIX}',data.prefix||'ORG').replace('{DEPT}','ENG').replace('{YY}',String(new Date().getFullYear()).slice(-2)).replace('{AUTO}',String(data.startNumber||1).padStart(3,'0'))}</p></div>;
+  if(id==='attendance') return <div className="space-y-8"><SwitchRow title="Grace Period" description="Allow buffer time for check-ins and check-outs" value={data.graceEnabled} onChange={v=>set('graceEnabled',v)}/><div className="grid md:grid-cols-2 gap-6"><Field label="Late check-in grace (minutes)" type="number" min="0" value={data.lateGrace} disabled={!data.graceEnabled} onChange={v=>set('lateGrace',v)}/><Field label="Early check-out grace (minutes)" type="number" min="0" value={data.earlyGrace} disabled={!data.graceEnabled} onChange={v=>set('earlyGrace',v)}/></div><SwitchRow title="Overtime Calculation" description="Calculate and compensate overtime" value={data.overtimeEnabled} onChange={v=>set('overtimeEnabled',v)}/><div className="grid md:grid-cols-2 gap-6"><Field label="Overtime starts after (hours)" type="number" min="0" value={data.overtimeAfter} disabled={!data.overtimeEnabled} onChange={v=>set('overtimeAfter',v)}/><Field label="Pay multiplier" type="number" min="1" value={data.overtimeMultiplier} disabled={!data.overtimeEnabled} onChange={v=>set('overtimeMultiplier',v)}/></div><SwitchRow title="Auto Mark Remote Attendance" description="Use authenticated activity for remote attendance" value={data.remoteEnabled} onChange={v=>set('remoteEnabled',v)}/><Field label="Auto mark criteria" value={data.remoteCriteria} disabled={!data.remoteEnabled} onChange={v=>set('remoteCriteria',v)} options={[{value:'system_login',label:'Based on system login time'},{value:'first_activity',label:'Based on first recorded activity'}]}/><SwitchRow title="Holiday Calendar" description="Apply a calendar to attendance" value={data.holidayEnabled} onChange={v=>set('holidayEnabled',v)}/><div className="grid md:grid-cols-2 gap-6"><Field label="Calendar" value={data.holidayCalendar} disabled={!data.holidayEnabled} onChange={v=>set('holidayCalendar',v)} options={[{value:'company',label:'Default company calendar'},{value:'india',label:'India holidays'}]}/><Field label="Minimum hours for full day" type="number" min="0" value={data.attendanceThreshold} onChange={v=>set('attendanceThreshold',v)}/></div></div>;
+  if(id==='leave') return <div className="space-y-8"><Field label="Default Leave Policy" value={data.defaultPolicy} onChange={v=>set('defaultPolicy',v)} options={[{value:'standard',label:'Standard policy'},{value:'flexible',label:'Flexible policy'}]}/><SwitchRow title="Carry Forward Rules" description="Carry unused leave into the next year" value={data.carryForward} onChange={v=>set('carryForward',v)}/><Field label="Maximum carry-forward days" type="number" min="0" value={data.carryDays} disabled={!data.carryForward} onChange={v=>set('carryDays',v)}/><SwitchRow title="Encashment Rules" description="Allow eligible leave to be encashed" value={data.encashment} onChange={v=>set('encashment',v)}/><div className="grid md:grid-cols-2 gap-6"><Field label="Maximum encashment days" type="number" min="0" value={data.encashDays} disabled={!data.encashment} onChange={v=>set('encashDays',v)}/><Field label="Minimum balance required" type="number" min="0" value={data.minimumBalance} disabled={!data.encashment} onChange={v=>set('minimumBalance',v)}/></div><ListEditor title="Additional Leave Types" items={data.leaveTypes} onChange={v=>set('leaveTypes',v)} newLabel="Add Leave Type" columns={[{key:'name',label:'Leave name'},{key:'days',label:'Days',type:'number',min:'1'}]}/><Field label="Company-wide Holiday Calendar" value={data.holidayCalendar} onChange={v=>set('holidayCalendar',v)} options={[{value:'india-2026',label:'India 2026 calendar'},{value:'custom',label:'Custom company calendar'}]}/></div>;
+  if(id==='onboarding') return <div className="space-y-8"><ListEditor title="Default Onboarding Checklist" items={data.tasks} onChange={v=>set('tasks',v)} newLabel="Add Task" columns={[{key:'name',label:'Task'},{key:'owner',label:'Owner',options:[{value:'Employee',label:'Employee'},{value:'Manager',label:'Manager'},{value:'HR',label:'HR'}],default:'Employee'}]}/><ListEditor title="Documents Required for New Employees" items={data.documents} onChange={v=>set('documents',v)} newLabel="Add Document" columns={[{key:'name',label:'Document'},{key:'mandatory',label:'Mandatory',type:'checkbox',default:true}]}/><SwitchRow title="Auto-Assign Onboarding Tasks" description="Assign checklist tasks automatically" value={data.autoAssign} onChange={v=>set('autoAssign',v)}/><label className="block text-sm text-gray-800">Welcome Email Template<textarea value={data.welcomeEmail} onChange={e=>set('welcomeEmail',e.target.value)} rows="5" className={`${inputClass} mt-2 resize-y`}/></label></div>;
+  if(id==='payroll') return <div className="space-y-8"><Field label="Payroll Frequency" value={data.frequency} onChange={v=>set('frequency',v)} options={[{value:'monthly',label:'Monthly'},{value:'biweekly',label:'Bi-weekly'},{value:'weekly',label:'Weekly'}]}/><ListEditor title="Salary Structure Templates" items={data.templates} onChange={v=>set('templates',v)} newLabel="Add Template" columns={[{key:'name',label:'Template name'}]}/><SwitchRow title="Tax Deducted at Source (TDS)" description="Calculate TDS automatically" value={data.tdsEnabled} onChange={v=>set('tdsEnabled',v)}/><Field label="Default TDS rate (%)" type="number" min="0" max="100" value={data.tdsRate} disabled={!data.tdsEnabled} onChange={v=>set('tdsRate',v)}/><SwitchRow title="Provident Fund (PF)" description="Enable employee and employer contributions" value={data.pfEnabled} onChange={v=>set('pfEnabled',v)}/><div className="grid md:grid-cols-2 gap-6"><Field label="Employee contribution (%)" type="number" min="0" max="100" value={data.employeePf} disabled={!data.pfEnabled} onChange={v=>set('employeePf',v)}/><Field label="Employer contribution (%)" type="number" min="0" max="100" value={data.employerPf} disabled={!data.pfEnabled} onChange={v=>set('employerPf',v)}/></div><ListEditor title="Reimbursement Categories" items={data.reimbursements} onChange={v=>set('reimbursements',v)} newLabel="Add Category" columns={[{key:'name',label:'Category'},{key:'max',label:'Maximum amount',type:'number',min:'0'}]}/></div>;
+  if(id==='department') return <div className="space-y-8"><ListEditor title="Departments" items={data.departments} onChange={v=>set('departments',v)} newLabel="Add Department" columns={[{key:'name',label:'Department name'},{key:'code',label:'Code'}]}/><ListEditor title="Designation Codes" items={data.designations} onChange={v=>set('designations',v)} newLabel="Add Designation" columns={[{key:'name',label:'Designation'},{key:'code',label:'Code'},{key:'level',label:'Level',type:'number',min:'1'}]}/><SwitchRow title="Hierarchy Mapping" description="Maintain reporting grades across the organization" value={data.hierarchyEnabled} onChange={v=>set('hierarchyEnabled',v)}/>{data.hierarchyEnabled&&<ListEditor title="Hierarchy Levels" items={data.levels} onChange={v=>set('levels',v)} newLabel="Add Level" columns={[{key:'code',label:'Code'},{key:'name',label:'Level name'},{key:'rank',label:'Rank',type:'number',min:'1'}]}/>}</div>;
+  if(id==='recruitment') return <div className="space-y-8"><ListEditor title="Default Hiring Stages" items={data.stages} onChange={v=>set('stages',v)} newLabel="Add Stage" columns={[{key:'name',label:'Stage name'},{key:'days',label:'Target days',type:'number',min:'1'}]}/><ListEditor title="Interview Panel Assignment Rules" items={data.panelRules} onChange={v=>set('panelRules',v)} newLabel="Add Rule" columns={[{key:'department',label:'Department'},{key:'interviewers',label:'Interviewers (comma separated)'}]}/><h3 className="text-sm font-medium">Automated Email Templates</h3><Field label="Interview invitation subject" value={data.invitationSubject} onChange={v=>set('invitationSubject',v)}/><label className="block text-sm">Interview invitation body<textarea value={data.invitationBody} onChange={e=>set('invitationBody',e.target.value)} rows="5" className={`${inputClass} mt-2`}/></label><Field label="Rejection email subject" value={data.rejectionSubject} onChange={v=>set('rejectionSubject',v)}/><label className="block text-sm">Rejection email body<textarea value={data.rejectionBody} onChange={e=>set('rejectionBody',e.target.value)} rows="5" className={`${inputClass} mt-2`}/></label></div>;
+  if(id==='documents') return <div className="space-y-8"><ListEditor title="Required Document Types" items={data.types} onChange={v=>set('types',v)} newLabel="Add Document" columns={[{key:'name',label:'Document'},{key:'mandatory',label:'Mandatory',type:'checkbox',default:true},{key:'periodic',label:'Periodic',type:'checkbox'}]}/><ListEditor title="Expiry Reminders" items={data.reminders} onChange={v=>set('reminders',v)} newLabel="Add Reminder" columns={[{key:'name',label:'Document'},{key:'days',label:'Days before expiry',type:'number',min:'1'}]}/><div className="grid md:grid-cols-2 gap-6"><Field label="Allowed file formats" value={data.formats} onChange={v=>set('formats',v)}/><Field label="Maximum file size (MB)" type="number" min="1" value={data.maxSize} onChange={v=>set('maxSize',v)}/></div></div>;
+  if(id==='notifications') { const labels={newHire:'New Hiring',leaveApplied:'Leave Applied',leaveDecision:'Leave Approved or Rejected',attendanceMissed:'Attendance Missed',taskAssigned:'Task Assigned'}; return <div className="space-y-8"><SwitchRow title="Email Notifications" description="Send email for enabled system events" value={data.emailEnabled} onChange={v=>set('emailEnabled',v)}/><div><h3 className="text-sm font-medium mb-3">Notification Events</h3>{Object.entries(labels).map(([key,label])=><div key={key} className="flex justify-between items-center p-4 border rounded-lg mb-3"><span className="text-sm">{label}</span><Toggle label={label} checked={data.events[key]} onChange={v=>set('events',{...data.events,[key]:v})}/></div>)}</div><Field label="Delivery frequency" value={data.digest} onChange={v=>set('digest',v)} options={[{value:'instant',label:'Immediately'},{value:'daily',label:'Daily digest'},{value:'weekly',label:'Weekly digest'}]}/></div>; }
+  const days=[['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
+  return <div className="space-y-8"><div><h3 className="text-sm font-medium mb-4">Working Days Per Week</h3><div className="flex flex-wrap gap-3">{days.map(([key,label])=><button type="button" key={key} onClick={()=>set('workingDays',data.workingDays.includes(key)?data.workingDays.filter(d=>d!==key):[...data.workingDays,key])} className={`px-5 py-2.5 rounded-full border ${data.workingDays.includes(key)?'bg-purple-100 border-purple-200 text-purple-700':'bg-white text-gray-600'}`}>{label}</button>)}</div><p className="text-sm text-gray-400 mt-2">Selected {data.workingDays.length} days per week</p></div><Field label="Week Start Day" value={data.weekStarts} onChange={v=>set('weekStarts',v)} options={[{value:'monday',label:'Monday'},{value:'sunday',label:'Sunday'}]}/><ListEditor title="Office Locations" items={data.locations} onChange={v=>set('locations',v)} newLabel="Add Office" columns={[{key:'name',label:'Office name'},{key:'address',label:'Address'},{key:'shift',label:'Default shift',options:[{value:'general',label:'General'},{value:'morning',label:'Morning'},{value:'night',label:'Night'}],default:'general'},{key:'calendar',label:'Holiday calendar',options:[{value:'india',label:'India Holidays'},{value:'custom',label:'Custom'}],default:'india'}]}/><Field label="Default Probation Period (months)" type="number" min="0" value={data.probationMonths} onChange={v=>set('probationMonths',v)}/></div>;
+}
+
+const sections=[['employeeId','Employee ID Settings'],['attendance','Attendance Settings'],['leave','Leave and Holiday Settings'],['onboarding','Onboarding Settings'],['payroll','Payroll Settings'],['department','Department and Designation Settings'],['recruitment','Recruitment Settings'],['documents','Employee Document Settings'],['notifications','Notification Settings'],['organization','Organization Settings']];
+
+export default function Settings(){
+  const navigate=useNavigate(); const importRef=useRef(null);
+  const [data,setData]=useState(()=>{try{return mergeDefaults(JSON.parse(localStorage.getItem(currentKey())||'null'));}catch{return clone(defaults);}});
+  const [saved,setSaved]=useState(()=>clone(data)); const [open,setOpen]=useState(['employeeId']); const [confirmReset,setConfirmReset]=useState(false);
+  const dirty=useMemo(()=>JSON.stringify(data)!==JSON.stringify(saved),[data,saved]);
+  useEffect(()=>{const warn=e=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+  const validate=()=>{if(!data.employeeId.prefix.trim())return 'Employee ID prefix is required';if(Number(data.payroll.tdsRate)>100||Number(data.payroll.employeePf)>100||Number(data.payroll.employerPf)>100)return 'Percentage values cannot exceed 100';if(data.organization.workingDays.length===0)return 'Select at least one working day';return null;};
+  const save=()=>{const error=validate();if(error){toast.error(error);return;}localStorage.setItem(currentKey(),JSON.stringify(data));setSaved(clone(data));toast.success('All settings saved');};
+  const exportData=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`orga-settings-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);toast.success('Settings exported');};
+  const importData=e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(reader.result);if(!parsed||typeof parsed!=='object')throw new Error();setData(mergeDefaults(parsed));toast.success('Settings imported. Review and save changes.');}catch{toast.error('Choose a valid settings JSON file');}};reader.readAsText(file);};
+  return <div className="bg-white px-4 sm:px-6 md:px-8 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-9rem)] overflow-y-auto border border-[#D9D9D9] font-['Poppins',sans-serif]">
+    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500"><button onClick={()=>navigate('/hrms')} aria-label="Back"><img src="/images/arrow_left_alt.svg" alt="" className="w-3 h-3"/></button><button className="text-[#7D1EDB]" onClick={()=>navigate('/hrms')}>HRMS Dashboard</button><ChevronRight size={14}/><span>Settings</span></div>
+    <div className="flex flex-wrap justify-between items-center gap-3 mb-6"><div><h1 className="text-xl font-semibold text-gray-700">Settings</h1><p className="text-xs text-gray-400 mt-1">{dirty?'You have unsaved changes':'All changes are saved'}</p></div><div className="flex flex-wrap gap-2"><input ref={importRef} type="file" accept="application/json,.json" onChange={importData} className="hidden"/><button onClick={()=>importRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border rounded-full text-sm hover:bg-gray-50"><Upload size={16}/>Import</button><button onClick={exportData} className="flex items-center gap-2 px-4 py-2 border rounded-full text-sm hover:bg-gray-50"><Download size={16}/>Export</button><button onClick={()=>setConfirmReset(true)} className="flex items-center gap-2 px-4 py-2 border rounded-full text-sm hover:bg-gray-50"><RotateCcw size={16}/>Reset</button><button onClick={save} disabled={!dirty} className={`${buttonClass} flex items-center gap-2`}><Save size={16}/>Save All</button></div></div>
+    <div className="bg-white rounded-2xl border p-4 space-y-3">{sections.map(([id,title])=><SettingsAccordion key={id} title={title} open={open.includes(id)} onClick={()=>setOpen(v=>v.includes(id)?v.filter(x=>x!==id):[...v,id])}><Section id={id} data={data[id]} setData={value=>setData(current=>({...current,[id]:value}))}/><div className="flex justify-end border-t mt-8 pt-5"><button onClick={save} disabled={!dirty} className={`${buttonClass} flex items-center gap-2`}><Save size={16}/>Save Changes</button></div></SettingsAccordion>)}</div>
+    {confirmReset&&<div role="dialog" aria-modal="true" className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full"><h2 className="text-lg font-semibold">Reset all settings?</h2><p className="text-sm text-gray-500 mt-2">This restores every setting to its original default. Save afterward to make the reset permanent.</p><div className="flex justify-end gap-3 mt-6"><button onClick={()=>setConfirmReset(false)} className="px-5 py-2.5 border rounded-full text-sm">Cancel</button><button onClick={()=>{setData(clone(defaults));setConfirmReset(false);toast.success('Defaults restored. Save to apply.');}} className="px-5 py-2.5 bg-red-600 text-white rounded-full text-sm">Reset Settings</button></div></div></div>}
+  </div>;
+}

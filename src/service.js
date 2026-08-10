@@ -126,6 +126,31 @@ export const dashboardService = {
 };
 
 export const authService = {
+  changePassword: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/auth/change-password`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      return response.ok
+        ? { success: true, message: data.message || "Password updated successfully" }
+        : { success: false, message: data.message || data.error || "Failed to update password" };
+    } catch {
+      return { success: false, message: "Unable to update password. Please try again." };
+    }
+  },
+  logoutAllDevices: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/auth/logout-all`, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to sign out devices" };
+      clearUserSession();
+      return { success: true, message: data.message || "Signed out from all devices" };
+    } catch {
+      return { success: false, message: "Unable to sign out devices. Please try again." };
+    }
+  },
   register: async (userData) => {
     try {
       const response = await apiFetch(`${BASE_URL}/auth/register`, {
