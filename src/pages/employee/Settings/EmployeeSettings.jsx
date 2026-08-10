@@ -1,17 +1,21 @@
-import React, { useState, useRef } from 'react';
-import { Lock, Bell, Shield, Camera, Eye, EyeOff, CheckCircle2, User, Palette, Globe, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, Bell, Shield, Camera, Eye, EyeOff, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { employeeService, getProfilePicUrl } from '../../../service';
+import { authService, employeeService, getProfilePicUrl } from '../../../service';
 
-const SectionCard = ({ title, icon: Icon, iconColor, children }) => (
+const SectionCard = ({ title, icon, iconColor, children }) => {
+  const IconComponent = icon;
+  return (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}><Icon className="w-4 h-4" /></div>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}><IconComponent className="w-4 h-4" /></div>
       <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
     </div>
     <div className="p-6">{children}</div>
   </div>
-);
+  );
+};
 
 const Toggle = ({ checked, onChange, label, desc }) => (
   <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
@@ -26,16 +30,21 @@ const Toggle = ({ checked, onChange, label, desc }) => (
 );
 
 export default function EmployeeSettings() {
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
   const userData = (() => { try { return JSON.parse(localStorage.getItem('userData')||'{}'); } catch { return {}; } })();
+  const preferencesKey = `employee:settings:${userData.id || userData.email || 'default'}`;
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); e.target.value=''; return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be 5 MB or smaller'); e.target.value=''; return; }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
@@ -69,6 +78,7 @@ export default function EmployeeSettings() {
   };
 
   const handleCancelPhoto = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
     setPreviewUrl(null);
   };
@@ -97,19 +107,40 @@ export default function EmployeeSettings() {
 
   const [pwForm, setPwForm] = useState({ current:'', new:'', confirm:'' });
   const [showPw, setShowPw] = useState({ current:false, new:false, confirm:false });
-  const [notifs, setNotifs] = useState({ email:true, push:true, leave:true, payroll:true, tasks:true, announcements:true, birthday:false });
+  const [notifs, setNotifs] = useState(() => { try { return {...{ email:true, push:true, leave:true, payroll:true, tasks:true, announcements:true, birthday:false },...JSON.parse(localStorage.getItem(preferencesKey)||'{}')}; } catch { return { email:true, push:true, leave:true, payroll:true, tasks:true, announcements:true, birthday:false }; } });
   const [saved, setSaved] = useState(false);
+  const [securityLoading, setSecurityLoading] = useState(false);
 
-  const handlePwSubmit = (e) => {
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
+  const handlePwSubmit = async (e) => {
     e.preventDefault();
+    if (pwForm.current === pwForm.new) { toast.error('New password must differ from current password'); return; }
     if (pwForm.new !== pwForm.confirm) { toast.error('Passwords do not match!'); return; }
     if (pwForm.new.length < 8) { toast.error('Password must be at least 8 characters!'); return; }
     setSaved(true);
-    toast.success('Password updated successfully!');
-    setTimeout(() => { setSaved(false); setPwForm({current:'',new:'',confirm:''}); }, 2000);
+    const result = await authService.changePassword({ currentPassword: pwForm.current, newPassword: pwForm.new });
+    if (result.success) { toast.success(result.message); setPwForm({current:'',new:'',confirm:''}); }
+    else toast.error(result.message);
+    setSaved(false);
   };
 
-  const toggle = (k) => setNotifs(prev => ({ ...prev, [k]: !prev[k] }));
+  const toggle = async (k) => {
+    if (k === 'push' && !notifs.push && 'Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { toast.error('Browser notification permission was not granted'); return; }
+    }
+    setNotifs(prev => ({ ...prev, [k]: !prev[k] }));
+  };
+  const savePreferences = () => { localStorage.setItem(preferencesKey, JSON.stringify(notifs)); toast.success('Notification preferences saved'); };
+  const signOutAll = async () => {
+    if (!window.confirm('Sign out every active session, including this device?')) return;
+    setSecurityLoading(true);
+    const result = await authService.logoutAllDevices();
+    setSecurityLoading(false);
+    if (!result.success) { toast.error(result.message); return; }
+    toast.success(result.message); navigate('/auth', { replace:true });
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -246,16 +277,16 @@ export default function EmployeeSettings() {
         <Toggle checked={notifs.tasks} onChange={()=>toggle('tasks')} label="Task Reminders" desc="Due date and task update alerts" />
         <Toggle checked={notifs.announcements} onChange={()=>toggle('announcements')} label="Announcements" desc="Company news and policy updates" />
         <Toggle checked={notifs.birthday} onChange={()=>toggle('birthday')} label="Birthday & Anniversaries" desc="Team member celebrations" />
-        <button onClick={()=>toast.success('Preferences saved!')} className="mt-4 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all">Save Preferences</button>
+        <button onClick={savePreferences} className="mt-4 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all">Save Preferences</button>
       </SectionCard>
 
       {/* Security */}
       <SectionCard title="Security" icon={Shield} iconColor="bg-green-100 text-green-600">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           {[
-            { label:'Last Login', val:'Jun 17, 2025 · 5:11 PM', icon:'🕐' },
-            { label:'Device', val:'Chrome on macOS', icon:'💻' },
-            { label:'Location', val:'Bangalore, India', icon:'📍' },
+            { label:'Last Login', val:userData.lastLoginAt ? new Date(userData.lastLoginAt).toLocaleString() : 'Current session', icon:'🕐' },
+            { label:'Device', val:navigator.userAgentData?.platform || navigator.platform || 'Unknown device', icon:'💻' },
+            { label:'Session', val:localStorage.getItem('authToken') ? 'Authenticated' : 'Not authenticated', icon:'🔐' },
           ].map(i => (
             <div key={i.label} className="bg-gray-50 rounded-xl p-3">
               <p className="text-lg mb-1">{i.icon}</p>
@@ -264,8 +295,8 @@ export default function EmployeeSettings() {
             </div>
           ))}
         </div>
-        <button className="text-xs text-red-500 font-semibold border border-red-200 px-3.5 py-2 rounded-lg hover:bg-red-50 transition-all">
-          Sign Out All Devices
+        <button onClick={signOutAll} disabled={securityLoading} className="text-xs text-red-500 font-semibold border border-red-200 px-3.5 py-2 rounded-lg hover:bg-red-50 transition-all disabled:opacity-50">
+          {securityLoading ? 'Signing out…' : 'Sign Out All Devices'}
         </button>
       </SectionCard>
     </div>
