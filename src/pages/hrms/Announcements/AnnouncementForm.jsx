@@ -10,6 +10,13 @@ import { departmentService, employeeService } from '../../../service';
 
 const field = 'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100';
 const label = 'mb-1.5 block text-sm font-semibold text-slate-700';
+const CONTENT_MAX_LENGTH = 180;
+
+const getContentText = (html = '') => {
+  const element = document.createElement('div');
+  element.innerHTML = html;
+  return element.textContent || '';
+};
 const formats = [
   ['bold', Bold],
   ['italic', Italic],
@@ -123,6 +130,12 @@ export default function AnnouncementForm() {
     return () => removeEventListener('beforeunload', guard);
   }, [dirty]);
 
+  useEffect(() => {
+    if (editor.current && document.activeElement !== editor.current) {
+      editor.current.innerHTML = form.content || '';
+    }
+  }, [form.content, loading]);
+
   const set = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
     setDirty(true);
@@ -195,6 +208,24 @@ export default function AnnouncementForm() {
     editor.current.focus();
   };
 
+  const contentLength = getContentText(form.content).length;
+
+  const updateContent = (e) => {
+    const nextContent = e.currentTarget.innerHTML;
+    if (getContentText(nextContent).length <= CONTENT_MAX_LENGTH) {
+      set('content', nextContent);
+      return;
+    }
+
+    e.currentTarget.innerHTML = form.content;
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(e.currentTarget);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
   if (loading) {
     return <div className="m-6 h-72 animate-pulse rounded-2xl bg-white" />;
   }
@@ -239,8 +270,10 @@ export default function AnnouncementForm() {
             {errors.title && <p className="mt-1 text-xs text-rose-600">{errors.title}</p>}
             <label className={`${label} mt-4`}>Short description *</label>
             <textarea className={field} rows="2" maxLength="180" value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="A concise summary shown in announcement lists" />
-            <div className="mt-1 text-right text-xs text-slate-400">{form.description.length}/180</div>
-            <label className={`${label} mt-3`}>Content *</label>
+            <div className="mt-3 flex items-center justify-between">
+              <label className={`${label} mb-0`}>Content *</label>
+              <span className="text-xs text-slate-400">{contentLength}/{CONTENT_MAX_LENGTH}</span>
+            </div>
             <div className="overflow-hidden rounded-xl border border-slate-200 focus-within:border-violet-400">
               <div className="flex flex-wrap gap-1 border-b bg-slate-50 p-2">
                 <select onChange={(e) => exec('formatBlock', e.target.value)} className="rounded border bg-white px-2 text-xs">
@@ -269,8 +302,7 @@ export default function AnnouncementForm() {
                 ref={editor}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={(e) => set('content', e.currentTarget.innerHTML)}
-                dangerouslySetInnerHTML={{ __html: form.content }}
+                onInput={updateContent}
                 className="prose min-h-56 max-w-none p-4 text-sm leading-7 outline-none"
               />
             </div>
