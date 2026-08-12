@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronRight,
-  Calendar,
   Upload
 } from "lucide-react";
 import noRecordsIllustration from "../../../assets/no-records.svg";
@@ -453,7 +452,6 @@ const BalanceSheet = () => {
             onChange={(e) => setAsOf(e.target.value)}
             className="bg-transparent outline-none text-[#7D1EDB] cursor-pointer"
           />
-          <Calendar size={16} className="text-[#7D1EDB]" />
         </label>
 
         <button
