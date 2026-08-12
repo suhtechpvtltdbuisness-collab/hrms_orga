@@ -1,19 +1,128 @@
-import { seedAnnouncements } from '../data';
+const API_BASE_PATH = '/api';
+const BASE_URL =
+  typeof window !== 'undefined'
+    ? `${window.location.origin}${API_BASE_PATH}`
+    : API_BASE_PATH;
 
-const KEY = 'orga_announcements_v2';
-const READ_KEY = 'orga_announcement_reads';
-const delay = (value) => new Promise(resolve => setTimeout(() => resolve(value), 180));
 const notify = () => window.dispatchEvent(new Event('orga-announcements-change'));
-const load = () => { try { const value = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(value) ? value : seedAnnouncements; } catch { return seedAnnouncements; } };
-const save = (items) => { localStorage.setItem(KEY, JSON.stringify(items)); notify(); return items; };
+
+const buildQuery = (params = {}) => {
+  const entries = Object.entries(params).filter(
+    ([, value]) => value !== undefined && value !== null && value !== '',
+  );
+  return entries.length ? `?${new URLSearchParams(Object.fromEntries(entries))}` : '';
+};
+
+const request = async (path, options = {}) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.message || payload.error || 'Request failed. Please try again.');
+    error.status = response.status;
+    throw error;
+  }
+  return payload;
+};
+
+const toBody = (input = {}) => {
+  const body = { ...input };
+  if ('scheduledAt' in input && (input.scheduledAt === undefined || input.scheduledAt === '')) {
+    body.scheduledAt = null;
+  }
+  if ('publishedAt' in input && (input.publishedAt === undefined || input.publishedAt === '')) {
+    body.publishedAt = null;
+  }
+  delete body.id;
+  delete body.reads;
+  delete body.createdAt;
+  delete body.updatedAt;
+  delete body.isRead;
+  return JSON.stringify(body);
+};
 
 export const announcementService = {
-  list: () => delay(load()),
-  get: (id) => delay(load().find(item => item.id === id)),
-  create: (input) => { const now = new Date().toISOString(); const item = {...input,id:`ann-${Date.now()}`,createdAt:now,updatedAt:now,reads:0,recipients:input.audience === 'Specific Employees' ? input.employees.length : 156}; save([item,...load()]); return delay(item); },
-  update: (id,input) => { const item = {...load().find(a=>a.id===id),...input,updatedAt:new Date().toISOString()}; save(load().map(a=>a.id===id?item:a)); return delay(item); },
-  remove: (id) => delay(save(load().filter(a=>a.id!==id))),
-  duplicate: (id) => { const source=load().find(a=>a.id===id); return announcementService.create({...source,id:undefined,title:`Copy of ${source.title}`,status:'Draft',publishedAt:undefined,scheduledAt:undefined}); },
-  isRead: (id) => { try { return JSON.parse(localStorage.getItem(READ_KEY)||'[]').includes(id); } catch { return false; } },
-  markRead: (id,read=true) => { let ids=[]; try { ids=JSON.parse(localStorage.getItem(READ_KEY)||'[]'); } catch { ids=[]; } ids=read?[...new Set([...ids,id])]:ids.filter(x=>x!==id); localStorage.setItem(READ_KEY,JSON.stringify(ids)); notify(); return delay(ids); },
+  list: async (params = {}) => {
+    const res = await request(`/announcements${buildQuery(params)}`);
+    return res.data || [];
+  },
+
+  stats: async () => {
+    const res = await request('/announcements/stats');
+    return res.data || {};
+  },
+
+  listForEmployee: async (params = {}) => {
+    const res = await request(`/announcements/employee${buildQuery(params)}`);
+    return {
+      items: res.data || [],
+      meta: res.meta || { unread: 0, urgent: 0 },
+    };
+  },
+
+  get: async (id) => {
+    const res = await request(`/announcements/${id}`);
+    return res.data;
+  },
+
+  getForEmployee: async (id) => {
+    const res = await request(`/announcements/employee/${id}`);
+    return res.data;
+  },
+
+  create: async (input) => {
+    const res = await request('/announcements', {
+      method: 'POST',
+      body: toBody(input),
+    });
+    notify();
+    return res.data;
+  },
+
+  update: async (id, input) => {
+    const res = await request(`/announcements/${id}`, {
+      method: 'PUT',
+      body: toBody(input),
+    });
+    notify();
+    return res.data;
+  },
+
+  updateStatus: async (id, action) => {
+    const res = await request(`/announcements/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action }),
+    });
+    notify();
+    return res.data;
+  },
+
+  remove: async (id) => {
+    await request(`/announcements/${id}`, { method: 'DELETE' });
+    notify();
+    return true;
+  },
+
+  duplicate: async (id) => {
+    const res = await request(`/announcements/${id}/duplicate`, { method: 'POST' });
+    notify();
+    return res.data;
+  },
+
+  markRead: async (id, read = true) => {
+    await request(`/announcements/${id}/read`, {
+      method: 'PATCH',
+      body: JSON.stringify({ read: Boolean(read) }),
+    });
+    notify();
+    return true;
+  },
 };

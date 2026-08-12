@@ -12,7 +12,7 @@ import {
   FaceRegistrationWizard,
 } from '../../../features/face-attendance/FaceAttendanceFlow';
 import { useAnnouncements } from '../../../features/announcements/hooks/useAnnouncements';
-import { canEmployeeView, relativeTime } from '../../../features/announcements/utils';
+import { relativeTime } from '../../../features/announcements/utils';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -77,7 +77,7 @@ const QuickAction = ({ icon, label, color, onClick }) => {
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
-  const { items: announcementItems } = useAnnouncements();
+  const { items: announcementItems } = useAnnouncements({ forEmployee: true });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRecord, setTodayRecord] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
@@ -237,8 +237,6 @@ export default function EmployeeDashboard() {
   const priorityColor = { high: 'text-red-600 bg-red-50', medium: 'text-amber-600 bg-amber-50', low: 'text-green-600 bg-green-50' };
 
   const announcements = announcementItems
-    .filter((announcement) => canEmployeeView(announcement, userData))
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
     .slice(0, 3)
     .map((announcement) => ({
       ...announcement,

@@ -1,8 +1,177 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Search, Megaphone, Paperclip, Check, Mail, SlidersHorizontal, Calendar, User, Download } from 'lucide-react';
+import { Search, Megaphone, Paperclip, Check, Mail, Calendar, User } from 'lucide-react';
 import { useAnnouncements } from '../../../features/announcements/hooks/useAnnouncements';
 import { announcementService } from '../../../features/announcements/services/announcementService';
 import { Attachments, Badge, EmptyState, priorityTone } from '../../../features/announcements/components';
-export default function EmployeeAnnouncements(){const {items,loading,error}=useAnnouncements(),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[priority,setPriority]=useState('All'),[readFilter,setReadFilter]=useState('All'),[version,setVersion]=useState(0);const visible=useMemo(()=>items.filter(a=>a.status==='Published').map(a=>({...a,isRead:announcementService.isRead(a.id)})).filter(a=>(!search||`${a.title} ${a.description} ${a.author}`.toLowerCase().includes(search.toLowerCase()))&&(priority==='All'||a.priority===priority)&&(readFilter==='All'||(readFilter==='Read')===a.isRead)).sort((a,b)=>new Date(b.publishedAt)-new Date(a.publishedAt)),[items,search,priority,readFilter,version]);const current=selected&&visible.find(a=>a.id===selected.id)||visible[0];const mark=async(read)=>{await announcementService.markRead(current.id,read);setVersion(v=>v+1);toast.success(read?'Marked as read':'Marked as unread')};return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-violet-600"><Megaphone size={15}/> Company communications</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Announcements</h1><p className="mt-1 text-sm text-slate-500">Stay connected with important news and updates.</p></div><div className="flex gap-3"><div className="rounded-xl border bg-white px-4 py-2"><p className="text-lg font-bold text-violet-700">{visible.filter(a=>!a.isRead).length}</p><p className="text-[10px] uppercase text-slate-400">Unread</p></div><div className="rounded-xl border bg-white px-4 py-2"><p className="text-lg font-bold text-rose-600">{visible.filter(a=>a.priority==='Urgent').length}</p><p className="text-[10px] uppercase text-slate-400">Urgent</p></div></div></div><div className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]"><aside className="space-y-3"><div className="rounded-2xl border bg-white p-3"><div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5"><Search size={16} className="text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Search announcements..."/></div><div className="mt-2 flex gap-2"><select value={readFilter} onChange={e=>setReadFilter(e.target.value)} className="min-w-0 flex-1 rounded-lg border px-2 py-2 text-xs"><option>All</option><option>Unread</option><option>Read</option></select><select value={priority} onChange={e=>setPriority(e.target.value)} className="min-w-0 flex-1 rounded-lg border px-2 py-2 text-xs"><option>All</option><option>Urgent</option><option>Important</option><option>Normal</option></select></div></div>{loading?[1,2,3].map(x=><div key={x} className="h-28 animate-pulse rounded-2xl bg-slate-100"/>):error?<p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-600">{error}</p>:!visible.length?<EmptyState title="No announcements"/>:visible.map(a=><button key={a.id} onClick={()=>setSelected(a)} className={`relative w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-violet-300 ${current?.id===a.id?'border-violet-400 ring-2 ring-violet-100':'border-slate-100'} ${!a.isRead?'border-l-4 border-l-violet-600':''}`}><div className="flex justify-between gap-3"><Badge className={priorityTone[a.priority]}>{a.priority}</Badge>{!a.isRead&&<span className="text-[10px] font-bold uppercase text-violet-600">New</span>}</div><h3 className="mt-3 text-sm font-bold text-slate-800">{a.title}</h3><p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{a.description}</p><p className="mt-2 text-[11px] text-slate-400">{new Date(a.publishedAt).toLocaleDateString('en-IN',{dateStyle:'medium'})} · {a.author}</p></button>)}</aside><main>{current?<article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-8"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex gap-2"><Badge className={priorityTone[current.priority]}>{current.priority}</Badge><Badge className="bg-slate-100 text-slate-600">{current.type}</Badge></div><h2 className="mt-4 text-2xl font-bold text-slate-900">{current.title}</h2><p className="mt-2 text-sm text-slate-500">{current.description}</p></div><button onClick={()=>mark(!current.isRead)} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${current.isRead?'border text-slate-600':'bg-violet-600 text-white'}`}>{current.isRead?<Mail size={16}/>:<Check size={16}/>} Mark as {current.isRead?'unread':'read'}</button></div><div className="my-6 flex flex-wrap gap-4 border-y py-4 text-xs text-slate-400"><span className="flex gap-1"><User size={14}/> {current.author}</span><span className="flex gap-1"><Calendar size={14}/> Published {new Date(current.publishedAt).toLocaleDateString('en-IN',{dateStyle:'long'})}</span></div><div className="prose max-w-none text-sm leading-7 text-slate-700" dangerouslySetInnerHTML={{__html:current.content}}/>{current.attachments?.length>0&&<div className="mt-8 border-t pt-5"><h3 className="mb-3 flex items-center gap-2 font-semibold"><Paperclip size={17}/> Attachments</h3><Attachments files={current.attachments}/></div>}{current.expiryDate&&<p className="mt-6 text-xs text-slate-400">This announcement is available until {new Date(current.expiryDate).toLocaleDateString('en-IN',{dateStyle:'long'})}.</p>}</article>:<EmptyState title="Select an announcement" message="Choose an announcement to read the full update."/>}</main></div></div>}
+
+export default function EmployeeAnnouncements() {
+  const { items, meta, loading, error, refresh } = useAnnouncements({ forEmployee: true });
+  const [searchParams] = useSearchParams();
+  const [selectedId, setSelectedId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [priority, setPriority] = useState('All');
+  const [readFilter, setReadFilter] = useState('All');
+  const [busy, setBusy] = useState(false);
+
+  const visible = useMemo(
+    () =>
+      items
+        .filter(
+          (a) =>
+            (!search || `${a.title} ${a.description} ${a.author}`.toLowerCase().includes(search.toLowerCase())) &&
+            (priority === 'All' || a.priority === priority) &&
+            (readFilter === 'All' || (readFilter === 'Read') === Boolean(a.isRead)),
+        )
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)),
+    [items, search, priority, readFilter],
+  );
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('announcement');
+    if (fromQuery) setSelectedId(Number(fromQuery) || fromQuery);
+  }, [searchParams]);
+
+  const current = (selectedId && visible.find((a) => String(a.id) === String(selectedId))) || visible[0];
+
+  const mark = async (read) => {
+    if (!current) return;
+    try {
+      setBusy(true);
+      await announcementService.markRead(current.id, read);
+      await refresh();
+      toast.success(read ? 'Marked as read' : 'Marked as unread');
+    } catch (err) {
+      toast.error(err.message || 'Unable to update read status');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unreadCount = visible.filter((a) => !a.isRead).length;
+  const urgentCount = visible.filter((a) => a.priority === 'Urgent').length;
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-violet-600">
+            <Megaphone size={15} /> Company communications
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">Announcements</h1>
+          <p className="mt-1 text-sm text-slate-500">Stay connected with important news and updates.</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="rounded-xl border bg-white px-4 py-2">
+            <p className="text-lg font-bold text-violet-700">{unreadCount || meta.unread || 0}</p>
+            <p className="text-[10px] uppercase text-slate-400">Unread</p>
+          </div>
+          <div className="rounded-xl border bg-white px-4 py-2">
+            <p className="text-lg font-bold text-rose-600">{urgentCount || meta.urgent || 0}</p>
+            <p className="text-[10px] uppercase text-slate-400">Urgent</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
+        <aside className="space-y-3">
+          <div className="rounded-2xl border bg-white p-3">
+            <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
+              <Search size={16} className="text-slate-400" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Search announcements..." />
+            </div>
+            <div className="mt-2 flex gap-2">
+              <select value={readFilter} onChange={(e) => setReadFilter(e.target.value)} className="min-w-0 flex-1 rounded-lg border px-2 py-2 text-xs">
+                <option>All</option>
+                <option>Unread</option>
+                <option>Read</option>
+              </select>
+              <select value={priority} onChange={(e) => setPriority(e.target.value)} className="min-w-0 flex-1 rounded-lg border px-2 py-2 text-xs">
+                <option>All</option>
+                <option>Urgent</option>
+                <option>Important</option>
+                <option>Normal</option>
+              </select>
+            </div>
+          </div>
+
+          {loading ? (
+            [1, 2, 3].map((x) => <div key={x} className="h-28 animate-pulse rounded-2xl bg-slate-100" />)
+          ) : error ? (
+            <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-600">{error}</p>
+          ) : !visible.length ? (
+            <EmptyState title="No announcements" />
+          ) : (
+            visible.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setSelectedId(a.id)}
+                className={`relative w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-violet-300 ${current?.id === a.id ? 'border-violet-400 ring-2 ring-violet-100' : 'border-slate-100'} ${!a.isRead ? 'border-l-4 border-l-violet-600' : ''}`}
+              >
+                <div className="flex justify-between gap-3">
+                  <Badge className={priorityTone[a.priority]}>{a.priority}</Badge>
+                  {!a.isRead && <span className="text-[10px] font-bold uppercase text-violet-600">New</span>}
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-slate-800">{a.title}</h3>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{a.description}</p>
+                <p className="mt-2 text-[11px] text-slate-400">
+                  {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'} · {a.author}
+                </p>
+              </button>
+            ))
+          )}
+        </aside>
+
+        <main>
+          {current ? (
+            <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="flex gap-2">
+                    <Badge className={priorityTone[current.priority]}>{current.priority}</Badge>
+                    <Badge className="bg-slate-100 text-slate-600">{current.type}</Badge>
+                  </div>
+                  <h2 className="mt-4 text-2xl font-bold text-slate-900">{current.title}</h2>
+                  <p className="mt-2 text-sm text-slate-500">{current.description}</p>
+                </div>
+                <button
+                  disabled={busy}
+                  onClick={() => mark(!current.isRead)}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${current.isRead ? 'border text-slate-600' : 'bg-violet-600 text-white'}`}
+                >
+                  {current.isRead ? <Mail size={16} /> : <Check size={16} />} Mark as {current.isRead ? 'unread' : 'read'}
+                </button>
+              </div>
+              <div className="my-6 flex flex-wrap gap-4 border-y py-4 text-xs text-slate-400">
+                <span className="flex gap-1">
+                  <User size={14} /> {current.author}
+                </span>
+                <span className="flex gap-1">
+                  <Calendar size={14} /> Published {current.publishedAt ? new Date(current.publishedAt).toLocaleDateString('en-IN', { dateStyle: 'long' }) : '—'}
+                </span>
+              </div>
+              <div className="prose max-w-none text-sm leading-7 text-slate-700" dangerouslySetInnerHTML={{ __html: current.content }} />
+              {current.attachments?.length > 0 && (
+                <div className="mt-8 border-t pt-5">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                    <Paperclip size={17} /> Attachments
+                  </h3>
+                  <Attachments files={current.attachments} />
+                </div>
+              )}
+              {current.expiryDate && (
+                <p className="mt-6 text-xs text-slate-400">
+                  This announcement is available until {new Date(current.expiryDate).toLocaleDateString('en-IN', { dateStyle: 'long' })}.
+                </p>
+              )}
+            </article>
+          ) : (
+            <EmptyState title="Select an announcement" message="Choose an announcement to read the full update." />
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
