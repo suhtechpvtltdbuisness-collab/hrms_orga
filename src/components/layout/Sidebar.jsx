@@ -71,7 +71,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     },
     { name: 'Tasks', icon: CheckSquare, path: '' },
     { name: 'Reports', icon: BarChart3, path: '/hrms/financial-reports/profit-and-loss' },
-    { name: 'Announcements', icon: Megaphone, path: '' },
+    { name: 'Announcements', icon: Megaphone, path: '/hrms/announcements' },
     { name: 'Messages', icon: MessageSquare, path: '' },
     { name: 'My Profile', icon: UserCircle, path: '/hrms/profile' },
     { name: 'Settings', icon: Settings, path: '/hrms/settings' },

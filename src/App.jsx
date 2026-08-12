@@ -146,6 +146,9 @@ import CandidateDocumentUpload from "./pages/public/CandidateDocumentUpload";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import Profile from "./pages/hrms/Profile/Profile";
 import SalesCRM from "./pages/hrms/SalesCRM/SalesCRM";
+import AnnouncementsDashboard from "./pages/hrms/Announcements/AnnouncementsDashboard";
+import AnnouncementForm from "./pages/hrms/Announcements/AnnouncementForm";
+import AnnouncementDetails from "./pages/hrms/Announcements/AnnouncementDetails";
 
 
 function App() {
@@ -407,6 +410,10 @@ function App() {
 
           {/* Notifications */}
           <Route path="notifications" element={<Notifications />} />
+          <Route path="announcements" element={<AnnouncementsDashboard />} />
+          <Route path="announcements/new" element={<AnnouncementForm />} />
+          <Route path="announcements/:id" element={<AnnouncementDetails />} />
+          <Route path="announcements/:id/edit" element={<AnnouncementForm />} />
 
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
