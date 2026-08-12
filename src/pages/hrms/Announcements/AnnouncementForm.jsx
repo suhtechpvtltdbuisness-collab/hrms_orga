@@ -41,6 +41,7 @@ export default function AnnouncementForm() {
   const [confirm, setConfirm] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -168,15 +169,24 @@ export default function AnnouncementForm() {
     set(key, values);
   };
 
-  const upload = (e) => {
-    const files = [...e.target.files].map((f, i) => ({
-      id: `file-${Date.now()}-${i}`,
-      name: f.name,
-      size: f.size > 1048576 ? `${(f.size / 1048576).toFixed(1)} MB` : `${Math.ceil(f.size / 1024)} KB`,
-      type: f.name.split('.').pop().toUpperCase(),
-    }));
-    set('attachments', [...form.attachments, ...files]);
+  const upload = async (e) => {
+    const files = [...e.target.files];
     e.target.value = '';
+    if (!files.length) return;
+    if (files.some((file) => file.type !== 'application/pdf')) {
+      toast.error('Only PDF attachments are allowed');
+      return;
+    }
+    try {
+      setUploading(true);
+      const uploadedFiles = await announcementService.uploadAttachments(files);
+      set('attachments', [...form.attachments, ...uploadedFiles]);
+      toast.success(uploadedFiles.length > 1 ? 'Attachments uploaded' : 'Attachment uploaded');
+    } catch (err) {
+      toast.error(err.message || 'Unable to upload attachment');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const exec = (cmd, value) => {
@@ -203,14 +213,14 @@ export default function AnnouncementForm() {
           <p className="mt-1 text-sm text-slate-500">Share a clear, timely update with the right people.</p>
         </div>
         <div className="flex gap-2">
-          <button disabled={saving} onClick={() => { if (validate()) setPreview(true); }} className="flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold">
+          <button disabled={saving || uploading} onClick={() => { if (validate()) setPreview(true); }} className="flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold">
             <Eye size={16} /> Preview
           </button>
-          <button disabled={saving} onClick={() => persist('Draft')} className="flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold">
+          <button disabled={saving || uploading} onClick={() => persist('Draft')} className="flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold">
             <Save size={16} /> Save draft
           </button>
           <button
-            disabled={saving}
+            disabled={saving || uploading}
             onClick={() => (form.publishOption === 'Schedule' ? persist('Scheduled') : setConfirm(true))}
             className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white"
           >
@@ -271,11 +281,11 @@ export default function AnnouncementForm() {
             <div className="flex justify-between">
               <div>
                 <h2 className="font-semibold">Attachments</h2>
-                <p className="mt-1 text-sm text-slate-400">PDF, images, or office files up to 10 MB.</p>
+                <p className="mt-1 text-sm text-slate-400">PDF files are stored in the upload volume and linked to the announcement.</p>
               </div>
-              <label className="flex h-fit cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-violet-700">
-                <Upload size={16} /> Upload
-                <input type="file" multiple className="hidden" onChange={upload} />
+              <label className={`flex h-fit cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-violet-700 ${uploading ? 'pointer-events-none opacity-60' : ''}`}>
+                <Upload size={16} /> {uploading ? 'Uploading...' : 'Upload PDF'}
+                <input type="file" multiple accept="application/pdf,.pdf" className="hidden" onChange={upload} />
               </label>
             </div>
             <div className="mt-4">

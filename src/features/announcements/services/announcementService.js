@@ -33,6 +33,23 @@ const request = async (path, options = {}) => {
   return payload;
 };
 
+const requestForm = async (path, formData) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.message || payload.error || 'Upload failed. Please try again.');
+    error.status = response.status;
+    throw error;
+  }
+  return payload;
+};
+
 const toBody = (input = {}) => {
   const body = { ...input };
   if ('scheduledAt' in input && (input.scheduledAt === undefined || input.scheduledAt === '')) {
@@ -50,6 +67,13 @@ const toBody = (input = {}) => {
 };
 
 export const announcementService = {
+  uploadAttachments: async (files) => {
+    const formData = new FormData();
+    [...files].forEach((file) => formData.append('attachments', file));
+    const res = await requestForm('/upload/announcements', formData);
+    return res.files || [];
+  },
+
   list: async (params = {}) => {
     const res = await request(`/announcements${buildQuery(params)}`);
     return res.data || [];
