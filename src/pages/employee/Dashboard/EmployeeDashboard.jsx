@@ -11,6 +11,8 @@ import {
   FaceAttendanceCard,
   FaceRegistrationWizard,
 } from '../../../features/face-attendance/FaceAttendanceFlow';
+import { useAnnouncements } from '../../../features/announcements/hooks/useAnnouncements';
+import { canEmployeeView, relativeTime } from '../../../features/announcements/utils';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -75,6 +77,7 @@ const QuickAction = ({ icon, label, color, onClick }) => {
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
+  const { items: announcementItems } = useAnnouncements();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRecord, setTodayRecord] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
@@ -233,11 +236,20 @@ export default function EmployeeDashboard() {
 
   const priorityColor = { high: 'text-red-600 bg-red-50', medium: 'text-amber-600 bg-amber-50', low: 'text-green-600 bg-green-50' };
 
-  const announcements = [
-    { title: 'Company Picnic — July 5th', time: '2h ago', category: 'Event', color: 'bg-blue-100 text-blue-700' },
-    { title: 'New Leave Policy Update', time: '1d ago', category: 'Policy', color: 'bg-violet-100 text-violet-700' },
-    { title: 'Q2 All-Hands Meeting', time: '2d ago', category: 'Meeting', color: 'bg-green-100 text-green-700' },
-  ];
+  const announcements = announcementItems
+    .filter((announcement) => canEmployeeView(announcement, userData))
+    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    .slice(0, 3)
+    .map((announcement) => ({
+      ...announcement,
+      time: relativeTime(announcement.publishedAt),
+      category: announcement.type,
+      color: announcement.priority === 'Urgent'
+        ? 'bg-red-100 text-red-700'
+        : announcement.priority === 'Important'
+          ? 'bg-amber-100 text-amber-700'
+          : 'bg-violet-100 text-violet-700',
+    }));
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -437,16 +449,17 @@ export default function EmployeeDashboard() {
             </button>
           </div>
           <div className="space-y-3">
-            {announcements.map((a, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-blue-50/30 transition-all cursor-pointer">
+            {announcements.map((a) => (
+              <button type="button" onClick={() => navigate(`/employee/announcements?announcement=${a.id}`)} key={a.id} className="flex w-full items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-blue-50/30 transition-all cursor-pointer text-left">
                 <span className={`text-[10px] font-bold px-2 py-1 rounded-lg whitespace-nowrap mt-0.5 ${a.color}`}>{a.category}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{a.title}</p>
                   <p className="text-[10px] text-gray-500 mt-0.5">{a.time}</p>
                 </div>
                 <ChevronRight className="w-3 h-3 text-gray-400 shrink-0 mt-0.5" />
-              </div>
+              </button>
             ))}
+            {announcements.length === 0 && <p className="py-6 text-center text-xs text-gray-400">No published announcements</p>}
           </div>
         </div>
       </div>
