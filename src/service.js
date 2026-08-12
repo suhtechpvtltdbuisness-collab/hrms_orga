@@ -4870,3 +4870,386 @@ export const invoiceService = {
     }
   },
 };
+
+export const expenseService = {
+  getCategories: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/categories`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch categories" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createCategory: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/categories`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create category" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateCategory: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/categories/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update category" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteCategory: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/categories/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete category" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getExpenses: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/expenses${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch expenses" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  getExpense: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch expense" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  createExpense: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create expense" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateExpense: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update expense" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  updateExpenseStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/${id}/status`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update expense status" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+  deleteExpense: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/expenses/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete expense" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};
+
+export const financialReportsService = {
+  getFilters: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/filters`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch report filters" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getProfitAndLoss: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/profit-and-loss${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch profit and loss" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getBalanceSheet: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/balance-sheet${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch balance sheet" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getCashFlow: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/cash-flow${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch cash flow" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getBudgetVsActual: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/budget-vs-actual${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch budget vs actual" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getTrialBalance: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/trial-balance${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch trial balance" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  listFiscalYears: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/fiscal-years`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch fiscal years" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createFiscalYear: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/fiscal-years`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create fiscal year" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateFiscalYear: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/fiscal-years/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update fiscal year" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteFiscalYear: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/fiscal-years/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete fiscal year" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  listBudgets: async (params = {}) => {
+    try {
+      const response = await apiFetch(
+        `${BASE_URL}/financial-reports/budgets${buildQueryString(params)}`,
+        { method: "GET", headers: getAuthHeaders() },
+      );
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch budgets" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getBudget: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/budgets/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch budget" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  createBudget: async (payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/budgets`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to create budget" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateBudget: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/budgets/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update budget" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteBudget: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/budgets/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete budget" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  getAccountClassification: async () => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/account-classification`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to fetch account classification" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  updateAccountClassification: async (id, payload) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/financial-reports/account-classification/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, message: data.message || "Failed to update account classification" };
+      return data;
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+};

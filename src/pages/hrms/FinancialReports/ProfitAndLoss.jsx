@@ -11,30 +11,29 @@ import noRecordsIllustration from "../../../assets/no-records.svg";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency, formatCurrencyPDF } from "../../../utils/financialFormatters";
+import { buildPeriodOptions } from "../../../utils/financialReportApi";
+import { financialReportsService } from "../../../service";
 
 const ProfitAndLoss = () => {
   const navigate = useNavigate();
 
+  const [periodOptions, setPeriodOptions] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [costCenters, setCostCenters] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
+  const [selectedCostCenter, setSelectedCostCenter] = useState(null);
+
   const [filters, setFilters] = useState({
     dateRange: "Date Range",
-    department: "Department",
-    costCenter: "Cost Center",
+    department: "All Departments",
+    costCenter: "All Cost Centers",
   });
 
   const filterOptions = {
-    dateRange: ["Jan-March 2026", "April-June 2026", "July-Sept 2026"],
-    department: [
-      "All Departments",
-      "IT Department",
-      "Sales & Marketing",
-      "Operations",
-    ],
-    costCenter: [
-      "Global HQ",
-      "Administration",
-      "Finance & Accounts",
-      "Operations",
-    ],
+    dateRange: periodOptions.map((p) => p.label),
+    department: ["All Departments", ...departments.map((d) => d.name)],
+    costCenter: ["All Cost Centers", ...costCenters],
   };
 
   const [openFilter, setOpenFilter] = useState(null);
@@ -46,64 +45,72 @@ const ProfitAndLoss = () => {
   const handleFilterSelect = (filter, value) => {
     setFilters((prev) => ({ ...prev, [filter]: value }));
     setOpenFilter(null);
+
+    if (filter === "dateRange") {
+      setSelectedPeriod(periodOptions.find((p) => p.label === value) || null);
+    }
+    if (filter === "department") {
+      const dept = departments.find((d) => d.name === value);
+      setSelectedDepartmentId(dept?.id ?? null);
+    }
+    if (filter === "costCenter") {
+      setSelectedCostCenter(value === "All Cost Centers" ? null : value);
+    }
   };
 
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Simulate API Call
-    setTimeout(() => {
-      setReportData({
-        summaryData: [
-          { title: "Total Revenue", amount: 550000, percentage: "12.5%", isPositive: true },
-          { title: "Direct Expense", amount: 550000, percentage: "12.5%", isPositive: true },
-          { title: "Indirect Expense", amount: 550000, percentage: "12.5%", isPositive: false },
-          { title: "Net Profit", amount: 550000, percentage: "12.5%", isPositive: true },
-        ],
-        tableData: [
-          { department: "Sales", revenue: 80000, direct: 70000, indirect: 60000, net: 90000 },
-          { department: "IT", revenue: 80000, direct: 70000, indirect: 60000, net: 90000 },
-          { department: "Operations", revenue: 80000, direct: 70000, indirect: 60000, net: 90000 },
-        ],
-        grandTotal: {
-          department: "GRAND TOTAL", revenue: 80000, direct: 70000, indirect: 60000, net: 90000
-        },
-        revenueBreakdown: [
-          ["Product Sales", 320000, "58.2%"],
-          ["Service Revenue", 150000, "27.3%"],
-          ["Subscription", 50000, "9.1%"],
-          ["Other Income", 30000, "5.4%"],
-        ],
-        expenseBreakdown: [
-          ["Salaries & Wages", 280000, "50.9%"],
-          ["Infrastructure", 80000, "14.5%"],
-          ["Marketing", 60000, "10.9%"],
-          ["Administrative", 50000, "9.1%"],
-          ["Miscellaneous", 30000, "5.5%"],
-        ],
-        observations: [
-          {
-            title: "Gross Profit Margin",
-            desc: "The company maintains a healthy gross margin. Direct expenses account\nfor 70% of revenue, leaving a 30% margin before indirect costs.",
-          },
-          {
-            title: "Department\nPerformance",
-            desc: "The company maintains a healthy gross margin. Direct expenses account\nfor 70% of revenue, leaving a 30% margin before indirect costs.",
-          },
-          {
-            title: "Expense Control",
-            desc: "Indirect expense represent a significant portion of costs. A 10% reduction could\nadd approximately Rs. 6,000 to the net profit per department.",
-          },
-          {
-            title: "Growth Trend",
-            desc: "A 12.5% increase across all key metrics indicates strong business growth.\nSustaining this trajectory requires continued investment in high-margin activities.",
-          },
-        ]
-      });
-      setIsLoading(false);
-    }, 800);
+    let cancelled = false;
+    (async () => {
+      const res = await financialReportsService.getFilters();
+      if (cancelled) return;
+      if (!res.success) {
+        setError(res.message || "Failed to load filters");
+        setIsLoading(false);
+        return;
+      }
+      const periods = buildPeriodOptions(res.data);
+      setPeriodOptions(periods);
+      setDepartments(res.data?.departments || []);
+      setCostCenters(res.data?.costCenters || []);
+      if (periods[0]) {
+        setSelectedPeriod(periods[0]);
+        setFilters((prev) => ({ ...prev, dateRange: periods[0].label }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!selectedPeriod) return;
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError("");
+      const res = await financialReportsService.getProfitAndLoss({
+        from: selectedPeriod.from,
+        to: selectedPeriod.to,
+        departmentId: selectedDepartmentId || undefined,
+        costCenter: selectedCostCenter || undefined,
+      });
+      if (cancelled) return;
+      if (!res.success) {
+        setReportData(null);
+        setError(res.message || "Failed to load profit and loss");
+      } else {
+        setReportData(res.data || null);
+      }
+      setIsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPeriod, selectedDepartmentId, selectedCostCenter]);
 
   const handleExportPDF = () => {
     if (!reportData) return;
@@ -132,12 +139,12 @@ const ProfitAndLoss = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Company:", 50, 95);
     doc.setFont("helvetica", "normal");
-    doc.text("SUH Technologies Pvt. Ltd.", 95, 95);
+    doc.text(reportData.meta?.company || "Organization", 95, 95);
 
     doc.setFont("helvetica", "bold");
     doc.text("Period:", 50, 110);
     doc.setFont("helvetica", "normal");
-    doc.text("April 2024 - March 2025", 85, 110);
+    doc.text(reportData.meta?.period || filters.dateRange, 85, 110);
 
     const now = new Date();
     const formattedDate = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}, ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
@@ -150,7 +157,7 @@ const ProfitAndLoss = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Generated By:", pageWidth - 190, 110);
     doc.setFont("helvetica", "normal");
-    doc.text("Ankit Kumar(Admin)", pageWidth - 125, 110);
+    doc.text(reportData.meta?.generatedBy || "Admin", pageWidth - 125, 110);
 
     let currentY = 135;
 
@@ -397,6 +404,14 @@ const ProfitAndLoss = () => {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px] text-gray-500 font-medium">
         Loading Profit & Loss Data...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px] text-red-500 font-medium">
+        {error}
       </div>
     );
   }

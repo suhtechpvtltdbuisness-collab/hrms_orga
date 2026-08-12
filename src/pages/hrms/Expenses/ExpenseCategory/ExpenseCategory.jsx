@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { expenseService } from "../../../../service";
 
 const ExpenseCategory = () => {
   const navigate = useNavigate();
@@ -8,70 +9,31 @@ const ExpenseCategory = () => {
   const [categories, setCategories] = useState([]);
   const [actionDropdownOpen, setActionDropdownOpen] = useState(null);
 
-  const mockCategories = [
-    {
-      id: 1,
-      name: "Office Equipment",
-      linkedAccount: "Equipment 6300",
-      monthlyBudget: 70000,
-      dailyLimit: null,
-      approval: "Not Required",
-    },
-    {
-      id: 2,
-      name: "Travel",
-      linkedAccount: "Travel 6200",
-      monthlyBudget: 70000,
-      dailyLimit: 10000,
-      approval: "Required",
-    },
-    {
-      id: 3,
-      name: "Meals",
-      linkedAccount: "Meals 6000",
-      monthlyBudget: 70000,
-      dailyLimit: 10000,
-      approval: "Required",
-    },
-    {
-      id: 4,
-      name: "Other",
-      linkedAccount: "Other 6700",
-      monthlyBudget: 70000,
-      dailyLimit: 10000,
-      approval: "Required",
-    },
-  ];
+  const loadCategories = async () => {
+    setLoading(true);
+    const res = await expenseService.getCategories();
+    setCategories(res.success ? res.data || [] : []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const storedCategories =
-      JSON.parse(localStorage.getItem("expenseCategories")) || [];
-
-    // Seed mock data if empty (User Request)
-    if (storedCategories.length === 0) {
-      localStorage.setItem("expenseCategories", JSON.stringify(mockCategories));
-      setCategories(mockCategories);
-    } else {
-      setCategories(storedCategories);
-    }
-    setLoading(false);
+    loadCategories();
   }, []);
 
   const toggleActionDropdown = (id) => {
     setActionDropdownOpen(actionDropdownOpen === id ? null : id);
   };
 
-  const handleDelete = (id) => {
-    const updatedCategories = categories.filter((cat) => cat.id !== id);
-    setCategories(updatedCategories);
-    localStorage.setItem(
-      "expenseCategories",
-      JSON.stringify(updatedCategories)
-    );
+  const handleDelete = async (id) => {
+    const res = await expenseService.deleteCategory(id);
+    if (!res.success) {
+      alert(res.message || "Failed to delete category");
+      return;
+    }
+    setCategories((prev) => prev.filter((cat) => cat.id !== id));
     setActionDropdownOpen(null);
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
     if (!amount && amount !== 0) return "-";
     return `₹${Number(amount).toLocaleString()}`;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import ReviewExpenseModal from "./ReviewExpenseModal";
+import { expenseService } from "../../../../service";
 
 const PendingApprovals = () => {
   const navigate = useNavigate();
@@ -10,88 +11,21 @@ const PendingApprovals = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState("");
   const [titleFilter, setTitleFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState("");
 
   const [expenses, setExpenses] = useState([]);
 
-  // Mock Data for initial load if localStorage is empty
-  const mockExpenses = [
-    {
-      id: 1,
-      title: "Client Lunch Meeting",
-      description: "Lunch with potential client - Project discussion",
-      category: "Meal & Entertainment",
-      amount: 10000,
-      date: "29/02/2026",
-      status: "Submitted", // Level 1 Pending
-      employee: "Alice John",
-      costCenter: "Sales - 101",
-    },
-    {
-      id: 2,
-      title: "Conference Registration",
-      description: "Marketing Summit 2024 registration fee",
-      category: "Professional Development",
-      amount: 50000,
-      date: "29/02/2026",
-      status: "Manager Approved", // Level 2 Pending
-      employee: "Bob Smith",
-      costCenter: "Marketing - 102",
-    },
-    {
-      id: 3,
-      title: "Team Lunch",
-      description: "Team building lunch",
-      category: "Meal & Entertainment",
-      amount: 10000,
-      date: "29/02/2026",
-      status: "Submitted",
-      employee: "Charlie Brown",
-      costCenter: "Marketing - 102",
-    },
-  ];
+  const loadPending = async () => {
+    setLoading(true);
+    const res = await expenseService.getExpenses({ pendingOnly: true });
+    setExpenses(res.success ? res.data || [] : []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // In a real app, this would fetch from API.
-    // Here we might want to share state with Expense.jsx via localStorage or context.
-    // For now, let's use a separate 'pendingExpenses' key or filter the main 'expenses' key if we want integration.
-    // To keep it simple and consistent with the plan, I'll use 'expenses' key but filter for pending ones,
-    // or just use mock data if 'expenses' doesn't have enough pending items for demo.
-
-    // Let's try to read 'expenses' first, if not populate with mock.
-    const storedExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
-
-    // If we have stored expenses but none are pending/manager approved, let's add some mock ones for demo purposes
-    // or just use the mockExpenses if stored is empty.
-
-    let displayExpenses = storedExpenses;
-    if (storedExpenses.length === 0) {
-      displayExpenses = mockExpenses;
-      localStorage.setItem("expenses", JSON.stringify(mockExpenses));
-    }
-
-    // We only want to show expenses that need approval
-    // statuses: "Submitted" (needs Manager) or "Manager Approved" (needs Finance)
-    const pending = displayExpenses.filter(
-      (e) => e.status === "Submitted" || e.status === "Manager Approved"
-    );
-
-    // If existing data doesn't have any pending items (e.g. all drafts), let's merge mock data for demo
-    if (pending.length === 0 && storedExpenses.length > 0) {
-      // Checking if we should inject mock data...
-      // For the sake of the user request, let's ensure we have data to show.
-      // But modifying user's existing data might be intrusive.
-      // Let's just use the filtered list. If empty, it's empty.
-      // But wait, the user wants to see the flow.
-      // Let's rely on the user having added some or just use mockExpenses purely for this view if we want to force demo data?
-      // Better: Use `displayExpenses` and filter.
-    }
-
-    setExpenses(pending.length > 0 ? pending : mockExpenses); // Fallback to mock if nothing pending found, just to show UI
-    setLoading(false);
+    loadPending();
   }, []);
 
   const handleOpenModal = (expense) => {
@@ -99,34 +33,19 @@ const PendingApprovals = () => {
     setIsModalOpen(true);
   };
 
-  const handleUpdateExpense = (updatedExpense) => {
-    // Update local state
-    const updatedList = expenses.map((e) =>
-      e.id === updatedExpense.id ? updatedExpense : e
-    );
-    // Remove from view if it's fully approved (Approved) or Rejected?
-    // Typically "Pending Approvals" only shows pending.
-    // If status becomes "Approved" or "Rejected", it should disappear from this list.
-
-    const newPendingList = updatedList.filter(
-      (e) => e.status === "Submitted" || e.status === "Manager Approved"
-    );
-
-    setExpenses(newPendingList);
-
-    // Update localStorage to sync with Expense.jsx
-    const allExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
-    const newAllExpenses = allExpenses.map((e) =>
-      e.id === updatedExpense.id ? updatedExpense : e
-    );
-
-    // If it was a mock expense not in allExpenses, push it?
-    const exists = allExpenses.find((e) => e.id === updatedExpense.id);
-    if (!exists) {
-      newAllExpenses.push(updatedExpense);
+  const handleUpdate = async (updatedExpense) => {
+    let nextStatus = updatedExpense.status;
+    if (nextStatus === "Approved") nextStatus = "Reimbursed";
+    const res = await expenseService.updateExpense(updatedExpense.id, {
+      ...updatedExpense,
+      status: nextStatus,
+      costCenter: updatedExpense.costCenter,
+    });
+    if (!res.success) {
+      alert(res.message || "Failed to update expense");
+      return;
     }
-
-    localStorage.setItem("expenses", JSON.stringify(newAllExpenses));
+    await loadPending();
   };
 
   const getStatusColor = (status) => {
@@ -136,6 +55,8 @@ const PendingApprovals = () => {
       case "Manager Approved":
         return "bg-blue-700 text-white";
       case "Reimbursed":
+      case "Approved":
+        return "bg-emerald-500 text-white";
         return "bg-emerald-500 text-white";
       case "Draft":
         return "bg-purple-500 text-white";
@@ -327,7 +248,7 @@ const PendingApprovals = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         expense={selectedExpense}
-        onUpdate={handleUpdateExpense}
+        onUpdate={handleUpdate}
       />
     </div>
   );

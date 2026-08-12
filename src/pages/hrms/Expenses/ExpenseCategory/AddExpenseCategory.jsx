@@ -2,79 +2,62 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { expenseService } from "../../../../service";
 
 const AddExpenseCategory = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [saving, setSaving] = useState(false);
 
-  // Initial State
   const [formData, setFormData] = useState({
     name: "",
     linkedAccount: "",
     monthlyBudget: "",
     dailyLimit: "",
-    approval: "Not Required", // Default
+    approval: "Not Required",
   });
 
-  // Load data if editing
   useEffect(() => {
-    if (id) {
-      const categories =
-        JSON.parse(localStorage.getItem("expenseCategories")) || [];
-      const category = categories.find((c) => c.id.toString() === id);
+    if (!id) return;
+    (async () => {
+      const res = await expenseService.getCategories();
+      if (!res.success) return;
+      const category = (res.data || []).find((c) => c.id.toString() === id);
       if (category) {
-        setFormData(category);
+        setFormData({
+          name: category.name || "",
+          linkedAccount: category.linkedAccount || "",
+          monthlyBudget: category.monthlyBudget ?? "",
+          dailyLimit: category.dailyLimit ?? "",
+          approval: category.approval || "Not Required",
+        });
       }
-    }
+    })();
   }, [id]);
 
-  const handleSave = () => {
-    // Validation
+  const handleSave = async () => {
     if (!formData.name || !formData.linkedAccount) {
       alert("Please fill in Category Name and Linked Account");
       return;
     }
 
-    const categories =
-      JSON.parse(localStorage.getItem("expenseCategories")) || [];
-
-    // Determine Approval status logic (mock logic based on budget for now, or user selection if we add field)
-    // User screenshot shows approval status in table but no field in form.
-    // Let's assume logic: if daily limit exists, maybe required? Or just default Not Required for now.
-    // Actually, let's auto-set it based on limits to show some logic.
-    let approvalStatus = "Not Required";
-    if (formData.dailyLimit && Number(formData.dailyLimit) > 0) {
-      approvalStatus = "Required";
-    }
-
-    const dataToSave = {
-      ...formData,
-      monthlyBudget: formData.monthlyBudget
-        ? Number(formData.monthlyBudget)
-        : null,
-      dailyLimit: formData.dailyLimit ? Number(formData.dailyLimit) : null,
-      approval: approvalStatus,
+    setSaving(true);
+    const payload = {
+      name: formData.name,
+      linkedAccount: formData.linkedAccount,
+      monthlyBudget: formData.monthlyBudget === "" ? null : formData.monthlyBudget,
+      dailyLimit: formData.dailyLimit === "" ? null : formData.dailyLimit,
+      approval: formData.approval,
     };
+    const res = id
+      ? await expenseService.updateCategory(id, payload)
+      : await expenseService.createCategory(payload);
+    setSaving(false);
 
-    if (id) {
-      const updatedCategories = categories.map((c) =>
-        c.id.toString() === id ? { ...dataToSave, id: c.id } : c
-      );
-      localStorage.setItem(
-        "expenseCategories",
-        JSON.stringify(updatedCategories)
-      );
-    } else {
-      const newCategory = {
-        id: Date.now(),
-        ...dataToSave,
-      };
-      localStorage.setItem(
-        "expenseCategories",
-        JSON.stringify([...categories, newCategory])
-      );
+    if (!res.success) {
+      alert(res.message || "Failed to save category");
+      return;
     }
-
     navigate("/hrms/expenses/category");
   };
 

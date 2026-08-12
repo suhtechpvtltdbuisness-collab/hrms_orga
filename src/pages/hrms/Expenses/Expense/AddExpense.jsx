@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronRight, UploadCloud, X, Download, FileText } from "lucide-react";
 import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { expenseService } from "../../../../service";
 
 const AddExpense = () => {
   const navigate = useNavigate();
@@ -10,6 +11,8 @@ const AddExpense = () => {
   const isViewMode = !!id;
 
   const [isEditing, setIsEditing] = useState(!id);
+  const [categories, setCategories] = useState([]);
+  const [saving, setSaving] = useState(false);
   const [expenseData, setExpenseData] = useState({
     title: "",
     category: "",
@@ -18,56 +21,65 @@ const AddExpense = () => {
     paymentType: "",
     description: "",
     bill: null,
+    status: "",
   });
 
   useEffect(() => {
-    if (id) {
-      const existingExpenses =
-        JSON.parse(localStorage.getItem("expenses")) || [];
-      const expense = existingExpenses.find((e) => e.id.toString() === id);
-      if (expense) {
-        setExpenseData(expense);
-        if (!expense.bill && expense.amount > 5000) {
-          setExpenseData((prev) => ({ ...prev, bill: "Restaurant Bill.pdf" }));
-        }
+    (async () => {
+      const catRes = await expenseService.getCategories();
+      if (catRes.success) setCategories(catRes.data || []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const res = await expenseService.getExpense(id);
+      if (res.success && res.data) {
+        setExpenseData({
+          ...res.data,
+          date: res.data.date || res.data.expenseDate || "",
+          amount: res.data.amount ?? "",
+        });
       }
-    }
+    })();
   }, [id]);
 
-  const handleSave = () => {
-    // Basic validation
+  const handleSave = async () => {
     if (!expenseData.title || !expenseData.amount || !expenseData.date) {
       alert("Please fill in required fields (Title, Amount, Date)");
       return;
     }
+    if (!expenseData.category) {
+      alert("Please select a category");
+      return;
+    }
 
-    const existingExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    setSaving(true);
+    const payload = {
+      title: expenseData.title,
+      category: expenseData.category,
+      amount: Number(expenseData.amount),
+      date: expenseData.date,
+      paymentType: expenseData.paymentType,
+      description: expenseData.description,
+      bill: expenseData.bill,
+    };
+
+    const res = id
+      ? await expenseService.updateExpense(id, payload)
+      : await expenseService.createExpense(payload);
+    setSaving(false);
+
+    if (!res.success) {
+      alert(res.message || "Failed to save expense");
+      return;
+    }
 
     if (id) {
-      // Update existing
-      const updatedExpenses = existingExpenses.map((ex) =>
-        ex.id.toString() === id
-          ? { ...ex, ...expenseData, amount: Number(expenseData.amount) }
-          : ex
-      );
-      localStorage.setItem("expenses", JSON.stringify(updatedExpenses));
+      setExpenseData((prev) => ({ ...prev, ...res.data }));
       setIsEditing(false);
     } else {
-      // Create new
-      const newExpense = {
-        id: Date.now(),
-        ...expenseData,
-        amount: Number(expenseData.amount),
-        status: "Submitted",
-        date:
-          typeof expenseData.date === "string"
-            ? expenseData.date
-            : expenseData.date?.toLocaleDateString("en-GB"),
-      };
-      localStorage.setItem(
-        "expenses",
-        JSON.stringify([newExpense, ...existingExpenses])
-      );
       navigate("/hrms/expenses/expense");
     }
   };
@@ -83,6 +95,8 @@ const AddExpense = () => {
   const handleUploadMock = () => {
     setExpenseData({ ...expenseData, bill: "Uploaded_Bill.pdf" });
   };
+
+  const categoryOptions = categories.map((c) => c.name);
 
   return (
     <div className="bg-white px-4 sm:px-4 md:px-6 py-6 mx-2 sm:mx-4 mt-4 mb-4 rounded-xl h-[calc(100vh-10rem)] flex flex-col font-inter">
@@ -128,11 +142,12 @@ const AddExpense = () => {
 
         {!id || isEditing ? (
           <button
-            className="px-4 py-2 rounded-full bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 rounded-full bg-[#7D1EDB] text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-60"
             onClick={handleSave}
+            disabled={saving}
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            {id ? "Save" : "Submit"}
+            {saving ? "Saving..." : id ? "Save" : "Submit"}
           </button>
         ) : (
           <button
@@ -182,14 +197,18 @@ const AddExpense = () => {
                 Expense Category
               </label>
               <FilterDropdown
-                options={[
-                  "Travel",
-                  "Meal & Entertainment",
-                  "Professional Development",
-                  "Supplies",
-                  "Software",
-                  "Other",
-                ]}
+                options={
+                  categoryOptions.length
+                    ? categoryOptions
+                    : [
+                        "Travel",
+                        "Meal & Entertainment",
+                        "Professional Development",
+                        "Supplies",
+                        "Software",
+                        "Other",
+                      ]
+                }
                 value={expenseData.category}
                 onChange={(val) =>
                   setExpenseData({ ...expenseData, category: val })

@@ -13,19 +13,25 @@ import noRecordsIllustration from "../../../assets/no-records.svg";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency, formatCurrencyPDF } from "../../../utils/financialFormatters";
+import { buildPeriodOptions } from "../../../utils/financialReportApi";
+import { financialReportsService } from "../../../service";
 
 const CashFlow = () => {
   const navigate = useNavigate();
 
-  // Filters State
+  const [periodOptions, setPeriodOptions] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState(null);
+
   const [filters, setFilters] = useState({
     dateRange: "Date Range",
-    bankAccount: "Bank/Cash Account",
+    bankAccount: "All Accounts",
   });
 
   const filterOptions = {
-    dateRange: ["Jan 2026", "Feb 2026", "March 2026", "April 2026", "May 2026", "June 2026"],
-    bankAccount: ["All Accounts", "HDFC Bank", "SBI", "Cash in Hand"],
+    dateRange: periodOptions.map((p) => p.label),
+    bankAccount: ["All Accounts", ...bankAccounts.map((b) => b.name)],
   };
 
   const [openFilter, setOpenFilter] = useState(null);
@@ -37,9 +43,15 @@ const CashFlow = () => {
   const handleFilterSelect = (filter, value) => {
     setFilters((prev) => ({ ...prev, [filter]: value }));
     setOpenFilter(null);
+    if (filter === "dateRange") {
+      setSelectedPeriod(periodOptions.find((p) => p.label === value) || null);
+    }
+    if (filter === "bankAccount") {
+      const bank = bankAccounts.find((b) => b.name === value);
+      setSelectedBankAccountId(bank?.id ?? null);
+    }
   };
 
-  // Accordion State
   const [openSections, setOpenSections] = useState({
     operating: true,
     investing: true,
@@ -52,67 +64,55 @@ const CashFlow = () => {
 
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setTimeout(() => {
-      setReportData({
-        summaryCards: [
-          { title: "Opening Balance", amount: 45050000, hasPercentage: false },
-          { title: "Net Inflow/Outflow", amount: 4750000, percentage: "12.5%", isPositive: true, hasPercentage: true },
-          { title: "Liquidity Strength", amount: 550000, hasPercentage: false },
-          { title: "Forecasted Runway", amount: 550000, hasPercentage: false },
-        ],
-        sectionsData: [
-          {
-            id: "operating",
-            title: "Operating Activities",
-            netTotal: 407000,
-            rows: [
-              { particulars: "Receipts from Customers", inflow: 1250000, outflow: null, net: 1250000 },
-              { particulars: "Payments to Suppliers", inflow: null, outflow: 450000, net: -450000 },
-              { particulars: "Employee Salaries & Benefits", inflow: null, outflow: 320000, net: -320000 },
-              { particulars: "Income Tax Paid", inflow: null, outflow: 85000, net: -85000 },
-              { particulars: "Interest Received", inflow: 80000, outflow: null, net: 80000 },
-            ]
-          },
-          {
-            id: "investing",
-            title: "Investing Activities",
-            netTotal: -70000,
-            rows: [
-              { particulars: "Purchase of Property & Equipment", inflow: null, outflow: 150000, net: -150000 },
-              { particulars: "Sale of Long-term Investments", inflow: 80000, outflow: null, net: 80000 },
-            ]
-          },
-          {
-            id: "financing",
-            title: "Financing Activities",
-            netTotal: 105000,
-            rows: [
-              { particulars: "Proceeds from Bank Loans", inflow: 200000, outflow: null, net: 200000 },
-              { particulars: "Repayment of Lease Liabilities", inflow: null, outflow: 45000, net: -45000 },
-              { particulars: "Dividends Paid", inflow: null, outflow: 50000, net: -50000 },
-            ]
-          }
-        ],
-        cashPositionRows: [
-          ["Opening Cash Balance", 450000],
-          ["(-) Net Cash from Investing Activities", -150000],
-          ["(+) Net Cash from Operating Activities", 2450000],
-          ["(+) Net Cash from Financing Activities", 2450000],
-          ["Net Change In Cash", 2450000],
-          ["CLOSING CASH BALANCE", 407000]
-        ],
-        inflowOutflowRows: [
-          ["Operating Activities", 1330000, 855000, 475000, "Inflow"],
-          ["Investing Activities", 90000, 210000, -120000, "Outflow"],
-          ["Financial Activities", 330000, 95000, 205000, "Inflow"],
-          ["TOTAL", 1720000, 1160000, 560000, "Inflow"] 
-        ]
-      });
-      setIsLoading(false);
-    }, 800);
+    let cancelled = false;
+    (async () => {
+      const res = await financialReportsService.getFilters();
+      if (cancelled) return;
+      if (!res.success) {
+        setError(res.message || "Failed to load filters");
+        setIsLoading(false);
+        return;
+      }
+      const periods = buildPeriodOptions(res.data);
+      setPeriodOptions(periods);
+      setBankAccounts(res.data?.bankAccounts || []);
+      if (periods[0]) {
+        setSelectedPeriod(periods[0]);
+        setFilters((prev) => ({ ...prev, dateRange: periods[0].label }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!selectedPeriod) return;
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError("");
+      const res = await financialReportsService.getCashFlow({
+        from: selectedPeriod.from,
+        to: selectedPeriod.to,
+        bankAccountId: selectedBankAccountId || undefined,
+      });
+      if (cancelled) return;
+      if (!res.success) {
+        setReportData(null);
+        setError(res.message || "Failed to load cash flow");
+      } else {
+        setReportData(res.data || null);
+      }
+      setIsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPeriod, selectedBankAccountId]);
 
   const handleExportPDF = () => {
     if (!reportData) return;
@@ -141,12 +141,12 @@ const CashFlow = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Company:", 50, currentY + 15);
     doc.setFont("helvetica", "normal");
-    doc.text("SUH Technologies Pvt. Ltd.", 95, currentY + 15);
+    doc.text(reportData.meta?.company || "Organization", 95, currentY + 15);
 
     doc.setFont("helvetica", "bold");
     doc.text("Period:", 50, currentY + 30);
     doc.setFont("helvetica", "normal");
-    doc.text("April 2024 - March 2025", 85, currentY + 30);
+    doc.text(reportData.meta?.period || filters.dateRange, 85, currentY + 30);
 
     const now = new Date();
     doc.setFont("helvetica", "bold");
@@ -158,7 +158,7 @@ const CashFlow = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Generated By:", pageWidth - 190, currentY + 30);
     doc.setFont("helvetica", "normal");
-    doc.text("Ankit Kumar(Admin)", pageWidth - 125, currentY + 30);
+    doc.text(reportData.meta?.generatedBy || "Admin", pageWidth - 125, currentY + 30);
     currentY += 50;
 
     // Statement Date Row
@@ -171,17 +171,17 @@ const CashFlow = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Date Range:", 50, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("01 April 2024-31 March 2025", 100, currentY + 16);
+    doc.text(reportData.meta?.period || filters.dateRange, 100, currentY + 16);
     
     doc.setFont("helvetica", "bold");
     doc.text("Bank/Cash Account:", (pageWidth / 2) - 40, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("All Accounts", (pageWidth / 2) + 50, currentY + 16);
+    doc.text(reportData.meta?.bankAccount || filters.bankAccount, (pageWidth / 2) + 50, currentY + 16);
 
     doc.setFont("helvetica", "bold");
     doc.text("Currency:", pageWidth - 130, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("INR (Rs)", pageWidth - 85, currentY + 16);
+    doc.text(reportData.meta?.currency || "INR", pageWidth - 85, currentY + 16);
 
     currentY += 40;
 
@@ -450,7 +450,15 @@ const CashFlow = () => {
       );
   }
 
-  const hasData = reportData?.sectionsData && reportData.sectionsData.length > 0;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px] text-red-500 font-medium">
+        {error}
+      </div>
+    );
+  }
+
+  const hasData = reportData?.sectionsData?.some((section) => section.rows?.length > 0);
 
   const renderTableSection = (section) => {
     const isOpen = openSections[section.id];
@@ -643,7 +651,7 @@ const CashFlow = () => {
       </div>
 
       {/* Main Content Area */}
-      {hasData && (
+      {reportData?.summaryCards?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {reportData.summaryCards.map((card, idx) => (
             <div
@@ -671,7 +679,7 @@ const CashFlow = () => {
                 className="text-[#1E1E1E] text-[20px] font-medium"
                 style={{ fontFamily: "'Nunito Sans', sans-serif" }}
               >
-                {formatCurrency(card.amount)}
+                {card.display || formatCurrency(card.amount)}
               </span>
             </div>
           ))}
@@ -680,13 +688,13 @@ const CashFlow = () => {
 
       {/* Dynamic Sections (Empty state triggers inside renderTableSection) */}
       <div className="w-full relative">
-        {hasData && (
+        {reportData?.sectionsData?.length > 0 && (
           <div className="text-[#1E1E1E] text-[13px] font-medium mb-3 mt-2" style={{ fontFamily: "'Nunito Sans', sans-serif" }}>
             Activity Breakdown
           </div>
         )}
         
-        {hasData && reportData.sectionsData.map(section => renderTableSection(section))}
+        {reportData?.sectionsData?.map(section => renderTableSection(section))}
       </div>
       
     </div>

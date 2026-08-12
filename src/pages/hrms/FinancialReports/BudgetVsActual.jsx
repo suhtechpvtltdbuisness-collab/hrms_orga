@@ -12,21 +12,29 @@ import noRecordsIllustration from "../../../assets/no-records.svg";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency, formatCurrencyPDF } from "../../../utils/financialFormatters";
+import { buildPeriodOptions } from "../../../utils/financialReportApi";
+import { financialReportsService } from "../../../service";
 
 const BudgetVsActual = () => {
   const navigate = useNavigate();
 
-  // Filters State
+  const [periodOptions, setPeriodOptions] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
   const [filters, setFilters] = useState({
     dateRange: "Date Range",
-    department: "Department",
-    expenseCategory: "Expense Category",
+    department: "All Departments",
+    expenseCategory: "All categories",
   });
 
   const filterOptions = {
-    dateRange: ["Jan-March 2026", "April-June 2026", "July-Sept 2026"],
-    department: ["All Departments", "IT Department", "Sales & Marketing", "Operations"],
-    expenseCategory: ["Cloud Infrastructure", "Employee Salaries", "Marketing Campaigns", "Office Rent & Utilities", "Travel & Expense", "Software License"],
+    dateRange: periodOptions.map((p) => p.label),
+    department: ["All Departments", ...departments.map((d) => d.name)],
+    expenseCategory: ["All categories", ...expenseCategories],
   };
 
   const [openFilter, setOpenFilter] = useState(null);
@@ -38,48 +46,71 @@ const BudgetVsActual = () => {
   const handleFilterSelect = (filter, value) => {
     setFilters((prev) => ({ ...prev, [filter]: value }));
     setOpenFilter(null);
+    if (filter === "dateRange") {
+      setSelectedPeriod(periodOptions.find((p) => p.label === value) || null);
+    }
+    if (filter === "department") {
+      const dept = departments.find((d) => d.name === value);
+      setSelectedDepartmentId(dept?.id ?? null);
+    }
+    if (filter === "expenseCategory") {
+      setSelectedCategory(value === "All categories" ? null : value);
+    }
   };
 
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Mock Data API Simulation
   useEffect(() => {
-    setTimeout(() => {
-      setReportData({
-        summaryCards: [
-          { title: "Total Budget", amount: 550000, percentage: "12.5%", isPositive: true },
-          { title: "Total Actual Spent", amount: 550000, percentage: "12.5%", isPositive: true },
-          { title: "Net Variance", amount: 550000, percentage: "12.5%", isPositive: false },
-        ],
-        varianceByDeptRows: [
-          { department: "Cloud Infrastructure", budget: 80000, actual: 80000, variance: 10000, variancePerc: "+12.5%", status: "Within" },
-          { department: "Employee Salaries", budget: 80000, actual: 90000, variance: -10000, variancePerc: "-12.5%", status: "Over" },
-          { department: "Marketing Campaigns", budget: 80000, actual: 75000, variance: 10000, variancePerc: "+12.5%", status: "Within" },
-          { department: "Office Rent & Utilities", budget: 80000, actual: 90000, variance: -10000, variancePerc: "-12.5%", status: "Over" },
-          { department: "Travel & Expense", budget: 80000, actual: 75000, variance: 10000, variancePerc: "+12.5%", status: "Within" },
-          { department: "Software License", budget: 80000, actual: 75000, variance: 10000, variancePerc: "+12.5%", status: "Within" }
-        ],
-        grandTotal: { department: "TOTAL", budget: 480000, actual: 450000, variance: 30000, variancePerc: "+6.3%", status: "Within" },
-        expenseCategoryRows: [
-          ["Infrastructure", 160000, 140000, 20000, "Within"],
-          ["Personnel", 160000, 180000, -20000, "Over"],
-          ["Marketing", 80000, 75000, 10000, "Within"],
-          ["Operations", 80000, 90000, -10000, "Over"],
-          ["Miscellaneous", 100000, 90000, -10000, "Over"]
-        ],
-        utilizationSummaryRows: [
-          ["Total Budget Allocated", 4080000],
-          ["Total Actual Spend", 4050000],
-          ["Total Savings (Under Budget)", 30000],
-          ["Departments Over Budget", "2 of 6"],
-          ["Budget Utilization Rate", "93.75%"],
-          ["OVERALL STATUS", "WITHIN BUDGET"]
-        ]
-      });
-      setIsLoading(false);
-    }, 800);
+    let cancelled = false;
+    (async () => {
+      const res = await financialReportsService.getFilters();
+      if (cancelled) return;
+      if (!res.success) {
+        setError(res.message || "Failed to load filters");
+        setIsLoading(false);
+        return;
+      }
+      const periods = buildPeriodOptions(res.data);
+      setPeriodOptions(periods);
+      setDepartments(res.data?.departments || []);
+      setExpenseCategories(res.data?.expenseCategories || []);
+      if (periods[0]) {
+        setSelectedPeriod(periods[0]);
+        setFilters((prev) => ({ ...prev, dateRange: periods[0].label }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!selectedPeriod) return;
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError("");
+      const res = await financialReportsService.getBudgetVsActual({
+        from: selectedPeriod.from,
+        to: selectedPeriod.to,
+        departmentId: selectedDepartmentId || undefined,
+        category: selectedCategory || undefined,
+      });
+      if (cancelled) return;
+      if (!res.success) {
+        setReportData(null);
+        setError(res.message || "Failed to load budget vs actual");
+      } else {
+        setReportData(res.data || null);
+      }
+      setIsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPeriod, selectedDepartmentId, selectedCategory]);
 
   const handleExportPDF = () => {
     if (!reportData) return;
@@ -109,7 +140,7 @@ const BudgetVsActual = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Period:", 50, currentY + 25);
     doc.setFont("helvetica", "normal");
-    doc.text("April 2024 - March 2025", 85, currentY + 25);
+    doc.text(reportData.meta?.period || filters.dateRange, 85, currentY + 25);
 
     const now = new Date();
     doc.setFont("helvetica", "bold");
@@ -122,7 +153,7 @@ const BudgetVsActual = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Generated By:", pageWidth - 190, currentY + 30);
     doc.setFont("helvetica", "normal");
-    doc.text("Ankit Kumar(Admin)", pageWidth - 125, currentY + 30);
+    doc.text(reportData.meta?.generatedBy || "Admin", pageWidth - 125, currentY + 30);
     currentY += 50;
 
     // Statement Filters Row
@@ -135,17 +166,17 @@ const BudgetVsActual = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Date Range:", 50, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("01 April 2024 - 31 March 2025", 105, currentY + 16);
+    doc.text(reportData.meta?.period || filters.dateRange, 105, currentY + 16);
     
     doc.setFont("helvetica", "bold");
     doc.text("Departments:", (pageWidth / 2) - 60, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("All Departments", (pageWidth / 2) + 5, currentY + 16);
+    doc.text(filters.department, (pageWidth / 2) + 5, currentY + 16);
 
     doc.setFont("helvetica", "bold");
     doc.text("Expense Category:", pageWidth - 170, currentY + 16);
     doc.setFont("helvetica", "normal");
-    doc.text("All categories", pageWidth - 90, currentY + 16);
+    doc.text(reportData.meta?.expenseCategory || filters.expenseCategory, pageWidth - 90, currentY + 16);
 
     currentY += 40;
 
@@ -369,6 +400,14 @@ const BudgetVsActual = () => {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px] text-gray-500 font-medium">
         Loading Budget vs Actual Data...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px] text-red-500 font-medium">
+        {error}
       </div>
     );
   }

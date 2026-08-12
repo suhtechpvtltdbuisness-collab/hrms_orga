@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus } from "lucide-react";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
-
 import ExpenseDetailsModal from "./ExpenseDetailsModal";
+import { expenseService } from "../../../../service";
 
 const Expense = () => {
   const navigate = useNavigate();
@@ -11,7 +11,6 @@ const Expense = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState("");
   const [titleFilter, setTitleFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState("");
@@ -19,54 +18,19 @@ const Expense = () => {
 
   const [expenses, setExpenses] = useState([]);
 
-  const mockExpenses = [
-    {
-      id: 1,
-      title: "Client Lunch Meeting",
-      description: "Lunch with potential client - Project discussion",
-      category: "Meal & Entertainment",
-      amount: 10000,
-      date: "29/02/2026",
-      status: "Submitted",
-    },
-    {
-      id: 2,
-      title: "Conference Registration",
-      description: "Marketing Summit 2024 registration fee",
-      category: "Professional Development",
-      amount: 50000,
-      date: "29/02/2026",
-      status: "Manager Approved",
-    },
-    {
-      id: 3,
-      title: "Travel - Flight",
-      description: "Flight to New York for client presentation",
-      category: "Travel",
-      amount: 170000,
-      date: "29/02/2026",
-      status: "Reimbursed",
-    },
-    {
-      id: 4,
-      title: "Team Lunch",
-      description: "Team building lunch - Marketing department",
-      category: "Meal & Entertainment",
-      amount: 10000,
-      date: "29/02/2026",
-      status: "Draft",
-    },
-  ];
-
   useEffect(() => {
-    const storedExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
-    if (storedExpenses.length === 0) {
-      setExpenses(mockExpenses);
-      localStorage.setItem("expenses", JSON.stringify(mockExpenses));
-    } else {
-      setExpenses(storedExpenses);
-    }
-    setLoading(false);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const res = await expenseService.getExpenses();
+      if (cancelled) return;
+      if (res.success) setExpenses(res.data || []);
+      else setExpenses([]);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleOpenModal = (e, expense) => {
@@ -86,6 +50,7 @@ const Expense = () => {
       case "Manager Approved":
         return "bg-blue-700 text-white";
       case "Reimbursed":
+      case "Approved":
         return "bg-emerald-500 text-white";
       case "Draft":
         return "bg-purple-500 text-white";
@@ -96,13 +61,23 @@ const Expense = () => {
     }
   };
 
+  const formatDisplayDate = (value) => {
+    if (!value) return "";
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      const [y, m, d] = value.slice(0, 10).split("-");
+      return `${d}/${m}/${y}`;
+    }
+    return value;
+  };
+
   const filteredExpenses = expenses.filter((expense) => {
+    const displayDate = formatDisplayDate(expense.date || expense.expenseDate);
     return (
       (!statusFilter || expense.status === statusFilter) &&
       (!titleFilter ||
         expense.title.toLowerCase().includes(titleFilter.toLowerCase())) &&
       (!amountFilter || expense.amount.toString().includes(amountFilter)) &&
-      (!dateFilter || expense.date === dateFilter)
+      (!dateFilter || displayDate === dateFilter || expense.date === dateFilter)
     );
   });
 
@@ -269,7 +244,7 @@ const Expense = () => {
                     </span>
                     <span>
                       Date:{" "}
-                      <span className="text-[#1E1E1E]">{expense.date}</span>
+                      <span className="text-[#1E1E1E]">{formatDisplayDate(expense.date || expense.expenseDate)}</span>
                     </span>
                   </div>
                 </div>
