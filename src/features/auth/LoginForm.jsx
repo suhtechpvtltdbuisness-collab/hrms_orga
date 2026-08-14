@@ -12,6 +12,7 @@ import {
   Building2,
   Camera,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../../service";
@@ -525,7 +526,18 @@ export const LoginForm = () => {
         </div>
       </div>
 
-      <p className="text-center text-xs text-gray-400 mt-5">
+      <div className="mt-5 flex justify-center">
+        <button
+          type="button"
+          onClick={() => window.location.assign("https://www.orga.cc/")}
+          className="group inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-sm font-semibold text-violet-700 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:text-violet-800 hover:shadow-md"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          Back to Dashboard
+        </button>
+      </div>
+
+      <p className="text-center text-xs text-gray-400 mt-4">
         © 2025 ORGA HRMS. All rights reserved.
       </p>
     </div>
