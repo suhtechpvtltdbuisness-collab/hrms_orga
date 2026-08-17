@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Copy, Check, Users, Share2, Gift, ExternalLink } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Copy, Check, Users, Share2, Gift, Upload, Eye, FileText, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Spinner from '../../../../components/ui/Spinner';
-import { hiringService } from '../../../../service';
+import { getSecureFileUrl, hiringService } from '../../../../service';
 
 const EmployeeReferral = () => {
     const navigate = useNavigate();
@@ -18,6 +18,11 @@ const EmployeeReferral = () => {
         jobId: '',
         notes: '',
     });
+    const [resumeFile, setResumeFile] = useState(null);
+    const [updatingReferral, setUpdatingReferral] = useState(null);
+    const [showResumeModal, setShowResumeModal] = useState(false);
+    const [resumeBlobUrl, setResumeBlobUrl] = useState('');
+    const [resumeLoading, setResumeLoading] = useState(false);
     const [jobs, setJobs] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -84,15 +89,28 @@ const EmployeeReferral = () => {
         }
         setSubmitting(true);
         const loadingToast = toast.loading('Submitting referral...');
+        let resume = null;
+        if (resumeFile) {
+            const uploadResult = await hiringService.uploadFile(resumeFile);
+            if (!uploadResult.success || !uploadResult.files?.[0]?.url) {
+                toast.dismiss(loadingToast);
+                toast.error(uploadResult.message || 'Resume upload failed');
+                setSubmitting(false);
+                return;
+            }
+            resume = uploadResult.files[0].url;
+        }
         const result = await hiringService.createReferral({
             ...formData,
             referralCode,
             jobId: formData.jobId ? Number(formData.jobId) : null,
+            resume,
         });
         toast.dismiss(loadingToast);
         if (result.success) {
             toast.success('Referral submitted successfully!');
             setFormData({ candidateName: '', candidateEmail: '', candidatePhone: '', jobId: '', notes: '' });
+            setResumeFile(null);
             setShowForm(false);
             loadMyReferrals();
         } else {
@@ -101,9 +119,72 @@ const EmployeeReferral = () => {
         setSubmitting(false);
     };
 
+    const updateReferral = async (referral, changes, successMessage) => {
+        setUpdatingReferral(referral.id);
+        const result = await hiringService.updateReferral(referral.id, changes);
+        if (result.success) {
+            setReferrals(current => current.map(item => item.id === referral.id
+                ? { ...item, ...changes, ...(result.data || {}) }
+                : item));
+            toast.success(successMessage);
+        } else {
+            toast.error(result.message || 'Failed to update referral');
+        }
+        setUpdatingReferral(null);
+    };
+
+    const handleStatusChange = (referral, status) => {
+        updateReferral(referral, { status }, 'Referral status updated');
+    };
+
+    const handleResumeUpload = async (referral, file) => {
+        if (!file) return;
+        setUpdatingReferral(referral.id);
+        const uploadResult = await hiringService.uploadFile(file);
+        if (!uploadResult.success || !uploadResult.files?.[0]?.url) {
+            toast.error(uploadResult.message || 'Resume upload failed');
+            setUpdatingReferral(null);
+            return;
+        }
+        await updateReferral(referral, { resume: uploadResult.files[0].url }, 'Resume uploaded successfully');
+    };
+
+    const closeResumePreview = () => {
+        setShowResumeModal(false);
+        if (resumeBlobUrl) URL.revokeObjectURL(resumeBlobUrl);
+        setResumeBlobUrl('');
+    };
+
+    const handleResumePreview = async (referral) => {
+        const resume = referral.resume || referral.resumeUrl;
+        if (!resume) {
+            toast.error('No resume uploaded');
+            return;
+        }
+        setShowResumeModal(true);
+        setResumeLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(getSecureFileUrl(resume), {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!response.ok) throw new Error('Failed to fetch resume');
+            setResumeBlobUrl(URL.createObjectURL(await response.blob()));
+        } catch {
+            toast.error('Unable to preview resume');
+            setResumeBlobUrl('');
+        }
+        setResumeLoading(false);
+    };
+
+    useEffect(() => () => {
+        if (resumeBlobUrl) URL.revokeObjectURL(resumeBlobUrl);
+    }, [resumeBlobUrl]);
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return { bg: '#FFF3E0', color: '#FF9800' };
+            case 'approved': return { bg: '#E8F5E9', color: '#2E7D32' };
             case 'shortlisted': return { bg: '#E3F2FD', color: '#2196F3' };
             case 'accepted': return { bg: '#E8F5E9', color: '#4CAF50' };
             case 'rejected': return { bg: '#FFEBEE', color: '#F44336' };
@@ -238,6 +319,11 @@ const EmployeeReferral = () => {
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-none"
                                 />
                             </div>
+                            <label className="md:col-span-2 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-gray-300 p-4 hover:border-purple-400 hover:bg-purple-50/40">
+                                <Upload size={19} className="text-purple-600" />
+                                <span className="text-sm text-gray-600">{resumeFile?.name || 'Upload resume (PDF, DOC or DOCX)'}</span>
+                                <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => setResumeFile(e.target.files?.[0] || null)} />
+                            </label>
                             <div className="md:col-span-2 flex gap-3">
                                 <button
                                     type="submit"
@@ -287,6 +373,7 @@ const EmployeeReferral = () => {
                                         <th className="px-4 py-4 font-medium">PHONE</th>
                                         <th className="px-4 py-4 font-medium">POSITION</th>
                                         <th className="px-4 py-4 font-medium">STATUS</th>
+                                        <th className="px-4 py-4 font-medium">RESUME</th>
                                         <th className="px-4 py-4 font-medium">DATE</th>
                                     </tr>
                                 </thead>
@@ -300,11 +387,27 @@ const EmployeeReferral = () => {
                                                 <td className="px-4 py-4 text-gray-600">{ref.candidatePhone || '-'}</td>
                                                 <td className="px-4 py-4 text-gray-600">{ref.jobTitle || '-'}</td>
                                                 <td className="px-4 py-4">
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                                    <select
+                                                        value={ref.status === 'approved' ? 'approved' : 'pending'}
+                                                        disabled={updatingReferral === ref.id}
+                                                        onChange={event => handleStatusChange(ref, event.target.value)}
+                                                        className="rounded-full border-0 px-3 py-1.5 text-xs font-medium outline-none ring-1 ring-inset ring-black/5 disabled:opacity-60"
                                                         style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}
                                                     >
-                                                        {ref.status.charAt(0).toUpperCase() + ref.status.slice(1)}
-                                                    </span>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="approved">Approved</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <label title="Upload resume" className={`flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 ${updatingReferral === ref.id ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}>
+                                                            <Upload size={15} />
+                                                            <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={event => { handleResumeUpload(ref, event.target.files?.[0]); event.target.value = ''; }} />
+                                                        </label>
+                                                        <button type="button" title="Preview resume" disabled={!(ref.resume || ref.resumeUrl)} onClick={() => handleResumePreview(ref)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-35">
+                                                            <Eye size={15} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-4 text-gray-500">
                                                     {ref.createdAt ? new Date(ref.createdAt).toLocaleDateString() : '-'}
@@ -318,6 +421,22 @@ const EmployeeReferral = () => {
                     )}
                 </div>
             </div>
+
+            {showResumeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onMouseDown={closeResumePreview}>
+                    <div className="flex h-[90vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl" onMouseDown={event => event.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-gray-200 p-4">
+                            <h2 className="text-lg font-semibold text-gray-900">Resume Preview</h2>
+                            <button type="button" onClick={closeResumePreview} className="rounded-full p-1.5 hover:bg-gray-100"><X size={20} className="text-gray-500" /></button>
+                        </div>
+                        <div className="flex-1 p-4">
+                            {resumeLoading ? <div className="flex h-full items-center justify-center"><Spinner size={32} color="#7D1EDB" /></div>
+                                : resumeBlobUrl ? <object data={resumeBlobUrl} type="application/pdf" className="h-full w-full rounded-lg border border-gray-200"><p className="p-6 text-center text-gray-500">Preview is unavailable for this file type.</p></object>
+                                    : <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400"><FileText size={48} /><p>Could not load resume</p></div>}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
