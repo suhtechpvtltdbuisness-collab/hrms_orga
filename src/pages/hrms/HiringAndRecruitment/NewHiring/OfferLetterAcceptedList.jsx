@@ -2043,7 +2043,7 @@ const OfferLetterAcceptedList = () => {
   }, [loadAcceptedOffers]);
 
   useEffect(() => {
-    if (id) loadOfferDetail(id);
+    loadOfferDetail(id);
   }, [id, loadOfferDetail]);
 
   const openEditModal = (offer) => {
@@ -2071,7 +2071,7 @@ const OfferLetterAcceptedList = () => {
 
   const selectedOffer = selectedOfferDetail || (id ? acceptedOffers.find((o) => o.id === parseInt(id, 10)) : null);
   const isOnboardingView = location.pathname.includes("/onboarding");
-  const view = isOnboardingView ? "onboarding" : (selectedOffer ? "candidate" : "list");
+  const view = isOnboardingView ? "onboarding" : (id && selectedOffer ? "candidate" : "list");
 
   const offersWithStatus = useMemo(() => acceptedOffers.map((offer) => ({
     ...offer,
