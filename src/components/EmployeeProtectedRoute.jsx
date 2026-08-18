@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { authService } from "../service";
-import { isLocalAuthEnabled } from "../utils/authMode";
+import SubscriptionRequiredModal from "./SubscriptionRequiredModal";
 
 const EmployeeProtectedRoute = ({ children }) => {
   const [authState, setAuthState] = useState("loading");
+  const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -14,6 +15,8 @@ const EmployeeProtectedRoute = ({ children }) => {
         setAuthState("unauthenticated");
         return;
       }
+
+      setProfileData(profile);
 
       // Admin detection: check role, type, AND isAdmin fields
       const userData = profile.data?.user || profile.data;
@@ -32,6 +35,11 @@ const EmployeeProtectedRoute = ({ children }) => {
         return;
       }
 
+      if (!authService.isSubscribed(profile.data?.subscription)) {
+        setAuthState("subscription_required");
+        return;
+      }
+
       setAuthState("authenticated");
     };
 
@@ -40,7 +48,7 @@ const EmployeeProtectedRoute = ({ children }) => {
 
   if (authState === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-violet-50 to-indigo-50">
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-violet-50 to-indigo-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
           <p className="text-sm text-gray-500 font-medium">Verifying session...</p>
@@ -59,6 +67,10 @@ const EmployeeProtectedRoute = ({ children }) => {
 
   if (authState === "superadmin") {
     return <Navigate to="/super-admin" replace />;
+  }
+
+  if (authState === "subscription_required") {
+    return <SubscriptionRequiredModal profile={profileData} allowPurchase={false} />;
   }
 
   return children;

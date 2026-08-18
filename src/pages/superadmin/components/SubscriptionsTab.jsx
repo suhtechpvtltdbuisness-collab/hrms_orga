@@ -64,7 +64,7 @@ const SubscriptionsTab = () => {
     const verb = status === 'Canceled' ? 'Cancel' : 'Reactivate';
     if (!window.confirm(`${verb} ${subscription.orgName}'s subscription?`)) return;
     setUpdatingId(subscription.id);
-    const res = await subscriptionService.updateSubscriptionStatus(subscription.id, status);
+    const res = await subscriptionService.updateSubscriptionStatus(subscription.dbPlanId, status);
     if (res.success) {
       toast.success(res.message);
       await fetchSubscriptions();
@@ -198,7 +198,7 @@ const SubscriptionsTab = () => {
         </div>
       </div>
       {selectedSubscription && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedSubscription(null)}>
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedSubscription(null)}>
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-bold text-gray-900">{selectedSubscription.orgName}</h3><p className="mt-1 text-sm text-gray-500">{selectedSubscription.id}</p></div><button type="button" aria-label="Close" onClick={() => setSelectedSubscription(null)} className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"><X size={18} /></button></div>
             <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">

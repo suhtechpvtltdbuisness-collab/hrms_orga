@@ -3349,6 +3349,9 @@ export const subscriptionService = {
       if (!response.ok) {
         return { success: false, message: data.message || "Payment verification failed" };
       }
+      if (data.data?.subscription) {
+        localStorage.setItem("subscription", JSON.stringify(data.data.subscription));
+      }
       return { success: true, message: data.message, data: data.data };
     } catch {
       return { success: false, message: "Something went wrong" };
