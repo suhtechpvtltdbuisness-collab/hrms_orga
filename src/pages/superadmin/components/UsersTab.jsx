@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Users, ChevronRight, Search, Plus, MoreHorizontal, Shield, Mail, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, ChevronRight, Search, Shield, Mail, Calendar, Eye, Power, Copy, X } from 'lucide-react';
 import { employeeService, getProfilePicUrl } from '../../../service';
 import toast from 'react-hot-toast';
+import ActionMenu from './ActionMenu';
 
 const getRoleBadge = (role) => {
   if (role === 'Super Admin') return 'bg-purple-100 text-purple-700 border-purple-200';
@@ -29,13 +30,11 @@ const UsersTab = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
   const limit = 10;
 
-  useEffect(() => {
-    fetchUsers();
-  }, [page, searchTerm]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await employeeService.getAllUsersForSuperAdmin(page, limit, searchTerm);
@@ -46,16 +45,42 @@ const UsersTab = () => {
       } else {
         toast.error(res.message || "Failed to fetch users");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error loading users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPage(1);
+  };
+
+  const handleStatusChange = async (user) => {
+    if (!window.confirm(`${user.active ? 'Deactivate' : 'Activate'} ${user.name}?`)) return;
+    setUpdatingId(user.id);
+    const res = await employeeService.updateSuperAdminUserStatus(user.id, !user.active);
+    if (res.success) {
+      toast.success(res.message);
+      await fetchUsers();
+    } else {
+      toast.error(res.message);
+    }
+    setUpdatingId(null);
+  };
+
+  const copyEmail = async (email) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      toast.success('Email copied');
+    } catch {
+      toast.error('Could not copy email');
+    }
   };
 
   const totalUsers = totalCount;
@@ -187,9 +212,11 @@ const UsersTab = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                           <MoreHorizontal size={18} />
-                        </button>
+                        <ActionMenu label={`Manage ${user.name}`} items={[
+                          { label: 'View details', icon: Eye, onClick: () => setSelectedUser(user) },
+                          { label: 'Copy email', icon: Copy, onClick: () => copyEmail(user.email) },
+                          { label: user.active ? 'Deactivate user' : 'Activate user', icon: Power, danger: user.active, disabled: updatingId === user.id || user.roleId === 0, onClick: () => handleStatusChange(user) },
+                        ]} />
                       </td>
                     </tr>
                   );
@@ -235,6 +262,16 @@ const UsersTab = () => {
            </div>
         </div>
       </div>
+      {selectedUser && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedUser(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-bold text-gray-900">{selectedUser.name}</h3><p className="mt-1 text-sm text-gray-500">{selectedUser.email}</p></div><button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"><X size={18} /></button></div>
+            <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
+              {[["Role", getRoleName(selectedUser.roleId, selectedUser.type)], ["Plan", getPlanName(selectedUser.plan)], ["Status", selectedUser.active ? 'Active' : 'Inactive'], ["Joined", selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : '-']].map(([label, value]) => <div key={label} className="rounded-xl bg-gray-50 p-3"><dt className="text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-900">{value}</dd></div>)}
+            </dl>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

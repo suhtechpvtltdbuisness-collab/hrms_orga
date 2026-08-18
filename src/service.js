@@ -869,6 +869,20 @@ export const designationService = {
 };
 
 export const employeeService = {
+  updateSuperAdminUserStatus: async (id, active) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to update user status" };
+      return { success: true, message: data.message || "User status updated", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getAllUsersForSuperAdmin: async (page = 1, limit = 10, search = "") => {
     try {
       const response = await apiFetch(`${BASE_URL}/users/superadmin/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
@@ -1805,6 +1819,22 @@ export const appraisalService = {
 
 // ─── Energy Point Service ─────────────────────────────────────────────────────
 export const energyPointService = {
+  uploadDocument: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("documents", file);
+      const response = await apiFetch(`${BASE_URL}/upload/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to upload document" };
+      return { success: true, file: data.files?.[0] };
+    } catch {
+      return { success: false, message: "Unable to upload document" };
+    }
+  },
+
   getRules: async (filters = {}) => {
     try {
       const query = new URLSearchParams(
@@ -3216,6 +3246,20 @@ const loadRazorpayScript = () =>
   });
 
 export const subscriptionService = {
+  updateSubscriptionStatus: async (id, status) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/subscriptions/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to update subscription" };
+      return { success: true, message: data.message || "Subscription updated", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getManagedPlans: async () => {
     try {
       const response = await apiFetch(`${BASE_URL}/subscriptions/plans/manage`);
@@ -3941,6 +3985,20 @@ export const getSecureFileUrl = (url) => {
 };
 
 export const organizationService = {
+  updateOrganizationStatus: async (id, active) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/organizations/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to update organization status" };
+      return { success: true, message: data.message || "Organization status updated", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
   getOrganizations: async (page = 1, limit = 10, search = "") => {
     try {
       const response = await apiFetch(
