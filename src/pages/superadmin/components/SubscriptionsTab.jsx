@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, ChevronRight, Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronRight, Search, CheckCircle2, XCircle, Clock, Eye, Ban, RotateCcw, X } from 'lucide-react';
 import { subscriptionService } from '../../../service';
 import toast from 'react-hot-toast';
+import ActionMenu from './ActionMenu';
 
 const getStatusColor = (status) => {
   switch(status) {
@@ -28,13 +29,11 @@ const SubscriptionsTab = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
   const limit = 10;
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, [page, searchTerm]);
-
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     setLoading(true);
     try {
       const res = await subscriptionService.getAllSubscriptions(page, limit, searchTerm);
@@ -45,16 +44,34 @@ const SubscriptionsTab = () => {
       } else {
         toast.error(res.message || "Failed to fetch subscriptions");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error loading subscriptions");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPage(1);
+  };
+
+  const handleStatusChange = async (subscription, status) => {
+    const verb = status === 'Canceled' ? 'Cancel' : 'Reactivate';
+    if (!window.confirm(`${verb} ${subscription.orgName}'s subscription?`)) return;
+    setUpdatingId(subscription.id);
+    const res = await subscriptionService.updateSubscriptionStatus(subscription.id, status);
+    if (res.success) {
+      toast.success(res.message);
+      await fetchSubscriptions();
+    } else {
+      toast.error(res.message);
+    }
+    setUpdatingId(null);
   };
 
   return (
@@ -130,9 +147,12 @@ const SubscriptionsTab = () => {
                     <td className="px-6 py-4 text-gray-600">{sub.nextBilling}</td>
                     <td className="px-6 py-4 font-semibold text-gray-900">{sub.amount}</td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                         <MoreVertical size={18} />
-                      </button>
+                      <ActionMenu label={`Manage ${sub.orgName} subscription`} items={[
+                        { label: 'View details', icon: Eye, onClick: () => setSelectedSubscription(sub) },
+                        sub.status === 'Canceled'
+                          ? { label: 'Reactivate', icon: RotateCcw, disabled: updatingId === sub.id, onClick: () => handleStatusChange(sub, 'Active') }
+                          : { label: 'Cancel subscription', icon: Ban, danger: true, disabled: updatingId === sub.id, onClick: () => handleStatusChange(sub, 'Canceled') },
+                      ]} />
                     </td>
                   </tr>
                 ))
@@ -177,6 +197,16 @@ const SubscriptionsTab = () => {
            </div>
         </div>
       </div>
+      {selectedSubscription && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedSubscription(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-bold text-gray-900">{selectedSubscription.orgName}</h3><p className="mt-1 text-sm text-gray-500">{selectedSubscription.id}</p></div><button type="button" aria-label="Close" onClick={() => setSelectedSubscription(null)} className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"><X size={18} /></button></div>
+            <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
+              {[["Plan", selectedSubscription.plan], ["Status", selectedSubscription.status], ["Billing", selectedSubscription.billing], ["Next invoice", selectedSubscription.nextBilling], ["Amount", selectedSubscription.amount]].map(([label, value]) => <div key={label} className="rounded-xl bg-gray-50 p-3"><dt className="text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-900">{value || '-'}</dd></div>)}
+            </dl>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

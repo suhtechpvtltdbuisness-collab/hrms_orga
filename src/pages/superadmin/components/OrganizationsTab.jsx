@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Search, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronRight, Search, X, Eye, Power } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService, organizationService } from '../../../service';
+import ActionMenu from './ActionMenu';
 
 const OrganizationsTab = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -12,6 +13,8 @@ const OrganizationsTab = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
   const limit = 10;
   
   const [formData, setFormData] = useState({
@@ -22,11 +25,7 @@ const OrganizationsTab = () => {
     companyName: ""
   });
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, [page, searchTerm]);
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     setLoading(true);
     try {
       const res = await organizationService.getOrganizations(page, limit, searchTerm);
@@ -37,16 +36,34 @@ const OrganizationsTab = () => {
       } else {
         toast.error(res.message || "Failed to fetch organizations");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error loading organizations");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, [fetchOrganizations]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPage(1);
+  };
+
+  const handleStatusChange = async (organization) => {
+    const isActive = organization.status === 'Active';
+    if (!window.confirm(`${isActive ? 'Deactivate' : 'Activate'} ${organization.name}?`)) return;
+    setUpdatingId(organization.id);
+    const res = await organizationService.updateOrganizationStatus(organization.id, !isActive);
+    if (res.success) {
+      toast.success(res.message);
+      await fetchOrganizations();
+    } else {
+      toast.error(res.message);
+    }
+    setUpdatingId(null);
   };
 
   const handleChange = (e) => {
@@ -68,7 +85,7 @@ const OrganizationsTab = () => {
       } else {
          toast.error(res.message || "Failed to add organization.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Network error.");
     } finally {
       setIsSubmitting(false);
@@ -160,7 +177,19 @@ const OrganizationsTab = () => {
                               </span>
                            </td>
                            <td className="px-6 py-4 text-right">
-                             <button className="text-[#7C3AED] hover:underline font-medium text-sm">Manage</button>
+                             <ActionMenu
+                               label={`Manage ${item.name}`}
+                               items={[
+                                 { label: 'View details', icon: Eye, onClick: () => setSelectedOrg(item) },
+                                 {
+                                   label: item.status === 'Active' ? 'Deactivate' : 'Activate',
+                                   icon: Power,
+                                   danger: item.status === 'Active',
+                                   disabled: updatingId === item.id,
+                                   onClick: () => handleStatusChange(item),
+                                 },
+                               ]}
+                             />
                            </td>
                         </tr>
                       ))
@@ -206,6 +235,22 @@ const OrganizationsTab = () => {
             </div>
          </div>
       </div>
+
+      {selectedOrg && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedOrg(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div><h3 className="text-xl font-bold text-gray-900">{selectedOrg.name}</h3><p className="mt-1 text-sm text-gray-500">Organization details</p></div>
+              <button type="button" aria-label="Close" onClick={() => setSelectedOrg(null)} className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"><X size={18} /></button>
+            </div>
+            <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
+              {[["Domain", selectedOrg.domain || '-'], ["Plan", selectedOrg.plan || 'No Plan'], ["Users", selectedOrg.users ?? 0], ["Status", selectedOrg.status || '-']].map(([label, value]) => (
+                <div key={label} className="rounded-xl bg-gray-50 p-3"><dt className="text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-900">{value}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      )}
 
       {/* Add Organization Modal */}
       {isAddModalOpen && (
