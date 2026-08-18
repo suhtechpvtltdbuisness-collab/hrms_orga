@@ -9,6 +9,8 @@ const EMPTY_FORM = {
   description: '',
   priceInr: 0,
   pricePerEmployeeInr: 0,
+  priceUsd: 0,
+  pricePerEmployeeUsd: 0,
   durationDays: 30,
   maxEmployees: 1,
   module: 'hrms',
@@ -59,6 +61,8 @@ const PlansTab = () => {
       description: plan.description,
       priceInr: plan.priceInr,
       pricePerEmployeeInr: plan.pricePerEmployeeInr,
+      priceUsd: plan.priceUsd ?? 0,
+      pricePerEmployeeUsd: plan.pricePerEmployeeUsd ?? 0,
       durationDays: plan.durationDays,
       maxEmployees: plan.maxEmployees,
       module: plan.module,
@@ -83,6 +87,8 @@ const PlansTab = () => {
       description: form.description,
       priceInr: Number(form.priceInr),
       pricePerEmployeeInr: Number(form.pricePerEmployeeInr),
+      priceUsd: Number(form.priceUsd),
+      pricePerEmployeeUsd: Number(form.pricePerEmployeeUsd),
       durationDays: Number(form.durationDays),
       maxEmployees: Number(form.maxEmployees),
       module: form.module,
@@ -148,9 +154,10 @@ const PlansTab = () => {
                 </div>
               </div>
               <div className="mt-5 flex items-end gap-1">
-                <span className="text-3xl font-bold text-gray-900">₹{Number(plan.priceInr).toLocaleString('en-IN')}</span>
+                <span className="text-3xl font-bold text-gray-900">${Number(plan.priceUsd || 0).toLocaleString('en-US')}</span>
                 <span className="pb-1 text-sm text-gray-500">{getBillingPeriodLabel(plan.durationDays)}</span>
               </div>
+              <p className="mt-1 text-xs text-gray-400">₹{Number(plan.priceInr).toLocaleString('en-IN')} billed · ${Number(plan.pricePerEmployeeUsd || 0)} / employee</p>
               <p className="mt-3 min-h-10 text-sm text-gray-600">{getDynamicDescription(plan)}</p>
               <div className="mt-4 flex items-center justify-between rounded-xl bg-purple-50 px-3 py-2.5 text-sm">
                 <span className="flex items-center gap-2 font-medium text-purple-800"><Users size={16} /> Employee limit</span>
@@ -179,7 +186,9 @@ const PlansTab = () => {
               <label className="text-sm font-medium text-gray-700">Plan key<input required disabled={Boolean(editingPlan.id)} name="planType" value={form.planType} onChange={updateField} placeholder="growth_plus" className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none disabled:bg-gray-100 focus:border-purple-500" /></label>
               <label className="sm:col-span-2 text-sm font-medium text-gray-700">Description<textarea required name="description" value={form.description} onChange={updateField} rows={2} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:border-purple-500" /></label>
               <label className="text-sm font-medium text-gray-700">Price (₹)<input required min="0" type="number" name="priceInr" value={form.priceInr} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
+              <label className="text-sm font-medium text-gray-700">Price ($)<input required min="0" type="number" name="priceUsd" value={form.priceUsd} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
               <label className="text-sm font-medium text-gray-700">Extra employee price (₹)<input required min="0" type="number" name="pricePerEmployeeInr" value={form.pricePerEmployeeInr} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
+              <label className="text-sm font-medium text-gray-700">Per employee ($)<input required min="0" type="number" name="pricePerEmployeeUsd" value={form.pricePerEmployeeUsd} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
               <label className="text-sm font-medium text-gray-700">Employee limit<input required min="1" type="number" name="maxEmployees" value={form.maxEmployees} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
               <label className="text-sm font-medium text-gray-700">Duration (days)<input required min="1" type="number" name="durationDays" value={form.durationDays} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5" /></label>
               <label className="text-sm font-medium text-gray-700">Organization type<select name="organizationType" value={form.organizationType} onChange={updateField} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5"><option value="startup">Startup</option><option value="sme">SME</option><option value="enterprise">Enterprise</option></select></label>
