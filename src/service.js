@@ -1819,6 +1819,22 @@ export const appraisalService = {
 
 // ─── Energy Point Service ─────────────────────────────────────────────────────
 export const energyPointService = {
+  uploadDocument: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("documents", file);
+      const response = await apiFetch(`${BASE_URL}/upload/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to upload document" };
+      return { success: true, file: data.files?.[0] };
+    } catch {
+      return { success: false, message: "Unable to upload document" };
+    }
+  },
+
   getRules: async (filters = {}) => {
     try {
       const query = new URLSearchParams(
