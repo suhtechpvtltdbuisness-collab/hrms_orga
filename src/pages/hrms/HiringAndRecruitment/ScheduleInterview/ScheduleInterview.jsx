@@ -16,6 +16,7 @@ const ScheduleInterview = () => {
     const [scheduledInterview, setScheduledInterview] = useState(null);
     const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
     const [googleCalendarEmail, setGoogleCalendarEmail] = useState('');
+    const [googleRedirectUri, setGoogleRedirectUri] = useState('');
     const [checkingCalendar, setCheckingCalendar] = useState(true);
     const idempotencyKeyRef = useRef(crypto.randomUUID());
 
@@ -38,6 +39,7 @@ const ScheduleInterview = () => {
         if (result.success) {
             setGoogleCalendarConnected(Boolean(result.data?.connected));
             setGoogleCalendarEmail(result.data?.email || '');
+            setGoogleRedirectUri(result.data?.redirectUri || '');
         }
         setCheckingCalendar(false);
     };
@@ -45,6 +47,9 @@ const ScheduleInterview = () => {
     const handleConnectGoogleCalendar = async () => {
         const result = await googleCalendarService.getConnectUrl();
         if (result.success && result.authUrl) {
+            if (result.redirectUri) {
+                console.info('Google OAuth redirect URI:', result.redirectUri);
+            }
             window.location.href = result.authUrl;
             return;
         }
@@ -424,6 +429,11 @@ const ScheduleInterview = () => {
                     <div style={{ ...card, padding: '16px 20px', backgroundColor: '#FFF7ED', borderColor: '#FDBA74' }}>
                         <p style={{ margin: 0, fontSize: '14px', color: '#9A3412', fontFamily: '"Nunito Sans", sans-serif' }}>
                             Connect Google Calendar to automatically create a unique Google Meet link for online and hybrid interviews.
+                        </p>
+                        <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#9A3412', fontFamily: 'monospace' }}>
+                            Google Cloud Console → Credentials → OAuth client → Authorized redirect URIs (must match exactly):
+                            <br />
+                            <strong>{googleRedirectUri || 'http://localhost:5173/api/google-calendar/callback'}</strong>
                         </p>
                         <button
                             type="button"

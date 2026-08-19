@@ -3579,7 +3579,7 @@ export const googleCalendarService = {
       const response = await apiFetch(`${BASE_URL}/google-calendar/connect`, { method: "GET" });
       const data = await response.json();
       if (!response.ok) return { success: false, message: data.message || "Failed to start Google Calendar connect" };
-      return { success: true, authUrl: data.authUrl };
+      return { success: true, authUrl: data.authUrl, redirectUri: data.redirectUri };
     } catch {
       return { success: false, message: "Something went wrong" };
     }
