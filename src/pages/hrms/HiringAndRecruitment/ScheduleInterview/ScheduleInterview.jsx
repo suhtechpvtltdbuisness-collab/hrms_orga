@@ -81,7 +81,9 @@ const ScheduleInterview = () => {
             toast.success('Google Calendar connected successfully');
             loadGoogleCalendarStatus();
         } else if (status === 'error') {
-            toast.error('Failed to connect Google Calendar');
+            const reason = searchParams.get('reason');
+            toast.error(`Failed to connect Google Calendar${reason ? `: ${reason}` : ''}`);
+            console.error('[GoogleCalendar] connect failed, reason:', reason);
         }
     }, [searchParams]);
 
