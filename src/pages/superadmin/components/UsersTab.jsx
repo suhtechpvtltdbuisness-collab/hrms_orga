@@ -1,8 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Users, ChevronRight, Search, Shield, Mail, Calendar, Eye, Power, Copy, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Users, ChevronRight, Search, Shield, Mail, Calendar, Eye, Copy, X, Trash2 } from 'lucide-react';
 import { employeeService, getProfilePicUrl } from '../../../service';
 import toast from 'react-hot-toast';
 import ActionMenu from './ActionMenu';
+
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'admin', label: 'Admins' },
+  { id: 'employee', label: 'Employees' },
+];
 
 const getRoleBadge = (role) => {
   if (role === 'Super Admin') return 'bg-purple-100 text-purple-700 border-purple-200';
@@ -23,21 +29,27 @@ const getPlanName = (plan) => {
   return plan.name || plan.planType?.replaceAll('_', ' ') || '-';
 };
 
+const isAdminUser = (user) => user.roleId === 1 || user.type === 'admin' || user.isAdmin === true;
+
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [updatingId, setUpdatingId] = useState(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const selectAllRef = useRef(null);
   const limit = 10;
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await employeeService.getAllUsersForSuperAdmin(page, limit, searchTerm);
+      const res = await employeeService.getAllUsersForSuperAdmin(page, limit, searchTerm, roleFilter);
       if (res.success) {
         setUsersList(res.data.users || []);
         setTotalCount(res.data.total || 0);
@@ -50,7 +62,7 @@ const UsersTab = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm]);
+  }, [page, searchTerm, roleFilter]);
 
   useEffect(() => {
     fetchUsers();
@@ -61,17 +73,74 @@ const UsersTab = () => {
     setPage(1);
   };
 
-  const handleStatusChange = async (user) => {
-    if (!window.confirm(`${user.active ? 'Deactivate' : 'Activate'} ${user.name}?`)) return;
+  const selectableUsers = useMemo(
+    () => usersList.filter((user) => user.roleId !== 0),
+    [usersList],
+  );
+  const selectedOnPage = selectableUsers.filter((user) => selectedIds.includes(user.id));
+  const allPageSelected = selectableUsers.length > 0 && selectedOnPage.length === selectableUsers.length;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = selectedOnPage.length > 0 && !allPageSelected;
+    }
+  }, [selectedOnPage.length, allPageSelected]);
+
+  const toggleUser = (id) => {
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((selectedId) => selectedId !== id) : [...current, id],
+    );
+  };
+
+  const toggleAllOnPage = () => {
+    if (allPageSelected) {
+      const pageIds = new Set(selectableUsers.map((user) => user.id));
+      setSelectedIds((current) => current.filter((id) => !pageIds.has(id)));
+      return;
+    }
+    setSelectedIds((current) => [...new Set([...current, ...selectableUsers.map((user) => user.id)])]);
+  };
+
+  const handleFilterChange = (id) => {
+    setRoleFilter(id);
+    setPage(1);
+  };
+
+  const handleDelete = async (user) => {
+    const admin = isAdminUser(user);
+    const confirmText = admin
+      ? `Delete ${user.name} and all ${user.employeeCount || 0} employees under this admin? They can be restored later.`
+      : `Delete ${user.name}? This can be restored later.`;
+    if (!window.confirm(confirmText)) return;
     setUpdatingId(user.id);
-    const res = await employeeService.updateSuperAdminUserStatus(user.id, !user.active);
+    const res = await employeeService.deleteSuperAdminUser(user.id);
     if (res.success) {
       toast.success(res.message);
+      setSelectedIds((current) => current.filter((id) => id !== user.id));
       await fetchUsers();
     } else {
       toast.error(res.message);
     }
     setUpdatingId(null);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    const selectedAdmins = usersList.filter((user) => selectedIds.includes(user.id) && isAdminUser(user));
+    const confirmText = selectedAdmins.length
+      ? `Delete ${selectedIds.length} selected user(s)? Admins in this selection will also delete their employees. They can be restored later.`
+      : `Delete ${selectedIds.length} selected user(s)? They can be restored later.`;
+    if (!window.confirm(confirmText)) return;
+    setBulkDeleting(true);
+    const res = await employeeService.deleteSuperAdminUsers(selectedIds);
+    if (res.success) {
+      toast.success(res.message);
+      setSelectedIds([]);
+      await fetchUsers();
+    } else {
+      toast.error(res.message);
+    }
+    setBulkDeleting(false);
   };
 
   const copyEmail = async (email) => {
@@ -84,8 +153,8 @@ const UsersTab = () => {
   };
 
   const totalUsers = totalCount;
-  const orgOwners = usersList.filter(u => u.roleId === 1 || u.type === 'admin').length;
-  const activeNow = usersList.filter(u => u.active).length;
+  const orgOwners = usersList.filter((u) => isAdminUser(u)).length;
+  const activeNow = usersList.filter((u) => u.active).length;
 
   return (
     <div className="fade-in space-y-6">
@@ -125,9 +194,8 @@ const UsersTab = () => {
       </div>
 
       <div className="card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-           <div className="relative w-full sm:w-80">
+        <div className="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+           <div className="relative w-full lg:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 type="text" 
@@ -137,13 +205,52 @@ const UsersTab = () => {
                 onChange={handleSearchChange}
               />
            </div>
+           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {selectedIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              )}
+              <div className="inline-flex rounded-xl bg-gray-100 p-1">
+                 {FILTERS.map((filter) => (
+                   <button
+                     key={filter.id}
+                     type="button"
+                     onClick={() => handleFilterChange(filter.id)}
+                     className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+                       roleFilter === filter.id
+                         ? 'bg-white text-purple-700 shadow-sm'
+                         : 'text-gray-500 hover:text-gray-800'
+                     }`}
+                   >
+                     {filter.label}
+                   </button>
+                 ))}
+              </div>
+           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="px-4 py-4 w-12">
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    aria-label="Select all users on this page"
+                    checked={allPageSelected}
+                    onChange={toggleAllOnPage}
+                    disabled={!selectableUsers.length}
+                    className="h-4 w-4 rounded accent-purple-600"
+                  />
+                </th>
                 <th className="px-6 py-4 font-semibold text-gray-500">User</th>
                 <th className="px-6 py-4 font-semibold text-gray-500">Role</th>
                 <th className="px-6 py-4 font-semibold text-gray-500">Subscription Plan</th>
@@ -155,13 +262,13 @@ const UsersTab = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-10 text-center text-gray-500 font-medium">
+                  <td colSpan="7" className="px-6 py-10 text-center text-gray-500 font-medium">
                     Loading users...
                   </td>
                 </tr>
               ) : usersList.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-10 text-center text-gray-500 font-medium">
+                  <td colSpan="7" className="px-6 py-10 text-center text-gray-500 font-medium">
                     No users found.
                   </td>
                 </tr>
@@ -170,6 +277,16 @@ const UsersTab = () => {
                   const roleName = getRoleName(user.roleId, user.type);
                   return (
                     <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${user.name}`}
+                          checked={selectedIds.includes(user.id)}
+                          disabled={user.roleId === 0}
+                          onChange={() => toggleUser(user.id)}
+                          className="h-4 w-4 rounded accent-purple-600 disabled:opacity-40"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img 
@@ -180,6 +297,9 @@ const UsersTab = () => {
                           <div>
                             <div className="font-medium text-gray-900">{user.name}</div>
                             <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><Mail size={10} /> {user.email}</div>
+                            {roleName === 'Employee' && user.adminName ? (
+                              <div className="text-xs text-gray-400 mt-0.5">Admin: {user.adminName}</div>
+                            ) : null}
                           </div>
                         </div>
                       </td>
@@ -215,7 +335,7 @@ const UsersTab = () => {
                         <ActionMenu label={`Manage ${user.name}`} items={[
                           { label: 'View details', icon: Eye, onClick: () => setSelectedUser(user) },
                           { label: 'Copy email', icon: Copy, onClick: () => copyEmail(user.email) },
-                          { label: user.active ? 'Deactivate user' : 'Activate user', icon: Power, danger: user.active, disabled: updatingId === user.id || user.roleId === 0, onClick: () => handleStatusChange(user) },
+                          { label: isAdminUser(user) ? 'Delete admin' : 'Delete employee', icon: Trash2, danger: true, disabled: updatingId === user.id || user.roleId === 0, onClick: () => handleDelete(user) },
                         ]} />
                       </td>
                     </tr>
@@ -226,7 +346,6 @@ const UsersTab = () => {
           </table>
         </div>
         
-        {/* Pagination */}
         <div className="p-5 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
            <div>
              Showing {totalCount > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, totalCount)} of {totalCount} users
@@ -263,11 +382,11 @@ const UsersTab = () => {
         </div>
       </div>
       {selectedUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedUser(null)}>
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm" onMouseDown={() => setSelectedUser(null)}>
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-bold text-gray-900">{selectedUser.name}</h3><p className="mt-1 text-sm text-gray-500">{selectedUser.email}</p></div><button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"><X size={18} /></button></div>
             <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
-              {[["Role", getRoleName(selectedUser.roleId, selectedUser.type)], ["Plan", getPlanName(selectedUser.plan)], ["Status", selectedUser.active ? 'Active' : 'Inactive'], ["Joined", selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : '-']].map(([label, value]) => <div key={label} className="rounded-xl bg-gray-50 p-3"><dt className="text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-900">{value}</dd></div>)}
+              {[["Role", getRoleName(selectedUser.roleId, selectedUser.type)], ["Plan", getPlanName(selectedUser.plan)], ["Status", selectedUser.active ? 'Active' : 'Inactive'], ["Joined", selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : '-'], ...(selectedUser.adminName ? [["Admin", selectedUser.adminName]] : []), ...(isAdminUser(selectedUser) ? [["Employees", selectedUser.employeeCount ?? 0]] : [])].map(([label, value]) => <div key={label} className="rounded-xl bg-gray-50 p-3"><dt className="text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-900">{value}</dd></div>)}
             </dl>
           </div>
         </div>

@@ -883,9 +883,15 @@ export const employeeService = {
     }
   },
 
-  getAllUsersForSuperAdmin: async (page = 1, limit = 10, search = "") => {
+  getAllUsersForSuperAdmin: async (page = 1, limit = 10, search = "", role = "all") => {
     try {
-      const response = await apiFetch(`${BASE_URL}/users/superadmin/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        search,
+      });
+      if (role && role !== "all") params.set("role", role);
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/all?${params.toString()}`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -905,6 +911,77 @@ export const employeeService = {
         success: false,
         message: "Something went wrong",
       };
+    }
+  },
+
+  getDeletedUsersForSuperAdmin: async (page = 1, limit = 10, search = "", role = "all") => {
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        search,
+      });
+      if (role && role !== "all") params.set("role", role);
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/deleted?${params.toString()}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to fetch deleted users",
+        };
+      }
+      return {
+        success: true,
+        data: data.data || { users: [], total: 0 },
+      };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteSuperAdminUser: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete user" };
+      return { success: true, message: data.message || "User deleted", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  deleteSuperAdminUsers: async (ids) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/bulk-delete`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ids }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to delete users" };
+      return { success: true, message: data.message || "Users deleted", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    }
+  },
+
+  restoreSuperAdminUser: async (id) => {
+    try {
+      const response = await apiFetch(`${BASE_URL}/users/superadmin/${id}/restore`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, message: data.message || "Failed to restore user" };
+      return { success: true, message: data.message || "User restored", data: data.data };
+    } catch {
+      return { success: false, message: "Something went wrong" };
     }
   },
 
