@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, Clock, ChevronDown, X, ExternalLink, Copy } from 'lucide-react';
 import Spinner from '../../../../components/ui/Spinner';
-import { getSecureFileUrl, hiringService } from '../../../../service';
+import { getSecureFileUrl, hiringService, googleCalendarService } from '../../../../service';
 
 const ScheduleInterview = () => {
     const navigate = useNavigate();
@@ -13,6 +13,11 @@ const ScheduleInterview = () => {
     const [interviewMode, setInterviewMode] = useState('Online');
     const [isReadMode, setIsReadMode] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [scheduledInterview, setScheduledInterview] = useState(null);
+    const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+    const [googleCalendarEmail, setGoogleCalendarEmail] = useState('');
+    const [checkingCalendar, setCheckingCalendar] = useState(true);
+    const idempotencyKeyRef = useRef(crypto.randomUUID());
 
     const [activeJobs, setActiveJobs] = useState([]);
     const [selectedJobId, setSelectedJobId] = useState(null);
@@ -27,11 +32,53 @@ const ScheduleInterview = () => {
     const timeInputRef = useRef(null);
     const fileInputRef = useRef(null);
 
+    const loadGoogleCalendarStatus = async () => {
+        setCheckingCalendar(true);
+        const result = await googleCalendarService.getStatus();
+        if (result.success) {
+            setGoogleCalendarConnected(Boolean(result.data?.connected));
+            setGoogleCalendarEmail(result.data?.email || '');
+        }
+        setCheckingCalendar(false);
+    };
+
+    const handleConnectGoogleCalendar = async () => {
+        const result = await googleCalendarService.getConnectUrl();
+        if (result.success && result.authUrl) {
+            window.location.href = result.authUrl;
+            return;
+        }
+        toast.error(result.message || 'Unable to connect Google Calendar');
+    };
+
+    const copyMeetLink = async (url) => {
+        if (!url) return;
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success('Meet link copied');
+        } catch {
+            toast.error('Could not copy link');
+        }
+    };
+
+    const requiresMeet = interviewMode === 'Online' || interviewMode === 'Hybrid';
+    const meetUrl = scheduledInterview?.meetingLink || '';
     const applicationId = searchParams.get('applicationId');
 
     useEffect(() => {
         loadActiveJobs();
+        loadGoogleCalendarStatus();
     }, []);
+
+    useEffect(() => {
+        const status = searchParams.get('googleCalendar');
+        if (status === 'connected') {
+            toast.success('Google Calendar connected successfully');
+            loadGoogleCalendarStatus();
+        } else if (status === 'error') {
+            toast.error('Failed to connect Google Calendar');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (applicationId) {
@@ -216,6 +263,7 @@ const ScheduleInterview = () => {
     };
 
     const handleSave = async () => {
+        if (submitting || isReadMode) return;
         const { name, email, phone, experience, date, time, panel } = formData;
         if (!name || !email || !phone || !experience || !date || !time || !panel) {
             toast.error('Please fill in all candidate and interview details.');
@@ -223,6 +271,10 @@ const ScheduleInterview = () => {
         }
         if (!/^\d{10}$/.test(phone)) {
             toast.error('Enter a valid 10-digit phone number.');
+            return;
+        }
+        if (requiresMeet && !googleCalendarConnected) {
+            toast.error('Connect Google Calendar before scheduling online or hybrid interviews.');
             return;
         }
         setSubmitting(true);
@@ -239,24 +291,24 @@ const ScheduleInterview = () => {
         const selectedAppId = formData._appId || (applicationId ? Number(applicationId) : undefined);
         const interviewPayload = {
             jobApplicationId: selectedAppId,
-            interviewerId: panel === 'Tech' ? 1 : 1,
             scheduledAt: new Date(`${date}T${time}`).toISOString(),
             instruction: `${interviewType} - ${interviewMode}`,
-            meetingLink: '',
             status: 'scheduled',
             interviewType,
             interviewMode,
             panel,
             candidateEmail: email,
+            idempotencyKey: idempotencyKeyRef.current,
         };
 
         const result = await hiringService.createInterview(interviewPayload);
         toast.dismiss(loadingToast);
         if (result.success) {
+            setScheduledInterview(result.data);
             setIsReadMode(true);
-            toast.success('Interview scheduled successfully!');
+            toast.success(result.message || 'Interview scheduled successfully.');
         } else {
-            toast.error(result.message);
+            toast.error(result.message || 'Unable to create the Google Meet meeting. The interview was not scheduled. Please try again.');
         }
         setSubmitting(false);
     };
@@ -368,6 +420,40 @@ const ScheduleInterview = () => {
             </div>
 
             <div className="custom-scrollbar pr-2 pb-4" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {requiresMeet && !checkingCalendar && !googleCalendarConnected && !isReadMode && (
+                    <div style={{ ...card, padding: '16px 20px', backgroundColor: '#FFF7ED', borderColor: '#FDBA74' }}>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#9A3412', fontFamily: '"Nunito Sans", sans-serif' }}>
+                            Connect Google Calendar to automatically create a unique Google Meet link for online and hybrid interviews.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleConnectGoogleCalendar}
+                            style={{
+                                marginTop: '12px',
+                                height: '38px',
+                                padding: '0 20px',
+                                backgroundColor: '#7D1EDB',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '999px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '14px',
+                            }}
+                        >
+                            Connect Google Calendar
+                        </button>
+                    </div>
+                )}
+
+                {requiresMeet && googleCalendarConnected && !isReadMode && (
+                    <div style={{ ...card, padding: '12px 20px', backgroundColor: '#F5EEFB', borderColor: '#C4B5FD' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#5B21B6' }}>
+                            Google Calendar connected{googleCalendarEmail ? ` as ${googleCalendarEmail}` : ''}. A unique Meet link will be generated when you save.
+                        </p>
+                    </div>
+                )}
+
                 {/* ── Card 0: Job Opening & Candidate Selection ── */}
                 <div style={{ ...card, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0, fontFamily: '"Nunito Sans", sans-serif' }}>
@@ -779,11 +865,65 @@ const ScheduleInterview = () => {
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Type:</span> <strong>{interviewType}</strong></p>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Interview Panel:</span> <strong>{formData.panel === 'Tech' ? 'Tech Panel' : formData.panel ? 'HR Panel' : 'HR Panel'}</strong></p>
                         <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Mode:</span> <strong>{interviewMode}</strong></p>
-                        <p style={{ margin: 0 }}>
-                            <span style={{ color: '#000000', opacity: 0.7 }}>Meeting Link: </span>
-                            <strong>The meet link will be shared soon.</strong>
-                        </p>
-                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Instructions:</span> <strong>Please be on time</strong></p>
+                        {requiresMeet ? (
+                            isReadMode && meetUrl ? (
+                                <div style={{ marginTop: '4px' }}>
+                                    <p style={{ margin: '0 0 8px 0' }}><span style={{ color: '#000000', opacity: 0.7 }}>Google Meet:</span></p>
+                                    <p style={{ margin: '0 0 10px 0', wordBreak: 'break-all' }}><strong>{meetUrl}</strong></p>
+                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(meetUrl, '_blank', 'noopener,noreferrer')}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                padding: '8px 16px',
+                                                backgroundColor: '#7D1EDB',
+                                                color: '#FFFFFF',
+                                                border: 'none',
+                                                borderRadius: '999px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            <ExternalLink size={14} /> Join Meeting
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => copyMeetLink(meetUrl)}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                padding: '8px 16px',
+                                                backgroundColor: '#FFFFFF',
+                                                color: '#7D1EDB',
+                                                border: '1.5px solid #7D1EDB',
+                                                borderRadius: '999px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            <Copy size={14} /> Copy Link
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p style={{ margin: 0 }}>
+                                    <span style={{ color: '#000000', opacity: 0.7 }}>Meeting Link: </span>
+                                    <strong>A unique Google Meet link will be generated when the interview is scheduled.</strong>
+                                </p>
+                            )
+                        ) : (
+                            <p style={{ margin: 0 }}>
+                                <span style={{ color: '#000000', opacity: 0.7 }}>Meeting Link: </span>
+                                <strong>Not applicable for offline interviews.</strong>
+                            </p>
+                        )}
+                        <p style={{ margin: 0 }}><span style={{ color: '#000000', opacity: 0.7 }}>Instructions:</span> <strong>Please be on time{requiresMeet ? ' and join using the meeting link above' : ''}.</strong></p>
                     </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Calendar, ChevronDown } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, ChevronDown, ExternalLink, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Spinner from '../../../../components/ui/Spinner';
 import { hiringService } from '../../../../service';
@@ -46,16 +46,28 @@ const ScheduledInterviewDetails = () => {
         return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     };
 
-    const getModeFromInstruction = (instruction) => {
+    const getModeFromInstruction = (instruction, interviewMode) => {
+        if (interviewMode) return interviewMode;
         if (!instruction) return 'Online';
         const parts = instruction.split(' - ');
         return parts.length > 1 ? parts[1] : 'Online';
     };
 
-    const getTypeFromInstruction = (instruction) => {
+    const getTypeFromInstruction = (instruction, interviewType) => {
+        if (interviewType) return interviewType;
         if (!instruction) return 'HR Round';
         const parts = instruction.split(' - ');
         return parts[0];
+    };
+
+    const copyMeetLink = async (url) => {
+        if (!url) return;
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success('Meet link copied');
+        } catch {
+            toast.error('Could not copy link');
+        }
     };
 
     /* ── shared card style ── */
@@ -109,6 +121,11 @@ const ScheduledInterviewDetails = () => {
             </div>
         );
     }
+
+    const interviewMode = getModeFromInstruction(interview.instruction, interview.interviewMode);
+    const interviewType = getTypeFromInstruction(interview.instruction, interview.interviewType);
+    const requiresMeet = interviewMode === 'Online' || interviewMode === 'Hybrid';
+    const meetUrl = interview.meetingLink || '';
 
     return (
         <div 
@@ -186,7 +203,7 @@ const ScheduledInterviewDetails = () => {
                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7D1EDB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#7D1EDB' }}></div>
                          </div>
-                         <span style={{ fontSize: '14px', color: '#111827' }}>{getTypeFromInstruction(interview.instruction)}</span>
+                         <span style={{ fontSize: '14px', color: '#111827' }}>{interviewType}</span>
                     </div>
                 </div>
 
@@ -197,7 +214,7 @@ const ScheduledInterviewDetails = () => {
                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7D1EDB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#7D1EDB' }}></div>
                          </div>
-                         <span style={{ fontSize: '14px', color: '#111827' }}>{getModeFromInstruction(interview.instruction)}</span>
+                         <span style={{ fontSize: '14px', color: '#111827' }}>{interviewMode}</span>
                     </div>
                 </div>
 
@@ -230,10 +247,61 @@ const ScheduledInterviewDetails = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#374151', fontFamily: '"Nunito Sans", sans-serif' }}>
                         <p style={{ margin: 0 }}>Date: <strong>{formatDate(interview.scheduledAt)}</strong></p>
                         <p style={{ margin: 0 }}>Time: <strong>{formatTime(interview.scheduledAt)}</strong></p>
-                        <p style={{ margin: 0 }}>Interview Panel: <strong>{interview.interviewerId ? `Panel ${interview.interviewerId}` : 'N/A'}</strong></p>
-                        <p style={{ margin: 0 }}>Mode: <strong>{getModeFromInstruction(interview.instruction)}</strong></p>
-                        <p style={{ margin: 0 }}>Meeting link: <a href={interview.meetingLink || '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#7D1EDB', textDecoration: 'none' }}>{interview.meetingLink || 'N/A'}</a></p>
-                        <p style={{ margin: 0 }}>Instructions: <strong>{interview.instruction || 'N/A'}</strong></p>
+                        <p style={{ margin: 0 }}>Interview Type: <strong>{interviewType}</strong></p>
+                        <p style={{ margin: 0 }}>Interview Panel: <strong>{interview.panel === 'Tech' ? 'Tech Panel' : interview.panel ? 'HR Panel' : 'N/A'}</strong></p>
+                        <p style={{ margin: 0 }}>Mode: <strong>{interviewMode}</strong></p>
+                        {requiresMeet ? (
+                            meetUrl ? (
+                                <div style={{ marginTop: '4px' }}>
+                                    <p style={{ margin: '0 0 8px 0' }}>Google Meet: <strong style={{ wordBreak: 'break-all' }}>{meetUrl}</strong></p>
+                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(meetUrl, '_blank', 'noopener,noreferrer')}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                padding: '8px 16px',
+                                                backgroundColor: '#7D1EDB',
+                                                color: '#FFFFFF',
+                                                border: 'none',
+                                                borderRadius: '999px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            <ExternalLink size={14} /> Join Meeting
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => copyMeetLink(meetUrl)}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                padding: '8px 16px',
+                                                backgroundColor: '#FFFFFF',
+                                                color: '#7D1EDB',
+                                                border: '1.5px solid #7D1EDB',
+                                                borderRadius: '999px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            <Copy size={14} /> Copy Link
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p style={{ margin: 0 }}>Meeting link: <strong>Not available</strong></p>
+                            )
+                        ) : (
+                            <p style={{ margin: 0 }}>Meeting link: <strong>Not applicable for offline interviews</strong></p>
+                        )}
+                        <p style={{ margin: 0 }}>Instructions: <strong>Please be on time{requiresMeet && meetUrl ? ' and join using the meeting link above' : ''}.</strong></p>
                     </div>
                 </div>
 
