@@ -4,7 +4,7 @@ import { ChevronRight, Eye, CheckSquare, Download, Search, RotateCcw } from 'luc
 import { payrollModuleService } from '../../../service';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const formatDate = (value) => {
     if (!value) return '—';
@@ -29,22 +29,23 @@ const getDisplayUser = (item = {}) => {
     };
 };
 
-const getCompanyMeta = () => {
+const getCompanyMeta = (item = {}) => {
     try {
         const userData = JSON.parse(localStorage.getItem('userData') || '{}');
         const subscription = JSON.parse(localStorage.getItem('subscription') || '{}');
+        const org = userData.organization || {};
 
         return {
-            name: userData.companyName || userData.organizationName || subscription.orgName || subscription.companyName || 'Company',
-            email: userData.companyEmail || userData.email || subscription.email || '—',
-            phone: userData.companyPhone || userData.phone || '—',
+            name: item.organizationName || org.name || userData.organizationName || userData.companyName || subscription.orgName || subscription.companyName || 'Organization',
+            email: item.organizationEmail || org.organizationEmail || userData.companyEmail || userData.organizationEmail || '—',
+            phone: item.organizationPhone || org.organizationPhone || userData.companyPhone || userData.organizationPhone || '—',
             address: userData.companyAddress || userData.organizationAddress || userData.address || '—',
         };
     } catch {
         return {
-            name: 'Company',
-            email: '—',
-            phone: '—',
+            name: item.organizationName || 'Organization',
+            email: item.organizationEmail || '—',
+            phone: item.organizationPhone || '—',
             address: '—',
         };
     }
@@ -59,13 +60,7 @@ const SalarySlip = () => {
     const [selectedSlip, setSelectedSlip] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
-    const [companyMeta, setCompanyMeta] = useState(getCompanyMeta());
 
-    useEffect(() => {
-        setCompanyMeta(getCompanyMeta());
-    }, []);
-
-    // Fetch Slips
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -113,130 +108,124 @@ const SalarySlip = () => {
         setIsDetailOpen(true);
     };
 
-    // Download PDF with jsPDF
     const handleDownloadPDF = (item) => {
-        const slip = item.salarySlip || item;
-        const entry = item.payrollEntry || {};
-        const displayUser = getDisplayUser(item);
-        const company = getCompanyMeta();
+        try {
+            const slip = item.salarySlip || item;
+            const entry = item.payrollEntry || {};
+            const displayUser = getDisplayUser(item);
+            const company = getCompanyMeta(item);
+            const doc = new jsPDF();
 
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(22);
-        doc.setTextColor(125, 30, 219); // #7D1EDB
-        doc.text(company.name, 20, 25);
-        
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Corporate Payroll Slip', 20, 32);
-        
-        // Slip Info right side
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(50, 50, 50);
-        doc.text(`Payslip ID: ${slip.slipNumber}`, 130, 25);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Generated: ${new Date(slip.createdAt).toLocaleDateString()}`, 130, 32);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.setTextColor(125, 30, 219);
+            doc.text(company.name, 20, 25, { maxWidth: 105 });
 
-        // Divider Line
-        doc.setDrawColor(220, 220, 220);
-        doc.line(20, 38, 190, 38);
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Corporate Payroll Slip', 20, 32);
 
-        // Metadata block (Employee snapshot)
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Company Details', 20, 48);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(`Company: ${company.name}`, 20, 55);
-        doc.text(`Email: ${company.email}`, 20, 61);
-        doc.text(`Phone: ${company.phone}`, 20, 67);
-        doc.text(`Address: ${company.address}`, 20, 73);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(50, 50, 50);
+            doc.text(`Payslip ID: ${slip.slipNumber}`, 130, 25);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generated: ${new Date(slip.createdAt).toLocaleDateString()}`, 130, 32);
 
-        doc.setFont('helvetica', 'bold');
-        doc.text('Employee Details', 110, 48);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Name: ${displayUser.name}`, 110, 55);
-        doc.text(`Employee ID: ${displayUser.employeeId}`, 110, 61);
-        doc.text(`Email: ${displayUser.email}`, 110, 67);
-        doc.text(`Phone: ${displayUser.phone}`, 110, 73);
-        doc.text(`Department: ${displayUser.department}`, 110, 79);
-        doc.text(`Designation: ${displayUser.designation}`, 110, 85);
-        doc.text(`Salary Structure: ${displayUser.salaryStructure}`, 20, 79);
-        doc.text(`Period Start: ${formatDate(entry.periodStart)}`, 20, 85);
-        doc.text(`Period End: ${formatDate(entry.periodEnd)}`, 20, 91);
-        doc.text(`Paid Days: ${entry.paidDays || '—'} Days`, 20, 97);
+            doc.setDrawColor(220, 220, 220);
+            doc.line(20, 38, 190, 38);
 
-        // Earnings and Deductions tables side-by-side or combined
-        const earningsRows = (slip.earnings || []).map(e => [e.name || e.componentName || 'Earning', `Rs. ${Number(e.amount).toFixed(2)}`]);
-        const deductionsRows = (slip.deductions || []).map(d => [d.name || d.componentName || 'Deduction', `Rs. ${Number(d.amount).toFixed(2)}`]);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Organization Details', 20, 48);
 
-        // Draw Earnings Table
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Earnings', 20, 110);
-        
-        doc.autoTable({
-            startY: 115,
-            margin: { left: 20, right: 110 },
-            head: [['Component', 'Amount']],
-            body: earningsRows,
-            theme: 'striped',
-            headStyles: { fillColor: [125, 30, 219] },
-            styles: { fontSize: 9 }
-        });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Organization: ${company.name}`, 20, 55, { maxWidth: 85 });
+            doc.text(`Email: ${company.email}`, 20, 61);
+            doc.text(`Phone: ${company.phone}`, 20, 67);
+            doc.text(`Address: ${company.address}`, 20, 73);
 
-        // Draw Deductions Table
-        const earningsTableEndY = doc.lastAutoTable.finalY || 115;
-        doc.text('Deductions', 110, 110);
-        
-        doc.autoTable({
-            startY: 115,
-            margin: { left: 110, right: 20 },
-            head: [['Component', 'Amount']],
-            body: deductionsRows,
-            theme: 'striped',
-            headStyles: { fillColor: [220, 53, 69] },
-            styles: { fontSize: 9 }
-        });
+            doc.setFont('helvetica', 'bold');
+            doc.text('Employee Details', 110, 48);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Name: ${displayUser.name}`, 110, 55);
+            doc.text(`Employee ID: ${displayUser.employeeId}`, 110, 61);
+            doc.text(`Email: ${displayUser.email}`, 110, 67);
+            doc.text(`Phone: ${displayUser.phone}`, 110, 73);
+            doc.text(`Department: ${displayUser.department}`, 110, 79);
+            doc.text(`Designation: ${displayUser.designation}`, 110, 85);
+            doc.text(`Salary Structure: ${displayUser.salaryStructure}`, 20, 79);
+            doc.text(`Period Start: ${formatDate(entry.periodStart)}`, 20, 85);
+            doc.text(`Period End: ${formatDate(entry.periodEnd)}`, 20, 91);
+            doc.text(`Paid Days: ${entry.paidDays || '—'} Days`, 20, 97);
 
-        const deductionsTableEndY = doc.lastAutoTable.finalY || 115;
-        const mainTablesEndY = Math.max(earningsTableEndY, deductionsTableEndY);
+            const earningsRows = (slip.earnings || []).map(e => [e.name || e.componentName || 'Earning', `Rs. ${Number(e.amount).toFixed(2)}`]);
+            const deductionsRows = (slip.deductions || []).map(d => [d.name || d.componentName || 'Deduction', `Rs. ${Number(d.amount).toFixed(2)}`]);
 
-        // Summary box
-        const summaryY = mainTablesEndY + 15;
-        doc.setDrawColor(125, 30, 219);
-        doc.setFillColor(248, 245, 255);
-        doc.rect(20, summaryY, 170, 30, 'FD');
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Earnings', 20, 110);
 
-        doc.setFontSize(10);
-        doc.setTextColor(50, 50, 50);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Gross Earnings: Rs. ${Number(slip.grossPay).toFixed(2)}`, 25, summaryY + 10);
-        doc.text(`Total Deductions: Rs. ${Number(slip.totalDeductions).toFixed(2)}`, 25, summaryY + 18);
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(125, 30, 219);
-        doc.text(`Net Take-Home Pay: Rs. ${Number(slip.netPay).toFixed(2)}`, 110, summaryY + 15);
+            autoTable(doc, {
+                startY: 115,
+                margin: { left: 20, right: 110 },
+                head: [['Component', 'Amount']],
+                body: earningsRows.length ? earningsRows : [['—', 'Rs. 0.00']],
+                theme: 'striped',
+                headStyles: { fillColor: [125, 30, 219] },
+                styles: { fontSize: 9 }
+            });
 
-        // Signoff status
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Status: ${slip.status.toUpperCase()}`, 20, summaryY + 42);
-        if (slip.signedOffAt) {
-            doc.text(`Signed Off On: ${new Date(slip.signedOffAt).toLocaleString()}`, 20, summaryY + 48);
+            const earningsTableEndY = doc.lastAutoTable.finalY || 115;
+            doc.text('Deductions', 110, 110);
+
+            autoTable(doc, {
+                startY: 115,
+                margin: { left: 110, right: 20 },
+                head: [['Component', 'Amount']],
+                body: deductionsRows.length ? deductionsRows : [['—', 'Rs. 0.00']],
+                theme: 'striped',
+                headStyles: { fillColor: [220, 53, 69] },
+                styles: { fontSize: 9 }
+            });
+
+            const deductionsTableEndY = doc.lastAutoTable.finalY || 115;
+            const mainTablesEndY = Math.max(earningsTableEndY, deductionsTableEndY);
+
+            const summaryY = mainTablesEndY + 15;
+            doc.setDrawColor(125, 30, 219);
+            doc.setFillColor(248, 245, 255);
+            doc.rect(20, summaryY, 170, 30, 'FD');
+
+            doc.setFontSize(10);
+            doc.setTextColor(50, 50, 50);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Gross Earnings: Rs. ${Number(slip.grossPay || 0).toFixed(2)}`, 25, summaryY + 10);
+            doc.text(`Total Deductions: Rs. ${Number(slip.totalDeductions || 0).toFixed(2)}`, 25, summaryY + 18);
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(125, 30, 219);
+            doc.text(`Net Take-Home Pay: Rs. ${Number(slip.netPay || 0).toFixed(2)}`, 110, summaryY + 15);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Status: ${String(slip.status || 'draft').toUpperCase()}`, 20, summaryY + 42);
+            if (slip.signedOffAt) {
+                doc.text(`Signed Off On: ${new Date(slip.signedOffAt).toLocaleString()}`, 20, summaryY + 48);
+            }
+
+            const safeName = String(displayUser.name || 'Employee').replace(/\s+/g, '_');
+            doc.save(`Payslip_${safeName}_${slip.slipNumber || slip.id}.pdf`);
+            toast.success('Payslip PDF downloaded successfully!');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to download salary slip');
         }
-
-        // Save PDF
-        doc.save(`Payslip_${displayUser.name.replace(/\s+/g, '_')}_${slip.slipNumber}.pdf`);
-        toast.success('Payslip PDF downloaded successfully!');
     };
 
     // Filter
@@ -401,20 +390,20 @@ const SalarySlip = () => {
                         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-[#CECECE] text-sm">
                                 <div>
-                                    <span className="text-xs text-gray-400 block mb-1">Company Name</span>
-                                    <p className="font-semibold text-gray-900">{companyMeta.name}</p>
+                                    <span className="text-xs text-gray-400 block mb-1">Organization Name</span>
+                                    <p className="font-semibold text-gray-900">{getCompanyMeta(selectedSlip).name}</p>
                                 </div>
                                 <div>
-                                    <span className="text-xs text-gray-400 block mb-1">Company Email</span>
-                                    <p className="font-semibold text-gray-900">{companyMeta.email}</p>
+                                    <span className="text-xs text-gray-400 block mb-1">Organization Email</span>
+                                    <p className="font-semibold text-gray-900">{getCompanyMeta(selectedSlip).email}</p>
                                 </div>
                                 <div>
-                                    <span className="text-xs text-gray-400 block mb-1">Company Phone</span>
-                                    <p className="font-semibold text-gray-900">{companyMeta.phone}</p>
+                                    <span className="text-xs text-gray-400 block mb-1">Organization Phone</span>
+                                    <p className="font-semibold text-gray-900">{getCompanyMeta(selectedSlip).phone}</p>
                                 </div>
                                 <div>
-                                    <span className="text-xs text-gray-400 block mb-1">Company Address</span>
-                                    <p className="font-semibold text-gray-900">{companyMeta.address}</p>
+                                    <span className="text-xs text-gray-400 block mb-1">Organization Address</span>
+                                    <p className="font-semibold text-gray-900">{getCompanyMeta(selectedSlip).address}</p>
                                 </div>
                             </div>
 
