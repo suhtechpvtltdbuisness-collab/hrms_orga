@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   FileText,
   Download,
+  Save,
   X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -1847,7 +1848,10 @@ const PolishedCandidateView = ({ offer, onBack, onStartOnboarding, starting, onR
     systemAccess: true,
     provideLaptop: true,
   };
-  const [setupTasks, setSetupTasks] = useState(defaultSetupTasks);
+  const [setupTasks, setSetupTasks] = useState({
+    ...defaultSetupTasks,
+    ...(offer.onboardingTasks?.setup || {}),
+  });
   const milestones = [
     { label: "Offer sent", date: formatOfferDate(offer.sentAt), Icon: Send },
     { label: "Offer viewed", date: formatOfferDate(offer.viewedAt || offer.sentAt), Icon: Eye },
@@ -1915,7 +1919,7 @@ const PolishedCandidateView = ({ offer, onBack, onStartOnboarding, starting, onR
           ["Department", offer.department || "To be confirmed", Building2],
           ["Designation", offer.designation || offer.jobTitle || "To be confirmed", Users],
         ].map(([label, value, Icon]) => <div key={label} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm"><Icon size={17} /></span><div><p className="text-xs text-slate-400">{label}</p><p className="font-semibold text-slate-700">{value}</p></div></div>)}</div></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Assigned onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">Choose what should be assigned during onboarding.</p></div><div className="mb-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4"><label className="flex cursor-pointer items-center gap-3"><input type="checkbox" checked={setupTasks.provideLaptop} onChange={() => setSetupTasks((current) => ({ ...current, provideLaptop: !current.provideLaptop }))} className="h-4 w-4 accent-violet-600" /><span className="text-sm font-semibold text-slate-700">Provide company laptop to candidate</span></label></div><div className="grid gap-3 sm:grid-cols-2">{setupTaskItems.map(({ key, label, Icon }) => <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3"><input type="checkbox" checked={setupTasks[key]} onChange={() => setSetupTasks((current) => ({ ...current, [key]: !current[key] }))} className="h-4 w-4 accent-violet-600" /><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-700"><Icon size={17} /></span><span className="flex-1 text-sm font-semibold text-slate-700">{label}</span></label>)}</div></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="font-bold text-slate-900">Assigned onboarding tasks</h2><p className="mt-1 text-xs text-slate-500">Choose what should be assigned during onboarding.</p></div><div className="mb-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4"><label className="flex cursor-pointer items-center gap-3"><input type="checkbox" checked={setupTasks.provideLaptop} onChange={() => setSetupTasks((current) => ({ ...current, provideLaptop: !current.provideLaptop }))} className="h-4 w-4 accent-violet-600" /><span className="text-sm font-semibold text-slate-700">Provide company laptop to candidate</span></label></div><div className="grid gap-3 sm:grid-cols-2">{setupTaskItems.map(({ key, label, Icon }) => <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3"><input type="checkbox" checked={setupTasks[key]} onChange={() => setSetupTasks((current) => ({ ...current, [key]: !current[key] }))} className="h-4 w-4 accent-violet-600" /><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-700"><Icon size={17} /></span><span className="flex-1 text-sm font-semibold text-slate-700">{label}</span></label>)}</div><div className="mt-5 flex justify-end border-t border-slate-100 pt-4"><button type="button" onClick={() => onStartOnboarding(setupTasks)} disabled={starting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7D1EDB] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"><Save size={17} />{starting ? "Saving..." : "Save"}</button></div></div>
       </div>
     </div>
   </div>;
