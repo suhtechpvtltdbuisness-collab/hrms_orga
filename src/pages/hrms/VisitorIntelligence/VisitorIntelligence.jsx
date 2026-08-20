@@ -5,7 +5,7 @@ import {
   MapPin, Monitor, RefreshCw, ChevronRight, Flame, Minus, Circle
 } from 'lucide-react';
 
-const API = '/api';
+const API_PREFIXES = ['/api', '/api/api'];
 
 function getAuthHeaders() {
   const token = localStorage.getItem('authToken');
@@ -13,10 +13,20 @@ function getAuthHeaders() {
 }
 
 async function apiFetch(path) {
-  const res = await fetch(`${API}${path}`, { headers: getAuthHeaders() });
-  if (!res.ok) throw new Error(await res.text());
-  const json = await res.json();
-  return json.data;
+  let lastError = 'Something went wrong';
+
+  for (const prefix of API_PREFIXES) {
+    const res = await fetch(`${prefix}${path}`, { headers: getAuthHeaders() });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+
+    lastError = await res.text();
+    if (res.status !== 404) break;
+  }
+
+  throw new Error(lastError);
 }
 
 function fmtDate(d) {
