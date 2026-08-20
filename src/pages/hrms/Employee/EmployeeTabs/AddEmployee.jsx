@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft,
     ArrowRight,
+    AlertTriangle,
     BriefcaseBusiness,
     Building2,
     Check,
@@ -193,6 +194,9 @@ const AddEmployee = () => {
     const [originalEmail, setOriginalEmail] = useState('');
     const offerPrefillAppliedRef = useRef(null);
     const draftKey = isEditMode ? `${DRAFT_KEY}:${editEmployeeId || 'current'}` : DRAFT_KEY;
+    const missingDepartmentSetup = !loadingOptions && departments.length === 0;
+    const missingDesignationSetup = !loadingOptions && designations.length === 0;
+    const needsEmploymentSetup = !isEditMode && (missingDepartmentSetup || missingDesignationSetup);
 
     const getCurrentUser = () => {
         try {
@@ -1350,6 +1354,36 @@ const AddEmployee = () => {
                                     Extra seats available at ₹{subscriptionInfo.extraEmployeePriceInr ?? 51} per employee
                                 </>
                             ) : null}
+                        </div>
+                    )}
+
+                    {needsEmploymentSetup && (
+                        <div className="mx-5 mt-4 flex shrink-0 flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 sm:mx-7 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-600" />
+                                <div>
+                                    <p className="text-sm font-bold">Complete employment setup first</p>
+                                    <p className="mt-0.5 text-xs text-amber-800">
+                                        {missingDepartmentSetup && missingDesignationSetup
+                                            ? 'Please add a department and designation before creating your first employee.'
+                                            : missingDepartmentSetup
+                                                ? 'Please add a department before creating an employee.'
+                                                : 'Please add a designation before creating an employee.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex shrink-0 flex-wrap gap-2 pl-8 sm:pl-0">
+                                {missingDepartmentSetup && (
+                                    <button type="button" onClick={() => navigate('/hrms/departments')} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-900 shadow-sm hover:bg-amber-100">
+                                        Add department
+                                    </button>
+                                )}
+                                {missingDesignationSetup && (
+                                    <button type="button" onClick={() => navigate('/hrms/designations')} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-900 shadow-sm hover:bg-amber-100">
+                                        Add designation
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
 
