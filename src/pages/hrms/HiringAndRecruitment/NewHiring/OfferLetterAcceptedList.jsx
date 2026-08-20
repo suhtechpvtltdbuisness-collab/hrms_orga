@@ -18,6 +18,7 @@ import {
   Landmark,
   ShieldCheck,
   FileText,
+  Download,
   X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -82,6 +83,32 @@ const previewSecureFile = async (url, label = "Document") => {
     window.open(URL.createObjectURL(blob), "_blank");
   } catch {
     toast.error(`Unable to preview ${label}`);
+  }
+};
+
+const saveSecureFile = async (url, fileName = "document") => {
+  if (!url) {
+    toast.error("File not available");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(getSecureFileUrl(url), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error("Failed to fetch file");
+
+    const blobUrl = URL.createObjectURL(await response.blob());
+    const downloadLink = document.createElement("a");
+    downloadLink.href = blobUrl;
+    downloadLink.download = fileName || "document";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    toast.error(`Unable to save ${fileName || "document"}`);
   }
 };
 
@@ -177,14 +204,25 @@ const CandidateSubmissionReview = ({ offer }) => {
                       <p className="truncate text-xs text-slate-500">{file.name || "Uploaded file"}</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => previewSecureFile(file.url, DOCUMENT_LABELS[key] || key)}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50"
-                  >
-                    <Eye size={14} />
-                    View
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => previewSecureFile(file.url, DOCUMENT_LABELS[key] || key)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                    >
+                      <Eye size={14} />
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveSecureFile(file.url, file.name)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700"
+                      aria-label={`Save ${DOCUMENT_LABELS[key] || key}`}
+                    >
+                      <Download size={14} />
+                      Save
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
