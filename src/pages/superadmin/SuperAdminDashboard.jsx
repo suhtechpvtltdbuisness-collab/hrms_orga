@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../../service';
 import { 
   Building2, Users, CreditCard, Activity, Search, Bell, Settings, 
-  LogOut, Menu, Package, X, Trash2
+  LogOut, Menu, Package, X, Trash2, Radar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -14,6 +14,7 @@ import UsersTab from './components/UsersTab';
 import DeletedUsersTab from './components/DeletedUsersTab';
 import SettingsTab from './components/SettingsTab';
 import PlansTab from './components/PlansTab';
+import VisitorIntelligence from '../hrms/VisitorIntelligence/VisitorIntelligence';
 
 const SuperAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -38,6 +39,7 @@ const SuperAdminDashboard = () => {
       case "plans": return <PlansTab />;
       case "users": return <UsersTab />;
       case "deleted": return <DeletedUsersTab />;
+      case "visitors": return <VisitorIntelligence />;
       case "settings": return <SettingsTab />;
       default: return <OverviewTab />;
     }
@@ -50,6 +52,7 @@ const SuperAdminDashboard = () => {
     { id: "plans", label: "Plans", icon: Package },
     { id: "users", label: "All Users", icon: Users },
     { id: "deleted", label: "Deleted Users", icon: Trash2 },
+    { id: "visitors", label: "Visitor Intelligence", icon: Radar },
   ];
 
   return (

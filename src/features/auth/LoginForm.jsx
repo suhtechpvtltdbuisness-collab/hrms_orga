@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { linkUserToVisitor, trackEvent } from "../visitor/visitorTracking.js";
 import {
   Mail,
   Lock,
@@ -261,6 +262,8 @@ export const LoginForm = () => {
     const result = await authService.login({ email: form.email, password: form.password });
 
     if (result.success) {
+      trackEvent("login");
+      linkUserToVisitor();
       navigateByRole(result);
     } else {
       setError(result.message || "Invalid credentials. Please try again.");
