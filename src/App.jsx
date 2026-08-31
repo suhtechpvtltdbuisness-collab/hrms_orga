@@ -149,6 +149,8 @@ import SalesCRM from "./pages/hrms/SalesCRM/SalesCRM";
 import AnnouncementsDashboard from "./pages/hrms/Announcements/AnnouncementsDashboard";
 import AnnouncementForm from "./pages/hrms/Announcements/AnnouncementForm";
 import AnnouncementDetails from "./pages/hrms/Announcements/AnnouncementDetails";
+import Projects from "./pages/hrms/Projects/Projects";
+import ProjectDetails from "./pages/hrms/Projects/ProjectDetails";
 
 
 function App() {
@@ -414,6 +416,10 @@ function App() {
           <Route path="announcements/new" element={<AnnouncementForm />} />
           <Route path="announcements/:id" element={<AnnouncementDetails />} />
           <Route path="announcements/:id/edit" element={<AnnouncementForm />} />
+
+          {/* Project management */}
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetails />} />
 
           {/* Settings */}
           <Route path="settings" element={<Settings />} />

@@ -1,0 +1,32 @@
+{
+  "notes": "Development fixtures only. All IDs belong to organization org_orga_demo. Do not return records from another organization to this user.",
+  "users": [
+    { "id": "usr_admin_01", "organizationId": "org_orga_demo", "name": "Amit Sharma", "role": "ADMIN", "email": "amit@orga.test" },
+    { "id": "usr_manager_01", "organizationId": "org_orga_demo", "name": "Priya Nair", "role": "MANAGER", "email": "priya@orga.test" },
+    { "id": "usr_employee_01", "organizationId": "org_orga_demo", "name": "Rohan Verma", "role": "EMPLOYEE", "email": "rohan@orga.test" },
+    { "id": "usr_employee_02", "organizationId": "org_orga_demo", "name": "Meera Joshi", "role": "EMPLOYEE", "email": "meera@orga.test" }
+  ],
+  "projects": [
+    {
+      "id": "prj_website_refresh", "organizationId": "org_orga_demo", "name": "Website refresh", "description": "Redesign the public marketing site and launch the new careers pages.", "status": "IN_PROGRESS", "priority": "HIGH", "ownerId": "usr_manager_01", "createdBy": "usr_admin_01", "startDate": "2026-08-01", "dueDate": "2026-09-30", "progress": 45, "createdAt": "2026-08-01T09:00:00.000Z", "updatedAt": "2026-08-31T09:00:00.000Z"
+    },
+    {
+      "id": "prj_policy_review", "organizationId": "org_orga_demo", "name": "HR policy review", "description": "Review and publish the annual leave and remote work policy.", "status": "TODO", "priority": "MEDIUM", "ownerId": "usr_admin_01", "createdBy": "usr_admin_01", "startDate": "2026-09-01", "dueDate": "2026-09-20", "progress": 0, "createdAt": "2026-08-30T09:00:00.000Z", "updatedAt": "2026-08-30T09:00:00.000Z"
+    }
+  ],
+  "projectMembers": [
+    { "projectId": "prj_website_refresh", "userId": "usr_manager_01", "role": "MANAGER", "addedBy": "usr_admin_01" },
+    { "projectId": "prj_website_refresh", "userId": "usr_employee_01", "role": "MEMBER", "addedBy": "usr_manager_01" },
+    { "projectId": "prj_website_refresh", "userId": "usr_employee_02", "role": "MEMBER", "addedBy": "usr_manager_01" }
+  ],
+  "tasks": [
+    { "id": "tsk_design_system", "projectId": "prj_website_refresh", "title": "Finalize the design system", "description": "Document approved type, colour, button, and card patterns.", "status": "IN_PROGRESS", "priority": "HIGH", "assigneeId": "usr_employee_01", "createdBy": "usr_manager_01", "startDate": "2026-08-05", "dueDate": "2026-09-05", "progress": 60, "createdAt": "2026-08-05T09:00:00.000Z", "updatedAt": "2026-08-31T09:00:00.000Z" },
+    { "id": "tsk_careers_copy", "projectId": "prj_website_refresh", "title": "Write careers page copy", "description": "Prepare the approved content for the careers landing page.", "status": "TODO", "priority": "MEDIUM", "assigneeId": "usr_employee_02", "createdBy": "usr_manager_01", "startDate": "2026-08-18", "dueDate": "2026-09-12", "progress": 0, "createdAt": "2026-08-18T09:00:00.000Z", "updatedAt": "2026-08-18T09:00:00.000Z" }
+  ],
+  "activity": [
+    { "id": "act_001", "projectId": "prj_website_refresh", "actorId": "usr_manager_01", "type": "TASK_STATUS_CHANGED", "message": "Priya Nair moved ‘Finalize the design system’ to In progress.", "createdAt": "2026-08-31T09:00:00.000Z" },
+    { "id": "act_002", "projectId": "prj_website_refresh", "actorId": "usr_manager_01", "type": "MEMBER_ADDED", "message": "Priya Nair added Rohan Verma to the project.", "createdAt": "2026-08-05T09:00:00.000Z" }
+  ],
+  "createProjectRequest": { "name": "Website refresh", "description": "Redesign the public marketing site.", "status": "IN_PROGRESS", "priority": "HIGH", "ownerId": "usr_manager_01", "memberIds": ["usr_manager_01", "usr_employee_01"], "startDate": "2026-08-01", "dueDate": "2026-09-30" },
+  "createTaskRequest": { "title": "Finalize the design system", "description": "Document approved components.", "status": "TODO", "priority": "HIGH", "assigneeId": "usr_employee_01", "startDate": "2026-08-05", "dueDate": "2026-09-05", "progress": 0 }
+}

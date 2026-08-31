@@ -44,7 +44,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/hrms/dashboard' },
     { name: 'HRMS', icon: Users, path: '/hrms' },
-    { name: 'Project Management', icon: Briefcase, path: '' },
+    { name: 'Project Management', icon: Briefcase, path: '/hrms/projects' },
     { name: 'Employees', icon: Mail, path: '/hrms/employees' },
     { name: 'Attendance', icon: CalendarDays, path: '/hrms/attendance' },
     {
