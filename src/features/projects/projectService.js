@@ -1,5 +1,5 @@
 const API = '/api/projects';
-const projectsApiEnabled = import.meta.env.VITE_PROJECTS_API_ENABLED === 'true';
+const projectsApiDisabled = import.meta.env.VITE_PROJECTS_API_ENABLED === 'false';
 
 const headers = () => {
   const token = localStorage.getItem('authToken');
@@ -7,8 +7,8 @@ const headers = () => {
 };
 
 async function request(path = '', options = {}) {
-  if (!projectsApiEnabled) {
-    throw new Error('Project Management API is not enabled');
+  if (projectsApiDisabled) {
+    throw new Error('Project Management API is disabled');
   }
   const response = await fetch(`${API}${path}`, { credentials: 'include', ...options, headers: { ...headers(), ...options.headers } });
   const body = await response.json().catch(() => ({}));
