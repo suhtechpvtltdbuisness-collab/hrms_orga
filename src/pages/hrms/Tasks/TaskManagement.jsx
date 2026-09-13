@@ -2,22 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, CheckSquare, LayoutGrid, List, Loader2, Plus, Search } from 'lucide-react';
 import { employeeService } from '../../../service';
-import { mergeDirectory } from '../../../features/projects/demoDirectory';
 import { isDemoMode, projectOptions, projectService } from '../../../features/projects/projectService';
 import TaskDetailPanel from '../../../features/projects/TaskDetailPanel';
-import { columnAccent, dueLabel, formatDate, initials, isOverdue, priorityTone, readUser, sortTasks, statusLabels, statusTone } from '../../../features/projects/taskUi';
+import { columnAccent, dueLabel, employeeAssignees, formatDate, initials, isOverdue, priorityTone, readUser, sortTasks, statusLabels, statusTone } from '../../../features/projects/taskUi';
 
 const blankTask = { projectId: '', title: '', description: '', priority: 'MEDIUM', status: 'TODO', startDate: '', dueDate: '', assigneeId: '' };
-const normalizePeople = (rows, currentUser) => {
-  const people = (Array.isArray(rows) ? rows : []).map((row) => {
-    const user = row?.user || row;
-    return user?.id ? { id: String(user.id), name: user.name || user.email || `User ${user.id}`, email: user.email || '' } : null;
-  }).filter(Boolean);
-  if (currentUser?.id && !people.some((person) => person.id === String(currentUser.id))) {
-    people.unshift({ id: String(currentUser.id), name: currentUser.name || 'Current user', email: currentUser.email || '' });
-  }
-  return people;
-};
 
 export default function TaskManagement() {
   const currentUser = useMemo(readUser, []);
@@ -46,8 +35,8 @@ export default function TaskManagement() {
     } catch {
       rows = [];
     }
-    const directory = normalizePeople(rows, currentUser);
-    setPeople(directory.length > 1 ? directory : mergeDirectory(directory, currentUser));
+    const directory = employeeAssignees(rows, currentUser);
+    setPeople(directory);
   }, [currentUser]);
 
   const loadProjects = useCallback(async () => {
@@ -107,15 +96,31 @@ export default function TaskManagement() {
     completed: tasks.filter((task) => task.status === 'COMPLETED').length,
   }), [tasks]);
 
-  const assignableMembers = useMemo(() => {
-    const scoped = membersByProject[form.projectId] || [];
-    return scoped.length ? scoped : people.map((person) => ({ userId: person.id, name: person.name }));
-  }, [membersByProject, form.projectId, people]);
+  const assignableMembers = useMemo(
+    () => people.map((person) => ({ userId: person.id, id: person.id, name: person.name, type: person.type })),
+    [people],
+  );
+
+  const ensureProjectMember = async (projectId, assigneeId) => {
+    if (!projectId || !assigneeId) return;
+    const scoped = membersByProject[projectId] || [];
+    const already = scoped.some((member) => String(member.userId || member.id) === String(assigneeId));
+    if (already) return;
+    await projectService.addMember(projectId, assigneeId);
+    setMembersByProject((current) => ({
+      ...current,
+      [projectId]: [
+        ...(current[projectId] || []),
+        { userId: String(assigneeId), id: String(assigneeId), name: people.find((person) => person.id === String(assigneeId))?.name || 'Member' },
+      ],
+    }));
+  };
 
   const updateTask = async (task, patch) => {
     const previous = tasks;
     setTasks((current) => current.map((item) => item.id === task.id ? { ...item, ...patch } : item));
     try {
+      if (patch.assigneeId) await ensureProjectMember(task.projectId, patch.assigneeId);
       await projectService.updateTask(task.projectId, task.id, patch);
       await loadTasks();
       toast.success('Task updated');
@@ -143,6 +148,7 @@ export default function TaskManagement() {
     if (form.startDate && form.dueDate && form.dueDate < form.startDate) return toast.error('Due date must be after start date');
     try {
       setSaving(true);
+      if (form.assigneeId) await ensureProjectMember(form.projectId, form.assigneeId);
       await projectService.createTask(form.projectId, { ...form, assigneeId: form.assigneeId || undefined });
       setForm(blankTask);
       setShowForm(false);
@@ -290,7 +296,7 @@ export default function TaskManagement() {
       <div onClick={(event) => event.stopPropagation()} className="h-full w-full max-w-md overflow-hidden bg-white shadow-2xl">
         <TaskDetailPanel
           task={selected}
-          members={membersByProject[selected.projectId] || []}
+          members={assignableMembers}
           canManage
           onUpdate={(patch) => updateTask(selected, patch)}
           onArchive={archiveTask}
@@ -302,7 +308,7 @@ export default function TaskManagement() {
     {showForm && <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-900/40 p-4">
       <form onSubmit={submit} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
         <h2 className="text-xl font-bold text-slate-900">Create task</h2>
-        <p className="mt-1 text-sm text-slate-500">Tasks belong to a project and can only be assigned to that project&apos;s members.</p>
+        <p className="mt-1 text-sm text-slate-500">Tasks belong to a project and are assigned to employees (not admins).</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2 text-sm font-medium text-slate-700">Project
             <select required value={form.projectId} onChange={(event) => setForm({ ...form, projectId: event.target.value, assigneeId: '' })} className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm">
@@ -325,6 +331,7 @@ export default function TaskManagement() {
               <option value="">Unassigned</option>
               {assignableMembers.map((member) => <option key={member.userId || member.id} value={member.userId || member.id}>{member.name}</option>)}
             </select>
+            {!assignableMembers.length && <span className="mt-1 block text-xs text-slate-500">No employees found. Add employees in HRMS first.</span>}
           </label>
         </div>
         <div className="mt-6 flex justify-end gap-3">

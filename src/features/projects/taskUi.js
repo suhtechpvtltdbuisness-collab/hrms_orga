@@ -60,3 +60,33 @@ export const sortTasks = (tasks) => [...tasks].sort((a, b) => {
 });
 
 export const readUser = () => { try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; } };
+
+export const isAdminUser = (person, currentUser) => {
+  if (!person) return false;
+  const id = String(person.userId || person.id || '');
+  if (currentUser?.id && id && id === String(currentUser.id)) return true;
+  if (person.isAdmin === true) return true;
+  const type = String(person.type || '').toLowerCase();
+  return type === 'admin' || type === 'organization';
+};
+
+export const toAssignableEmployee = (row) => {
+  const user = row?.user || row;
+  if (!user?.id) return null;
+  const type = String(user.type || row?.type || 'employee').toLowerCase();
+  if (user.isAdmin === true || type === 'admin' || type === 'organization') return null;
+  return {
+    id: String(user.id),
+    userId: String(user.id),
+    name: user.name || user.email || `User ${user.id}`,
+    email: user.email || '',
+    type: type || 'employee',
+    isAdmin: false,
+  };
+};
+
+export const employeeAssignees = (rows = [], currentUser) =>
+  (Array.isArray(rows) ? rows : [])
+    .map(toAssignableEmployee)
+    .filter(Boolean)
+    .filter((person) => !isAdminUser(person, currentUser));

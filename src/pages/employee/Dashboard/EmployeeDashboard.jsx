@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { attendanceService, leaveService, leaveManagementService, payrollService } from '../../../service';
+import { projectService } from '../../../features/projects/projectService';
 import {
   AttendanceSuccessModal,
   AttendanceVerificationModal,
@@ -105,12 +106,13 @@ export default function EmployeeDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       const month = new Date().toISOString().slice(0, 7);
-      const [todayRes, attendanceRes, balanceRes, holidaysRes, payrollRes] = await Promise.all([
+      const [todayRes, attendanceRes, balanceRes, holidaysRes, payrollRes, tasksRes] = await Promise.all([
         attendanceService.getTodayStatus(),
         attendanceService.getMyAttendance(month),
         userId ? leaveService.getBalance(userId) : Promise.resolve({ success: false }),
         leaveManagementService.getHolidays(),
         userId ? payrollService.getPayrollByUserId(userId) : Promise.resolve({ success: false }),
+        projectService.myTasks().catch(() => ({ items: [] })),
       ]);
 
       if (todayRes.success && todayRes.data) {
@@ -170,6 +172,9 @@ export default function EmployeeDashboard() {
           sub: amount != null && amount !== '' ? `Current salary · ${sub}` : 'No payroll assigned',
         });
       }
+
+      const taskItems = tasksRes?.items ?? tasksRes?.tasks ?? tasksRes ?? [];
+      setTasks((Array.isArray(taskItems) ? taskItems : []).map(normalizeTask));
     } catch (error) {
       console.error(error);
     }

@@ -53,7 +53,32 @@ const MAX_RETRIES = 3;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const apiFetch = async (url, options = {}) => {
+let refreshInFlight = null;
+
+const refreshSessionTokens = async () => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (!storedRefreshToken) return false;
+      const response = await fetch(`${BASE_URL}/auth/refresh-token`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const accessToken = data?.data?.tokens?.accessToken;
+      if (!response.ok || !accessToken) return false;
+      persistUserSession(null, data.data.tokens);
+      return true;
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+};
+
+const apiFetch = async (url, options = {}, retried = false) => {
   const headers = {
     ...getAuthHeaders(),
     ...options.headers,
@@ -72,6 +97,12 @@ const apiFetch = async (url, options = {}) => {
         ...options,
         headers,
       });
+      if (response.status === 401 && !retried) {
+        const refreshed = await refreshSessionTokens();
+        if (refreshed) {
+          return apiFetch(url, options, true);
+        }
+      }
       if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_RETRIES) {
         await sleep(300 * 2 ** attempt);
         continue;

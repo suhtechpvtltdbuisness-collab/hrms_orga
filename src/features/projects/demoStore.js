@@ -1,6 +1,6 @@
 // Persistent, browser-local implementation of the project management API.
 // It backs the UI end to end (projects, members, tasks, activity) until the
-// real /api/projects service is deployed and VITE_PROJECTS_API_ENABLED=true.
+// Persistent local fallback used only when VITE_PROJECTS_API_ENABLED=false.
 import { demoDirectory } from './demoDirectory';
 
 const KEY = 'orga.projects.demo.v1';

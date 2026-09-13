@@ -3,24 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { employeeService } from '../../../service';
-import { mergeDirectory } from '../../../features/projects/demoDirectory';
 import { isDemoMode, projectOptions, projectService } from '../../../features/projects/projectService';
+import { employeeAssignees } from '../../../features/projects/taskUi';
 
 const labels = { TODO: 'To do', IN_PROGRESS: 'In progress', IN_REVIEW: 'In review', COMPLETED: 'Completed', BLOCKED: 'Blocked' };
 const tone = (value) => ({ COMPLETED: 'bg-emerald-50 text-emerald-700', IN_PROGRESS: 'bg-blue-50 text-blue-700', IN_REVIEW: 'bg-amber-50 text-amber-700', BLOCKED: 'bg-rose-50 text-rose-700' }[value] || 'bg-slate-100 text-slate-600');
 const date = (value) => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 const readUser = () => { try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; } };
 const blankTask = { title: '', description: '', priority: 'MEDIUM', status: 'TODO', startDate: '', dueDate: '', assigneeId: '' };
-const normalizePeople = (rows, currentUser) => {
-  const people = (Array.isArray(rows) ? rows : []).map((row) => {
-    const user = row?.user || row;
-    return user?.id ? { id: String(user.id), name: user.name || user.email || `User ${user.id}`, email: user.email || '' } : null;
-  }).filter(Boolean);
-  if (currentUser?.id && !people.some((person) => person.id === String(currentUser.id))) {
-    people.unshift({ id: String(currentUser.id), name: currentUser.name || 'Current user', email: currentUser.email || '' });
-  }
-  return people;
-};
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -57,8 +47,8 @@ export default function ProjectDetails() {
     } catch {
       rows = [];
     }
-    const directory = normalizePeople(rows, currentUser);
-    setPeople(directory.length > 1 ? directory : mergeDirectory(directory, currentUser));
+    const directory = employeeAssignees(rows, currentUser);
+    setPeople(directory);
   };
 
   const load = async () => {
@@ -114,11 +104,19 @@ export default function ProjectDetails() {
     }
   };
 
+  const ensureAssigneeMember = async (assigneeId) => {
+    if (!assigneeId) return;
+    const already = members.some((member) => String(member.userId || member.id) === String(assigneeId));
+    if (already) return;
+    await projectService.addMember(id, assigneeId);
+  };
+
   const createTask = async (event) => {
     event.preventDefault();
     if (taskForm.dueDate && taskForm.startDate && taskForm.dueDate < taskForm.startDate) return toast.error('Due date must be after start date');
     try {
       setSavingTask(true);
+      if (taskForm.assigneeId) await ensureAssigneeMember(taskForm.assigneeId);
       await projectService.createTask(id, { ...taskForm, assigneeId: taskForm.assigneeId || undefined });
       toast.success('Task created');
       await load();
@@ -134,6 +132,7 @@ export default function ProjectDetails() {
   const updateTask = async (taskId, patch) => {
     try {
       setBusyTaskId(taskId);
+      if (patch.assigneeId) await ensureAssigneeMember(patch.assigneeId);
       await projectService.updateTask(id, taskId, patch);
       await load();
       toast.success('Task updated');
@@ -240,7 +239,7 @@ export default function ProjectDetails() {
         </div>}
         {isManagerView && <div className="flex justify-end"><button disabled={savingProject} className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white">{savingProject ? 'Saving…' : 'Save changes'}</button></div>}
       </form>}
-      {tab === 'Tasks' && <div className="space-y-3">{!tasks.length ? <p className="py-10 text-center text-sm text-slate-500">No tasks yet.</p> : tasks.map((task) => <div key={task.id} className="rounded-xl border border-slate-100 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold">{task.title}</p><p className="mt-1 text-sm text-slate-500">{task.description || 'No description'} · Due {date(task.dueDate)}</p><p className="mt-1 text-xs text-slate-500">Assigned to {task.assignee?.name || 'Unassigned'}</p></div><div className="flex flex-wrap gap-2">{<select disabled={busyTaskId === task.id} value={task.status} onChange={(event) => updateTask(task.id, { status: event.target.value })} className="rounded-lg border px-2 py-1 text-sm">{projectOptions.statuses.map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select>}{isManagerView && <select disabled={busyTaskId === task.id} value={task.assigneeId ? String(task.assigneeId) : ''} onChange={(event) => updateTask(task.id, { assigneeId: event.target.value || null })} className="rounded-lg border px-2 py-1 text-sm"><option value="">Unassigned</option>{members.map((member) => <option key={member.userId || member.id} value={member.userId || member.id}>{member.name}</option>)}</select>}{isManagerView && <button onClick={() => archiveTask(task.id)} disabled={busyTaskId === task.id} className="rounded-lg border border-rose-200 px-3 py-1 text-sm font-semibold text-rose-600">Archive</button>}</div></div><div className="mt-3 flex flex-wrap items-center gap-3"><input type="range" min="0" max="100" value={task.progress ?? 0} onChange={(event) => setTasks((current) => current.map((item) => item.id === task.id ? { ...item, progress: Number(event.target.value) } : item))} onMouseUp={(event) => updateTask(task.id, { progress: Number(event.currentTarget.value) })} disabled={busyTaskId === task.id} className="w-44 accent-violet-600" /><span className="text-xs font-semibold text-violet-600">{task.progress ?? 0}%</span><span className={`rounded-full px-2 py-1 text-xs font-semibold ${tone(task.status)}`}>{labels[task.status] || task.status}</span><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{task.priority || 'MEDIUM'}</span></div></div>)}</div>}
+      {tab === 'Tasks' && <div className="space-y-3">{!tasks.length ? <p className="py-10 text-center text-sm text-slate-500">No tasks yet.</p> : tasks.map((task) => <div key={task.id} className="rounded-xl border border-slate-100 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold">{task.title}</p><p className="mt-1 text-sm text-slate-500">{task.description || 'No description'} · Due {date(task.dueDate)}</p><p className="mt-1 text-xs text-slate-500">Assigned to {task.assignee?.name || 'Unassigned'}</p></div><div className="flex flex-wrap gap-2">{<select disabled={busyTaskId === task.id} value={task.status} onChange={(event) => updateTask(task.id, { status: event.target.value })} className="rounded-lg border px-2 py-1 text-sm">{projectOptions.statuses.map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select>}{isManagerView && <select disabled={busyTaskId === task.id} value={task.assigneeId ? String(task.assigneeId) : ''} onChange={(event) => updateTask(task.id, { assigneeId: event.target.value || null })} className="rounded-lg border px-2 py-1 text-sm"><option value="">Unassigned</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select>}{isManagerView && <button onClick={() => archiveTask(task.id)} disabled={busyTaskId === task.id} className="rounded-lg border border-rose-200 px-3 py-1 text-sm font-semibold text-rose-600">Archive</button>}</div></div><div className="mt-3 flex flex-wrap items-center gap-3"><input type="range" min="0" max="100" value={task.progress ?? 0} onChange={(event) => setTasks((current) => current.map((item) => item.id === task.id ? { ...item, progress: Number(event.target.value) } : item))} onMouseUp={(event) => updateTask(task.id, { progress: Number(event.currentTarget.value) })} disabled={busyTaskId === task.id} className="w-44 accent-violet-600" /><span className="text-xs font-semibold text-violet-600">{task.progress ?? 0}%</span><span className={`rounded-full px-2 py-1 text-xs font-semibold ${tone(task.status)}`}>{labels[task.status] || task.status}</span><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{task.priority || 'MEDIUM'}</span></div></div>)}</div>}
       {tab === 'Members' && <div className="space-y-4">{isManagerView && <div className="flex flex-wrap gap-2"><select value={memberUserId} onChange={(event) => setMemberUserId(event.target.value)} className="min-w-[240px] rounded-xl border px-3 py-2 text-sm"><option value="">Add member</option>{availablePeople.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><button onClick={addMember} disabled={memberBusy || !memberUserId} className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{memberBusy ? 'Adding…' : 'Add member'}</button>{!availablePeople.length && <p className="self-center text-sm text-slate-500">Everyone in your directory is already on this project.</p>}</div>}<div className="grid gap-3 sm:grid-cols-2">{members.map((member) => <div key={member.userId || member.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">{member.name?.[0] || 'U'}</div><div><p className="font-semibold">{member.name}</p><p className="text-xs text-slate-500">{member.role === 'OWNER' ? 'Project owner' : member.designationName || member.departmentName || 'Project member'}</p></div></div>{isManagerView && String(project.owner?.id) !== String(member.userId || member.id) && <button onClick={() => removeMember(member.userId || member.id)} disabled={memberBusy} className="text-xs font-semibold text-rose-600">Remove</button>}</div>)}</div></div>}
       {tab === 'Activity' && <div className="space-y-4 text-sm text-slate-600">{!activity.length ? <p className="py-10 text-center text-sm text-slate-500">No activity yet.</p> : activity.map((item) => <div key={item.id} className="rounded-xl border border-slate-100 p-4"><p className="font-medium text-slate-800">{item.message}</p><p className="mt-1 text-xs text-slate-400">{item.actor?.name ? `${item.actor.name} · ` : ''}{date(item.createdAt)}</p></div>)}</div>}
     </section>
@@ -254,7 +253,7 @@ export default function ProjectDetails() {
           <label className="text-sm font-medium">Status<select value={taskForm.status} onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5">{projectOptions.statuses.map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select></label>
           <label className="text-sm font-medium">Start date<input type="date" value={taskForm.startDate} onChange={(event) => setTaskForm({ ...taskForm, startDate: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5" /></label>
           <label className="text-sm font-medium">Due date<input type="date" value={taskForm.dueDate} onChange={(event) => setTaskForm({ ...taskForm, dueDate: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5" /></label>
-          <label className="col-span-2 text-sm font-medium">Assign to<select value={taskForm.assigneeId} onChange={(event) => setTaskForm({ ...taskForm, assigneeId: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5"><option value="">Unassigned</option>{members.map((member) => <option key={member.userId || member.id} value={member.userId || member.id}>{member.name}</option>)}</select></label>
+          <label className="col-span-2 text-sm font-medium">Assign to<select value={taskForm.assigneeId} onChange={(event) => setTaskForm({ ...taskForm, assigneeId: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5"><option value="">Unassigned</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select>{!people.length && <span className="mt-1 block text-xs text-slate-500">No employees found. Add employees in HRMS first.</span>}</label>
         </div>
         <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowTask(false)} className="rounded-xl border px-4 py-2.5 text-sm font-semibold">Cancel</button><button disabled={savingTask} className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white">{savingTask ? 'Creating…' : 'Create task'}</button></div>
       </form>
