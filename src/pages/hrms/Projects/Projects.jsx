@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { BriefcaseBusiness, Calendar, Plus, Search, Users } from 'lucide-react';
 import { employeeService } from '../../../service';
-import { projectOptions, projectService } from '../../../features/projects/projectService';
-import { demoProjects } from '../../../features/projects/demoData';
+import { isDemoMode, projectOptions, projectService } from '../../../features/projects/projectService';
+import { mergeDirectory } from '../../../features/projects/demoDirectory';
 
 const tone = (value) => ({ COMPLETED: 'bg-emerald-50 text-emerald-700', IN_PROGRESS: 'bg-blue-50 text-blue-700', IN_REVIEW: 'bg-amber-50 text-amber-700', BLOCKED: 'bg-rose-50 text-rose-700' }[value] || 'bg-slate-100 text-slate-600');
 const date = (value) => value ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : '—';
 const readUser = () => { try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; } };
-const shouldFallbackToDemo = (error) => !error?.message || /disabled|failed to fetch|load failed|network|request failed/i.test(error.message);
 const buildBlank = (currentUser) => ({ name: '', description: '', status: 'TODO', priority: 'MEDIUM', startDate: '', dueDate: '', ownerId: currentUser?.id ? String(currentUser.id) : '', memberIds: currentUser?.id ? [String(currentUser.id)] : [] });
 const normalizePeople = (rows, currentUser) => {
   const fromRows = (Array.isArray(rows) ? rows : []).map((row) => {
@@ -37,10 +36,19 @@ export default function Projects() {
   const [form, setForm] = useState(buildBlank(currentUser));
   const [saving, setSaving] = useState(false);
 
+  // Fall back to the demo directory so the owner/member pickers are never empty.
   const loadPeople = async () => {
-    if (!currentUser?.id) return;
-    const response = await employeeService.getAllEmployeesByAdminId(currentUser.id, 1, 200);
-    const normalized = normalizePeople(response?.data, currentUser);
+    let rows = [];
+    try {
+      if (currentUser?.id) {
+        const response = await employeeService.getAllEmployeesByAdminId(currentUser.id, 1, 200);
+        rows = response?.data || [];
+      }
+    } catch {
+      rows = [];
+    }
+    const directory = normalizePeople(rows, currentUser);
+    const normalized = directory.length > 1 ? directory : mergeDirectory(directory, currentUser);
     setPeople(normalized);
     setForm((current) => ({
       ...current,
@@ -55,16 +63,9 @@ export default function Projects() {
       setError('');
       const data = await projectService.list({ search: query, status, priority });
       setItems(data.items ?? data.projects ?? data ?? []);
-      setUsingDemo(false);
+      setUsingDemo(isDemoMode());
     } catch (loadError) {
-      const q = query.toLowerCase();
-      const filtered = demoProjects.filter((project) => (!q || `${project.name} ${project.description}`.toLowerCase().includes(q)) && (!status || project.status === status) && (!priority || project.priority === priority));
-      if (filtered.length || shouldFallbackToDemo(loadError)) {
-        setItems(filtered);
-        setUsingDemo(true);
-      } else {
-        setError(loadError.message || 'Unable to load projects');
-      }
+      setError(loadError.message || 'Unable to load projects');
     } finally {
       setLoading(false);
     }
@@ -101,29 +102,14 @@ export default function Projects() {
       setSaving(true);
       await projectService.create({
         ...form,
-        ownerId: Number(form.ownerId),
-        memberIds: Array.from(new Set([...form.memberIds, form.ownerId])).map(Number),
+        memberIds: Array.from(new Set([...form.memberIds, form.ownerId].filter(Boolean))),
       });
       toast.success('Project created');
       setForm(buildBlank(currentUser));
       setShowForm(false);
       await load();
     } catch (createError) {
-      if (!shouldFallbackToDemo(createError)) {
-        toast.error(createError.message || 'Unable to create project');
-      } else {
-        setItems((current) => [{
-          ...form,
-          id: `demo-${Date.now()}`,
-          progress: 0,
-          owner: people.find((person) => person.id === form.ownerId) || null,
-          memberCount: form.memberIds.length,
-        }, ...current]);
-        setForm(buildBlank(currentUser));
-        setShowForm(false);
-        setUsingDemo(true);
-        toast.success('Project created in demo mode');
-      }
+      toast.error(createError.message || 'Unable to create project');
     } finally {
       setSaving(false);
     }
@@ -138,12 +124,7 @@ export default function Projects() {
       toast.success('Project archived');
       await load();
     } catch (archiveError) {
-      if (!shouldFallbackToDemo(archiveError)) {
-        toast.error(archiveError.message || 'Unable to archive project');
-      } else {
-        setItems((current) => current.filter((project) => project.id !== id));
-        toast.success('Project archived in demo mode');
-      }
+      toast.error(archiveError.message || 'Unable to archive project');
     }
   };
 
@@ -156,7 +137,7 @@ export default function Projects() {
       </div>
       <button onClick={() => setShowForm(true)} className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200"><Plus size={17} /> Create project</button>
     </div>
-    {usingDemo && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Projects are currently showing demo data because the live API is unavailable.</div>}
+    {usingDemo && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Demo mode: the project API is not connected yet, so projects are saved in this browser only.</div>}
     <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">{[['All projects', counts.total, 'bg-violet-50 text-violet-600'], ['In progress', counts.active, 'bg-blue-50 text-blue-600'], ['Completed', counts.completed, 'bg-emerald-50 text-emerald-600']].map(([label, value, color]) => <div key={label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><div className={`mb-3 grid h-9 w-9 place-items-center rounded-xl ${color}`}><BriefcaseBusiness size={17} /></div><p className="text-2xl font-bold text-slate-900">{value}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>)}</div>
     <section className="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
       <div className="flex flex-wrap gap-2 border-b p-4">

@@ -1,17 +1,132 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CheckCircle2, Search } from 'lucide-react';
-import { projectOptions, projectService } from '../../../features/projects/projectService';
-import { demoTasks } from '../../../features/projects/demoData';
+import { AlertTriangle, CheckCircle2, CheckSquare, Loader2, Search } from 'lucide-react';
+import { isDemoMode, projectService } from '../../../features/projects/projectService';
+import TaskDetailPanel from '../../../features/projects/TaskDetailPanel';
+import { dueLabel, isOverdue, priorityTone, sortTasks, statusLabels, statusTone } from '../../../features/projects/taskUi';
 
-const labels = { TODO: 'To do', IN_PROGRESS: 'In progress', IN_REVIEW: 'In review', COMPLETED: 'Completed', BLOCKED: 'Blocked' };
-const tone = (status) => ({ COMPLETED:'bg-emerald-50 text-emerald-700', IN_PROGRESS:'bg-blue-50 text-blue-700', IN_REVIEW:'bg-amber-50 text-amber-700', BLOCKED:'bg-rose-50 text-rose-700' }[status] || 'bg-slate-100 text-slate-600');
+const groups = [
+  { key: '', label: 'All' },
+  { key: 'TODO', label: 'To do' },
+  { key: 'IN_PROGRESS', label: 'In progress' },
+  { key: 'IN_REVIEW', label: 'In review' },
+  { key: 'COMPLETED', label: 'Completed' },
+];
 
 export default function EmployeeTasks() {
-  const [tasks, setTasks] = useState([]); const [selected, setSelected] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [query, setQuery] = useState(''); const [busy, setBusy] = useState(false);
-  const load = async () => { try { setLoading(true); setError(''); const data = await projectService.myTasks(); const list = data.items ?? data.tasks ?? data ?? []; setTasks(list); setSelected((x) => list.find((t) => t.id === x?.id) || null); } catch { setTasks(demoTasks); setSelected((x) => demoTasks.find((t) => t.id === x?.id) || null); } finally { setLoading(false); } };
-  useEffect(() => { load(); }, []);
-  const visible = useMemo(() => tasks.filter((t) => `${t.title} ${t.project?.name || t.projectName || ''}`.toLowerCase().includes(query.toLowerCase())), [tasks, query]);
-  const update = async (patch) => { try { setBusy(true); await projectService.updateTask(selected.projectId || selected.project?.id, selected.id, patch); toast.success('Task updated'); await load(); } catch (e) { toast.error(e.message); } finally { setBusy(false); } };
-  return <div className="mx-auto max-w-6xl space-y-5"><div><h1 className="text-xl font-bold text-gray-900">My tasks</h1><p className="mt-0.5 text-sm text-gray-500">Work assigned to you in projects you can access.</p></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Total',tasks.length],['To do',tasks.filter(t=>t.status==='TODO').length],['In progress',tasks.filter(t=>t.status==='IN_PROGRESS').length],['Completed',tasks.filter(t=>t.status==='COMPLETED').length]].map(([label,value])=><div key={label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"><p className="text-2xl font-bold">{value}</p><p className="text-xs text-gray-500">{label}</p></div>)}</div><div className="grid grid-cols-1 gap-5 lg:grid-cols-5"><section className="space-y-3 lg:col-span-2"><div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2"><Search size={16} className="text-gray-400"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tasks…" className="w-full text-sm outline-none" /></div>{error ? <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error} <button onClick={load} className="font-semibold underline">Retry</button></div> : loading ? [1,2,3].map(x=><div key={x} className="h-24 animate-pulse rounded-xl bg-gray-100"/>) : !visible.length ? <div className="rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No assigned tasks.</div> : visible.map(t=><button key={t.id} onClick={()=>setSelected(t)} className={`w-full rounded-xl border bg-white p-4 text-left shadow-sm ${selected?.id===t.id?'border-violet-400 ring-2 ring-violet-100':'border-gray-100'}`}><p className="font-semibold text-gray-800">{t.title}</p><p className="mt-1 text-xs text-gray-500">{t.project?.name || t.projectName || 'Project'} · Due {t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-IN') : '—'}</p><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full bg-violet-600" style={{width:`${t.progress ?? 0}%`}}/></div></button>)}</section><section className="lg:col-span-3">{selected ? <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"><div className="flex flex-wrap justify-between gap-3"><div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone(selected.status)}`}>{labels[selected.status] || selected.status}</span><h2 className="mt-3 text-lg font-bold">{selected.title}</h2><p className="mt-1 text-sm text-gray-500">{selected.project?.name || selected.projectName || 'Project'}</p></div><select disabled={busy} value={selected.status} onChange={e=>update({status:e.target.value})} className="rounded-xl border p-2 text-sm">{projectOptions.statuses.map(x=><option key={x} value={x}>{labels[x]}</option>)}</select></div><p className="mt-5 text-sm leading-6 text-gray-600">{selected.description || 'No description provided.'}</p><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-xl bg-gray-50 p-3 text-sm"><p className="text-xs text-gray-500">Priority</p><p className="mt-1 font-semibold">{selected.priority || 'MEDIUM'}</p></div><div className="rounded-xl bg-gray-50 p-3 text-sm"><p className="text-xs text-gray-500">Due date</p><p className="mt-1 font-semibold">{selected.dueDate ? new Date(selected.dueDate).toLocaleDateString('en-IN') : '—'}</p></div></div><label className="mt-6 block text-sm font-semibold">Progress <span className="text-violet-600">{selected.progress ?? 0}%</span><input type="range" min="0" max="100" value={selected.progress ?? 0} disabled={busy} onChange={e=>setSelected({...selected,progress:Number(e.target.value)})} onMouseUp={()=>update({progress:selected.progress})} className="mt-2 w-full accent-violet-600"/></label></div> : <div className="rounded-2xl border bg-white p-12 text-center text-sm text-gray-500"><CheckCircle2 className="mx-auto mb-3 text-violet-300"/>Select a task to view it.</div>}</section></div></div>;
+  const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [status, setStatus] = useState('');
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [usingDemo, setUsingDemo] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const [taskResponse, projectResponse] = await Promise.all([
+        projectService.myTasks(),
+        projectService.myProjects().catch(() => ({ items: [] })),
+      ]);
+      setTasks(taskResponse?.items ?? taskResponse?.tasks ?? taskResponse ?? []);
+      setProjects(projectResponse?.items ?? projectResponse?.projects ?? projectResponse ?? []);
+      setUsingDemo(isDemoMode());
+    } catch (loadError) {
+      setError(loadError.message || 'Unable to load your tasks');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const visible = useMemo(() => sortTasks(tasks
+    .filter((task) => !status || task.status === status)
+    .filter((task) => `${task.title} ${task.projectName || ''}`.toLowerCase().includes(query.trim().toLowerCase()))), [tasks, status, query]);
+
+  const selected = useMemo(() => tasks.find((task) => task.id === selectedId) || null, [tasks, selectedId]);
+  const stats = useMemo(() => ({
+    total: tasks.length,
+    active: tasks.filter((task) => task.status === 'IN_PROGRESS').length,
+    overdue: tasks.filter(isOverdue).length,
+    completed: tasks.filter((task) => task.status === 'COMPLETED').length,
+  }), [tasks]);
+
+  // Employees may only move their own task along — status and progress.
+  const update = async (task, patch) => {
+    const allowed = {};
+    if (patch.status !== undefined) allowed.status = patch.status;
+    if (patch.progress !== undefined) allowed.progress = patch.progress;
+    if (!Object.keys(allowed).length) return;
+    const previous = tasks;
+    setTasks((current) => current.map((item) => item.id === task.id ? { ...item, ...allowed } : item));
+    try {
+      await projectService.updateTask(task.projectId, task.id, allowed);
+      await load();
+      toast.success('Task updated');
+    } catch (updateError) {
+      setTasks(previous);
+      toast.error(updateError.message || 'Unable to update task');
+    }
+  };
+
+  return <div className="mx-auto max-w-6xl space-y-5">
+    <div>
+      <h1 className="text-xl font-bold text-gray-900">My tasks</h1>
+      <p className="mt-0.5 text-sm text-gray-500">Work assigned to you across {projects.length || 'your'} project{projects.length === 1 ? '' : 's'}.</p>
+    </div>
+
+    {usingDemo && <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Demo mode: the task API is not connected yet, so updates are saved in this browser only.</div>}
+
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {[['Assigned', stats.total, 'bg-violet-50 text-violet-600'], ['In progress', stats.active, 'bg-blue-50 text-blue-600'], ['Overdue', stats.overdue, 'bg-rose-50 text-rose-600'], ['Completed', stats.completed, 'bg-emerald-50 text-emerald-600']].map(([label, value, color]) => <div key={label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className={`mb-3 grid h-9 w-9 place-items-center rounded-xl ${color}`}>{label === 'Overdue' ? <AlertTriangle size={17} /> : <CheckSquare size={17} />}</div>
+        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="mt-1 text-xs text-gray-500">{label}</p>
+      </div>)}
+    </div>
+
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+      <section className="space-y-3 lg:col-span-2">
+        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2">
+          <Search size={16} className="text-gray-400" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tasks…" className="w-full text-sm outline-none" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {groups.map((group) => <button key={group.label} onClick={() => setStatus(group.key)} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${status === group.key ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 ring-1 ring-gray-200'}`}>{group.label}</button>)}
+        </div>
+        {error ? <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error} <button onClick={load} className="font-semibold underline">Retry</button></div>
+          : loading ? <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-100 bg-white p-10 text-sm text-gray-500"><Loader2 size={16} className="animate-spin" />Loading your tasks…</div>
+            : !visible.length ? <div className="rounded-xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-500">No tasks here. Anything assigned to you will show up automatically.</div>
+              : visible.map((task) => <button
+                key={task.id}
+                onClick={() => setSelectedId(task.id)}
+                className={`w-full rounded-xl border bg-white p-4 text-left shadow-sm transition hover:shadow-md ${selectedId === task.id ? 'border-violet-400 ring-2 ring-violet-100' : 'border-gray-100'}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-gray-800">{task.title}</p>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${priorityTone(task.priority)}`}>{task.priority || 'MEDIUM'}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">{task.projectName || 'Project'}</p>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-violet-600" style={{ width: `${task.progress ?? 0}%` }} /></div>
+                <div className="mt-2.5 flex items-center justify-between">
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusTone(task.status)}`}>{statusLabels[task.status] || task.status}</span>
+                  <span className={`text-[11px] font-medium ${isOverdue(task) ? 'text-rose-600' : 'text-gray-400'}`}>{dueLabel(task)}</span>
+                </div>
+              </button>)}
+      </section>
+
+      <section className="lg:col-span-3">
+        {selected ? <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <TaskDetailPanel task={selected} onUpdate={(patch) => update(selected, patch)} onClose={() => setSelectedId(null)} />
+        </div> : <div className="rounded-2xl border border-gray-100 bg-white p-12 text-center text-sm text-gray-500">
+          <CheckCircle2 className="mx-auto mb-3 text-violet-300" />
+          Select a task to see its details, update progress and talk to your team.
+        </div>}
+      </section>
+    </div>
+  </div>;
 }
