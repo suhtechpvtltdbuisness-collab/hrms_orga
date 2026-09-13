@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Palmtree,
   Video,
-  AlarmClock
+  AlarmClock,
+  MessageSquare
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -31,6 +32,7 @@ const menuItems = [
   { name: 'Payroll',          icon: DollarSign,      path: '/employee/payroll' },
   { name: 'Documents',        icon: FolderOpen,      path: '/employee/documents' },
   { name: 'Tasks',            icon: CheckSquare,     path: '/employee/tasks' },
+  { name: 'Messages',         icon: MessageSquare,   path: '/employee/messages' },
   { name: 'Performance',      icon: TrendingUp,      path: '/employee/performance' },
   { name: 'Announcements',    icon: Megaphone,       path: '/employee/announcements' },
   { name: 'Holidays',         icon: Palmtree,        path: '/employee/holidays' },

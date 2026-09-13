@@ -21,6 +21,7 @@ import EmployeeLeaveManagement from "./pages/employee/Leave/EmployeeLeaveManagem
 import EmployeePayroll from "./pages/employee/Payroll/EmployeePayroll";
 import EmployeeDocuments from "./pages/employee/Documents/EmployeeDocuments";
 import EmployeeTasks from "./pages/employee/Tasks/EmployeeTasks";
+import EmployeeMessages from "./pages/employee/Messages/EmployeeMessages";
 import EmployeePerformance from "./pages/employee/Performance/EmployeePerformance";
 import EmployeeAnnouncements from "./pages/employee/Announcements/EmployeeAnnouncements";
 import EmployeeHolidays from "./pages/employee/Holidays/EmployeeHolidays";
@@ -151,6 +152,8 @@ import AnnouncementForm from "./pages/hrms/Announcements/AnnouncementForm";
 import AnnouncementDetails from "./pages/hrms/Announcements/AnnouncementDetails";
 import Projects from "./pages/hrms/Projects/Projects";
 import ProjectDetails from "./pages/hrms/Projects/ProjectDetails";
+import TaskManagement from "./pages/hrms/Tasks/TaskManagement";
+import Messages from "./pages/hrms/Messages/Messages";
 
 
 function App() {
@@ -419,6 +422,8 @@ function App() {
 
           {/* Project management */}
           <Route path="projects" element={<Projects />} />
+          <Route path="tasks" element={<TaskManagement />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="projects/:id" element={<ProjectDetails />} />
 
           {/* Settings */}
@@ -442,6 +447,7 @@ function App() {
           <Route path="payroll" element={<EmployeePayroll />} />
           <Route path="documents" element={<EmployeeDocuments />} />
           <Route path="tasks" element={<EmployeeTasks />} />
+          <Route path="messages" element={<EmployeeMessages />} />
           <Route path="performance" element={<EmployeePerformance />} />
           <Route path="announcements" element={<EmployeeAnnouncements />} />
           <Route path="holidays" element={<EmployeeHolidays />} />

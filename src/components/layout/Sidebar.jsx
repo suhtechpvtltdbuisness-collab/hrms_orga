@@ -69,10 +69,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { name: 'Objection Playbooks', path: '/hrms/sales/objection-playbooks' }
       ]
     },
-    { name: 'Tasks', icon: CheckSquare, path: '' },
+    { name: 'Tasks', icon: CheckSquare, path: '/hrms/tasks' },
     { name: 'Reports', icon: BarChart3, path: '/hrms/financial-reports/profit-and-loss' },
     { name: 'Announcements', icon: Megaphone, path: '/hrms/announcements' },
-    { name: 'Messages', icon: MessageSquare, path: '' },
+    { name: 'Messages', icon: MessageSquare, path: '/hrms/messages' },
     { name: 'My Profile', icon: UserCircle, path: '/hrms/profile' },
     { name: 'Settings', icon: Settings, path: '/hrms/settings' },
     { name: 'Support', icon: HelpCircle, path: '' }
