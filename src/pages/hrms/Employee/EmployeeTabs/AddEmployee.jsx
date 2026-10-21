@@ -868,7 +868,9 @@ const AddEmployee = () => {
             setToast({
                 type: 'success',
                 title: 'Extra seat added',
-                message: `One additional employee seat has been added to your plan for ₹${subscriptionInfo?.extraEmployeePriceInr || 51}.`,
+                message: subscriptionInfo?.extraEmployeePriceInr == null
+                    ? 'One additional employee seat has been added to your plan.'
+                    : `One additional employee seat has been added to your plan for ₹${subscriptionInfo.extraEmployeePriceInr}.`,
             });
         } catch (error) {
             setToast({
@@ -904,11 +906,13 @@ const AddEmployee = () => {
 
         if (subscriptionInfo?.canAddEmployee === false && subscriptionInfo?.hasActivePlan !== false) {
             const maxEmployees = subscriptionInfo?.maxEmployees ?? 0;
-            const price = subscriptionInfo?.extraEmployeePriceInr ?? 51;
+            const price = subscriptionInfo?.extraEmployeePriceInr;
             setToast({
                 type: 'warning',
                 title: 'Employee limit reached',
-                message: `You have reached your plan limit. You can only have ${maxEmployees} users. If you want to add more users you have to pay ₹${price} per person.`,
+                message: price == null
+                    ? `You have reached your plan limit. You can only have ${maxEmployees} users.`
+                    : `You have reached your plan limit. You can only have ${maxEmployees} users. If you want to add more users you have to pay ₹${price} per person.`,
                 persistent: true,
                 actions: [
                     {
@@ -1348,10 +1352,10 @@ const AddEmployee = () => {
                             <strong className="capitalize">{subscriptionInfo.planType?.replace('_', ' ') || 'Active'} plan</strong>
                             <span className="mx-2 text-current opacity-40">•</span>
                             {subscriptionInfo.employeeCount ?? 0} of {subscriptionInfo.maxEmployees ?? 0} employee seats used
-                            {!subscriptionInfo.canAddEmployee && subscriptionInfo.hasActivePlan !== false ? (
+                            {!subscriptionInfo.canAddEmployee && subscriptionInfo.hasActivePlan !== false && subscriptionInfo.extraEmployeePriceInr != null ? (
                                 <>
                                     <span className="mx-2 text-current opacity-40">•</span>
-                                    Extra seats available at ₹{subscriptionInfo.extraEmployeePriceInr ?? 51} per employee
+                                    Extra seats available at ₹{subscriptionInfo.extraEmployeePriceInr} per employee
                                 </>
                             ) : null}
                         </div>
