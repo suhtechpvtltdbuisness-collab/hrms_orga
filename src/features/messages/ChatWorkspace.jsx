@@ -41,8 +41,8 @@ export default function ChatWorkspace({ title = 'Messages', subtitle = 'Talk to 
   const loadPeople = useCallback(async () => {
     let rows = [];
     try {
-      if (currentUser?.id) {
-        const response = await employeeService.getAllEmployeesByAdminId(currentUser.id, 1, 200);
+      if (currentUser?.id || currentUser?._id) {
+        const response = await employeeService.getAllEmployeesByAdminId(currentUser.id || currentUser._id, 1, 200);
         rows = response?.data || [];
       }
     } catch {

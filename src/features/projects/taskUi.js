@@ -64,15 +64,16 @@ export const readUser = () => { try { return JSON.parse(localStorage.getItem('us
 export const isAdminUser = (person, currentUser) => {
   if (!person) return false;
   const id = String(person.userId || person.id || '');
-  if (currentUser?.id && id && id === String(currentUser.id)) return true;
+  const currentId = currentUser?.id ?? currentUser?._id;
+  if (currentId && id && id === String(currentId)) return true;
   if (person.isAdmin === true) return true;
   const type = String(person.type || '').toLowerCase();
   return type === 'admin' || type === 'organization';
 };
 
 export const toAssignableEmployee = (row) => {
-  const user = row?.user || row;
-  if (!user?.id) return null;
+  const user = { ...(row?.user || row), id: (row?.user || row)?.id ?? (row?.user || row)?._id };
+  if (!user.id) return null;
   const type = String(user.type || row?.type || 'employee').toLowerCase();
   if (user.isAdmin === true || type === 'admin' || type === 'organization') return null;
   return {
@@ -85,8 +86,16 @@ export const toAssignableEmployee = (row) => {
   };
 };
 
+// The employees API returns either an array or { employees: [...] }.
+const toRowList = (rows) => {
+  if (Array.isArray(rows)) return rows;
+  if (Array.isArray(rows?.employees)) return rows.employees;
+  if (Array.isArray(rows?.items)) return rows.items;
+  return [];
+};
+
 export const employeeAssignees = (rows = [], currentUser) =>
-  (Array.isArray(rows) ? rows : [])
+  toRowList(rows)
     .map(toAssignableEmployee)
     .filter(Boolean)
     .filter((person) => !isAdminUser(person, currentUser));
