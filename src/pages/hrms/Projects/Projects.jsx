@@ -42,13 +42,13 @@ export default function Projects() {
     try {
       if (currentUser?.id || currentUser?._id) {
         const response = await employeeService.getAllEmployeesByAdminId(currentUser.id || currentUser._id, 1, 200);
-        rows = response?.data || [];
+        rows = response?.data?.employees || response?.data || [];
       }
     } catch {
       rows = [];
     }
     const directory = normalizePeople(rows, currentUser);
-    const normalized = directory.length > 1 ? directory : mergeDirectory(directory, currentUser);
+    const normalized = isDemoMode() && directory.length <= 1 ? mergeDirectory(directory, currentUser) : directory;
     setPeople(normalized);
     setForm((current) => ({
       ...current,
@@ -153,7 +153,7 @@ export default function Projects() {
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2 text-sm font-medium">Project name<input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5" /></label>
           <label className="sm:col-span-2 text-sm font-medium">Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="mt-1 min-h-24 w-full rounded-xl border p-2.5" /></label>
-          <label className="text-sm font-medium">Owner<select value={form.ownerId} disabled className="mt-1 w-full cursor-not-allowed rounded-xl border bg-slate-50 p-2.5"><option value={String(currentUser.id || '')}>{currentUser.name || currentUser.email || 'Current user'}</option></select></label>
+          <label className="text-sm font-medium">Owner<select value={form.ownerId} onChange={(event) => setForm((current) => ({ ...current, ownerId: event.target.value, memberIds: Array.from(new Set([...current.memberIds, event.target.value])) }))} className="mt-1 w-full rounded-xl border p-2.5"><option value="">Select owner</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}{person.type ? ` (${person.type})` : ''}</option>)}</select></label>
           <label className="text-sm font-medium">Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5">{projectOptions.priorities.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label className="text-sm font-medium">Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5">{projectOptions.statuses.map((item) => <option key={item} value={item}>{item.replaceAll('_', ' ')}</option>)}</select></label>
           <label className="text-sm font-medium">Start date<input type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} className="mt-1 w-full rounded-xl border p-2.5" /></label>

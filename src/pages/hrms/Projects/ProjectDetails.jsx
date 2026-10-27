@@ -42,7 +42,7 @@ export default function ProjectDetails() {
     try {
       if (currentUser?.id || currentUser?._id) {
         const response = await employeeService.getAllEmployeesByAdminId(currentUser.id || currentUser._id, 1, 200);
-        rows = response?.data || [];
+        rows = response?.data?.employees || response?.data || [];
       }
     } catch {
       rows = [];
